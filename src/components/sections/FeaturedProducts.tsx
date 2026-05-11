@@ -2,17 +2,39 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import SectionHeader from "@/components/ui/SectionHeader";
 import { SHOP_PRODUCT_CARDS } from "@/lib/shop-products";
+import { useCart } from "@/lib/cart-context";
 
 const TABS = ["All", "Catering", "Events", "Kitchen"];
 
 export default function FeaturedProducts() {
   const [activeTab, setActiveTab] = useState("All");
+  const [addedIds, setAddedIds] = useState<number[]>([]);
+  const { addItem } = useCart();
 
-  const filtered = activeTab === "All"
-    ? SHOP_PRODUCT_CARDS
-    : SHOP_PRODUCT_CARDS.filter((p) => p.category === activeTab);
+  const filtered =
+    activeTab === "All"
+      ? SHOP_PRODUCT_CARDS
+      : SHOP_PRODUCT_CARDS.filter((p) => p.category === activeTab);
+
+  const handleAdd = (e: React.MouseEvent, product: (typeof SHOP_PRODUCT_CARDS)[0]) => {
+    e.preventDefault();
+    addItem({
+      id: `product-${product.id}`,
+      name: product.name,
+      category: product.category,
+      price: product.price,
+      image: product.image,
+      type: "product",
+    });
+    setAddedIds((prev) => [...prev, product.id]);
+    setTimeout(
+      () => setAddedIds((prev) => prev.filter((id) => id !== product.id)),
+      2000
+    );
+  };
 
   return (
     <section className="bg-cream py-24">
@@ -39,9 +61,7 @@ export default function FeaturedProducts() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-5 py-2.5 text-xs font-semibold tracking-wider uppercase transition-all duration-200 relative ${
-                activeTab === tab
-                  ? "text-charcoal"
-                  : "text-muted hover:text-charcoal"
+                activeTab === tab ? "text-charcoal" : "text-muted hover:text-charcoal"
               }`}
             >
               {tab}
@@ -54,49 +74,66 @@ export default function FeaturedProducts() {
 
         {/* Product Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-6">
-          {filtered.slice(0, 8).map((product) => (
-            <Link
-              key={product.id}
-              href={`/shop/${product.id}`}
-              className="group bg-white border border-border hover:border-sand/40 transition-all duration-300 hover:shadow-md block"
-            >
-              {/* Image placeholder */}
-              <div className="relative aspect-square bg-[#F5F1EB] overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#D4B483" strokeWidth="1">
-                    <rect x="3" y="3" width="18" height="18" rx="1" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                  </svg>
-                </div>
-                {product.tag && (
-                  <span className="absolute top-3 left-3 bg-sand text-white text-[10px] font-bold tracking-wider uppercase px-2.5 py-1">
-                    {product.tag}
-                  </span>
-                )}
-              </div>
+          {filtered.slice(0, 8).map((product) => {
+            const isAdded = addedIds.includes(product.id);
+            return (
+              <div key={product.id} className="group relative bg-white border border-border hover:border-sand/40 transition-all duration-300 hover:shadow-md">
+                <Link href={`/shop/${product.id}`} className="block">
+                  {/* Image */}
+                  <div className="relative aspect-square overflow-hidden bg-cream">
+                    <Image
+                      src={product.image}
+                      alt={product.name}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                    />
+                    {product.tag && (
+                      <span className="absolute top-3 left-3 bg-sand text-white text-[10px] font-bold tracking-wider uppercase px-2.5 py-1 z-10">
+                        {product.tag}
+                      </span>
+                    )}
+                  </div>
 
-              {/* Info */}
-              <div className="p-4">
-                <p className="text-[10px] text-muted tracking-widest uppercase mb-1">
-                  {product.category}
-                </p>
-                <h4 className="text-sm font-medium text-charcoal leading-snug mb-2 group-hover:text-sand transition-colors">
-                  {product.name}
-                </h4>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-charcoal">
-                    {product.price}
-                  </span>
-                  <span className="text-sand opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
-                  </span>
-                </div>
+                  {/* Info */}
+                  <div className="px-4 pt-4 pb-11">
+                    <p className="text-[10px] text-muted tracking-widest uppercase mb-1">
+                      {product.category}
+                    </p>
+                    <h4 className="text-sm font-medium text-charcoal leading-snug group-hover:text-sand transition-colors">
+                      {product.name}
+                    </h4>
+                  </div>
+                </Link>
+
+                {/* Add to Quote — always visible compact pill, bottom-right */}
+                <button
+                  onClick={(e) => handleAdd(e, product)}
+                  className={`absolute bottom-3 right-3 z-10 inline-flex items-center gap-1 text-[10px] font-bold tracking-wide uppercase px-3 py-1.5 rounded-full transition-all duration-200 shadow-sm ${
+                    isAdded
+                      ? "bg-green-600 text-white"
+                      : "bg-white border border-navy/20 text-navy hover:bg-navy hover:text-white"
+                  }`}
+                >
+                  {isAdded ? (
+                    <>
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      Added
+                    </>
+                  ) : (
+                    <>
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                        <path d="M12 5v14M5 12h14" />
+                      </svg>
+                      Quote
+                    </>
+                  )}
+                </button>
               </div>
-            </Link>
-          ))}
+            );
+          })}
         </div>
 
         {/* CTA */}

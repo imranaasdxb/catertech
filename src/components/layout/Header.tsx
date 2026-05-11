@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCart } from "@/lib/cart-context";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -17,23 +18,26 @@ const NAV_LINKS = [
 
 export default function Header() {
   const pathname = usePathname();
+  const { totalItems } = useCart();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  /** Product URLs (/shop/[id]): white hero — keep bar readable like scrolled state */
   const isShopProductDetail =
     pathname.length > "/shop".length && pathname.startsWith("/shop/");
   const barSolid = scrolled || isShopProductDetail;
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    const onScroll = () => setScrolled(window.scrollY > 15);
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [menuOpen]);
 
   return (
@@ -41,7 +45,7 @@ export default function Header() {
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           barSolid
-            ? "bg-white/95 backdrop-blur-md border-b border-border shadow-sm"
+            ? "bg-white/80 backdrop-blur-xl border-b border-border/60 shadow-[0_1px_16px_rgba(26,31,46,0.08)]"
             : "bg-transparent"
         }`}
       >
@@ -53,11 +57,9 @@ export default function Header() {
                 barSolid ? "text-navy" : "text-white"
               }`}
             >
-          Cater
+              Cater
             </span>
-            <span
-              className="text-lg font-light tracking-[0.18em] uppercase text-sand"
-            >
+            <span className="text-lg font-light tracking-[0.18em] uppercase text-sand">
               TECH
             </span>
           </Link>
@@ -70,7 +72,7 @@ export default function Header() {
                 href={link.href}
                 className={`text-xs font-medium tracking-widest uppercase transition-colors duration-200 hover:text-sand ${
                   barSolid ? "text-charcoal" : "text-white/80"
-                }`}
+                } ${pathname === link.href ? "text-sand" : ""}`}
               >
                 {link.label}
               </Link>
@@ -79,7 +81,6 @@ export default function Header() {
 
           {/* Right Actions */}
           <div className="hidden lg:flex items-center gap-4">
-            {/* Language Toggle */}
             <button
               className={`text-xs font-medium tracking-widest uppercase transition-colors duration-200 hover:text-sand ${
                 barSolid ? "text-muted" : "text-white/70"
@@ -94,16 +95,29 @@ export default function Header() {
               className={`relative transition-colors duration-200 hover:text-sand ${
                 barSolid ? "text-charcoal" : "text-white"
               }`}
-              aria-label="Cart"
+              aria-label={`Cart — ${totalItems} item${totalItems !== 1 ? "s" : ""}`}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
                 <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
                 <line x1="3" y1="6" x2="21" y2="6" />
                 <path d="M16 10a4 4 0 01-8 0" />
               </svg>
-              <span className="absolute -top-1.5 -right-1.5 bg-sand text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
-                0
-              </span>
+              {totalItems > 0 ? (
+                <span className="absolute -top-1.5 -right-1.5 bg-sand text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                  {totalItems > 99 ? "99+" : totalItems}
+                </span>
+              ) : (
+                <span className="absolute -top-1.5 -right-1.5 bg-sand text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                  0
+                </span>
+              )}
             </Link>
 
             {/* CTA */}
@@ -116,36 +130,67 @@ export default function Header() {
           </div>
 
           {/* Mobile Hamburger */}
-          <button
-            className={`lg:hidden flex flex-col gap-1.5 p-1 transition-colors duration-200 ${
-              barSolid ? "text-charcoal" : "text-white"
-            }`}
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Toggle menu"
-          >
-            <span
-              className={`block h-0.5 bg-current transition-all duration-300 origin-center ${
-                menuOpen ? "w-6 rotate-45 translate-y-2" : "w-6"
+          <div className="lg:hidden flex items-center gap-4">
+            {/* Mobile Cart */}
+            <Link
+              href="/cart"
+              className={`relative transition-colors duration-200 hover:text-sand ${
+                barSolid ? "text-charcoal" : "text-white"
               }`}
-            />
-            <span
-              className={`block h-0.5 bg-current transition-all duration-300 ${
-                menuOpen ? "opacity-0 w-0" : "w-4"
+              aria-label="Cart"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <path d="M16 10a4 4 0 01-8 0" />
+              </svg>
+              {totalItems > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-sand text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                  {totalItems}
+                </span>
+              )}
+            </Link>
+
+            <button
+              className={`flex flex-col gap-1.5 p-1 transition-colors duration-200 ${
+                barSolid ? "text-charcoal" : "text-white"
               }`}
-            />
-            <span
-              className={`block h-0.5 bg-current transition-all duration-300 origin-center ${
-                menuOpen ? "w-6 -rotate-45 -translate-y-2" : "w-6"
-              }`}
-            />
-          </button>
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label="Toggle menu"
+            >
+              <span
+                className={`block h-0.5 bg-current transition-all duration-300 origin-center ${
+                  menuOpen ? "w-6 rotate-45 translate-y-2" : "w-6"
+                }`}
+              />
+              <span
+                className={`block h-0.5 bg-current transition-all duration-300 ${
+                  menuOpen ? "opacity-0 w-0" : "w-4"
+                }`}
+              />
+              <span
+                className={`block h-0.5 bg-current transition-all duration-300 origin-center ${
+                  menuOpen ? "w-6 -rotate-45 -translate-y-2" : "w-6"
+                }`}
+              />
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Mobile Menu Overlay */}
       <div
         className={`fixed inset-0 z-40 bg-navy transition-opacity duration-300 lg:hidden ${
-          menuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          menuOpen
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
         }`}
       >
         <div className="flex flex-col h-full px-8 pt-24 pb-10">

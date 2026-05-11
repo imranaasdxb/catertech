@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
-import type { ShopProductDetail } from "@/lib/shop-products";
+import { type ShopProductDetail, SHOP_PRODUCT_CARDS } from "@/lib/shop-products";
+import { useCart } from "@/lib/cart-context";
 
 type AccordionKey = "description" | "packaging" | "shipping";
 
@@ -106,11 +108,29 @@ export default function ProductEquipmentDetail({
 }: {
   product: ShopProductDetail;
 }) {
+  const { addItem } = useCart();
   const [colorId, setColorId] = useState(product.colors[0]?.id ?? "");
+  const [sizeId, setSizeId] = useState(product.sizes[0]?.id ?? "");
   const [qty, setQty] = useState(1);
   const [wishlist, setWishlist] = useState(false);
   const [activeThumb, setActiveThumb] = useState(0);
   const [openSection, setOpenSection] = useState<AccordionKey>("description");
+  const [cartAdded, setCartAdded] = useState(false);
+
+  const handleAddToCart = () => {
+    for (let i = 0; i < qty; i++) {
+      addItem({
+        id: `product-${product.id}`,
+        name: product.name,
+        category: product.category,
+        price: product.price,
+        image: product.image ?? "",
+        type: "product",
+      });
+    }
+    setCartAdded(true);
+    setTimeout(() => setCartAdded(false), 2500);
+  };
 
   const selectedColor = product.colors.find((c) => c.id === colorId);
 
@@ -157,7 +177,18 @@ export default function ProductEquipmentDetail({
           <div className="lg:sticky lg:top-28 lg:self-start space-y-3">
             {/* Main image */}
             <div className="relative aspect-4/3 rounded-2xl overflow-hidden border border-border shadow-[0_4px_32px_rgba(26,31,46,0.07)]">
-              <ImgPlaceholder label={product.name} active />
+              {product.image ? (
+                <Image
+                  src={product.image}
+                  alt={product.name}
+                  fill
+                  className="object-cover"
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 55vw"
+                />
+              ) : (
+                <ImgPlaceholder label={product.name} active />
+              )}
 
               {/* Badges */}
               <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
@@ -216,7 +247,17 @@ export default function ProductEquipmentDetail({
                       : "border-border hover:border-sand/40"
                   }`}
                 >
-                  <ImgPlaceholder label={lbl} active={activeThumb === i} />
+                  {product.image ? (
+                    <Image
+                      src={product.image}
+                      alt={`${product.name} view ${i + 1}`}
+                      fill
+                      className="object-cover"
+                      sizes="96px"
+                    />
+                  ) : (
+                    <ImgPlaceholder label={lbl} active={activeThumb === i} />
+                  )}
                 </button>
               ))}
             </div>
@@ -290,22 +331,45 @@ export default function ProductEquipmentDetail({
               {product.shortDescription}
             </p>
 
-            {/* Price */}
-            <div className="flex flex-wrap items-end gap-3 mb-7">
-              <span className="text-[2.1rem] font-bold text-navy tracking-tight tabular-nums leading-none">
-                {product.price}
+            {/* Enquiry note (replaces price) */}
+            <div className="flex items-center gap-2.5 bg-sand/10 border border-sand/30 rounded-xl px-4 py-3 mb-7">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#C4A265" strokeWidth="2">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+              </svg>
+              <span className="text-[12px] text-sand font-semibold tracking-wide">
+                Pricing available on quote — request yours below
               </span>
-              {product.compareAtPrice && (
-                <span className="text-[1.05rem] text-muted line-through tabular-nums mb-0.5">
-                  {product.compareAtPrice}
-                </span>
-              )}
-              {product.discountPct != null && (
-                <span className="mb-1 text-[10px] font-bold uppercase tracking-[0.15em] text-white bg-sand px-2.5 py-1 rounded-full">
-                  Save {product.discountPct}%
-                </span>
-              )}
             </div>
+
+            {/* Size selector */}
+            {product.sizes.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[11px] font-bold tracking-[0.2em] uppercase text-charcoal">
+                    Size
+                  </p>
+                  <p className="text-[12px] text-muted font-medium">
+                    {product.sizes.find((s) => s.id === sizeId)?.label}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {product.sizes.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setSizeId(s.id)}
+                      className={`h-9 px-3.5 rounded-lg text-[11px] font-semibold tracking-wide border transition-all duration-200 ${
+                        sizeId === s.id
+                          ? "border-sand bg-sand/10 text-sand shadow-sm"
+                          : "border-border bg-white text-muted hover:border-sand/50 hover:text-charcoal"
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Finish / Color selector */}
             {product.colors.length > 0 && (
@@ -322,7 +386,7 @@ export default function ProductEquipmentDetail({
                       key={c.id}
                       type="button"
                       onClick={() => setColorId(c.id)}
-                      className={`h-10 px-4 rounded-lg text-[11px] font-semibold tracking-wide border transition-all duration-200 ${
+                      className={`h-9 px-3.5 rounded-lg text-[11px] font-semibold tracking-wide border transition-all duration-200 ${
                         colorId === c.id
                           ? "border-sand bg-sand/10 text-sand shadow-sm"
                           : "border-border bg-white text-muted hover:border-sand/50 hover:text-charcoal"
@@ -343,40 +407,78 @@ export default function ProductEquipmentDetail({
                   type="button"
                   onClick={() => setQty((q) => Math.max(1, q - 1))}
                   aria-label="Decrease quantity"
-                  className="w-11 h-13 flex items-center justify-center text-muted hover:text-sand hover:bg-cream transition-colors"
+                  className="w-10 h-12 flex items-center justify-center text-muted hover:text-sand hover:bg-cream transition-colors"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M5 12h14" />
                   </svg>
                 </button>
-                <span className="w-10 text-center text-sm font-bold text-charcoal tabular-nums select-none">
-                  {qty}
-                </span>
+                <input
+                  type="number"
+                  min={1}
+                  value={qty}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value, 10);
+                    if (!isNaN(v) && v >= 1) setQty(v);
+                  }}
+                  className="w-12 text-center text-sm font-bold text-charcoal tabular-nums bg-transparent outline-none border-none [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  aria-label="Quantity"
+                />
                 <button
                   type="button"
                   onClick={() => setQty((q) => q + 1)}
                   aria-label="Increase quantity"
-                  className="w-11 h-13 flex items-center justify-center text-muted hover:text-sand hover:bg-cream transition-colors"
+                  className="w-10 h-12 flex items-center justify-center text-muted hover:text-sand hover:bg-cream transition-colors"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M12 5v14M5 12h14" />
                   </svg>
                 </button>
               </div>
 
               {/* Primary CTA */}
-              <Link
-                href="/cart"
-                className="flex-1 inline-flex items-center justify-center gap-2 bg-navy hover:bg-charcoal text-white text-sm font-semibold tracking-wider rounded-xl px-6 py-3.5 transition-colors duration-200 shadow-sm"
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                className={`flex-1 inline-flex items-center justify-center gap-2 text-sm font-semibold tracking-wider rounded-xl px-6 py-3.5 transition-colors duration-200 shadow-sm ${
+                  cartAdded
+                    ? "bg-green-600 hover:bg-green-700 text-white"
+                    : "bg-navy hover:bg-charcoal text-white"
+                }`}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                  <path d="M16 10a4 4 0 01-8 0" />
-                </svg>
-                Add to Cart
-              </Link>
+                {cartAdded ? (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    Added to Quote!
+                  </>
+                ) : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+                      <line x1="3" y1="6" x2="21" y2="6" />
+                      <path d="M16 10a4 4 0 01-8 0" />
+                    </svg>
+                    Add to Quote
+                  </>
+                )}
+              </button>
             </div>
+
+            {cartAdded && (
+              <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 mb-4">
+                <span className="text-[12px] text-green-700 font-medium">
+                  {qty > 1 ? `${qty} × ` : ""}{product.name} added to your quote basket
+                </span>
+                <Link
+                  href="/cart"
+                  className="text-[11px] font-bold text-green-700 hover:text-green-800 underline underline-offset-2"
+                >
+                  View Basket →
+                </Link>
+              </div>
+            )}
 
             {/* Secondary CTA — bulk/trade */}
             <Link
@@ -572,6 +674,64 @@ export default function ProductEquipmentDetail({
           </div>
         </section>
 
+        {/* ── Related Products ─────────────────────────────────────── */}
+        {(() => {
+          const related = SHOP_PRODUCT_CARDS.filter(
+            (p) => p.category === product.category && p.id !== product.id
+          ).slice(0, 4);
+          if (!related.length) return null;
+          return (
+            <section className="mt-20 pt-14 border-t border-border">
+              <div className="mb-8">
+                <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-sand mb-2">
+                  Similar Equipment
+                </p>
+                <h2 className="font-serif text-2xl text-navy tracking-tight">
+                  You Might Also Need
+                </h2>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {related.map((p) => (
+                  <Link
+                    key={p.id}
+                    href={`/shop/${p.id}`}
+                    className="group bg-white rounded-xl border border-border hover:border-sand/40 hover:shadow-md transition-all duration-300 overflow-hidden"
+                  >
+                    <div className="relative aspect-square overflow-hidden bg-cream">
+                      <Image
+                        src={p.image}
+                        alt={p.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        sizes="(max-width: 640px) 50vw, 25vw"
+                      />
+                      {p.tag && (
+                        <span className="absolute top-2 left-2 bg-sand text-white text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full">
+                          {p.tag}
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <p className="text-[9px] text-muted tracking-widest uppercase mb-1">
+                        {p.category}
+                      </p>
+                      <h4 className="text-xs font-medium text-charcoal leading-snug group-hover:text-sand transition-colors">
+                        {p.name}
+                      </h4>
+                      <p className="text-[10px] text-sand font-semibold mt-2 flex items-center gap-1">
+                        View Details
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <path d="M5 12h14M12 5l7 7-7 7" />
+                        </svg>
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          );
+        })()}
+
         {/* ── Back to Shop CTA ─────────────────────────────────────── */}
         <div className="mt-20 pt-14 border-t border-border text-center">
           <p className="text-[11px] font-bold tracking-[0.25em] uppercase text-sand mb-3">
@@ -596,10 +756,10 @@ export default function ProductEquipmentDetail({
       <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/95 backdrop-blur-md border-t border-border px-4 py-3 flex items-center gap-3 shadow-[0_-4px_20px_rgba(26,31,46,0.09)]">
         <div className="flex-1 min-w-0">
           <p className="text-[11px] font-medium text-muted truncate leading-tight">
-            {product.name}
+            {product.category}
           </p>
-          <p className="text-base font-bold text-navy tabular-nums leading-tight mt-0.5">
-            {product.price}
+          <p className="text-sm font-bold text-navy leading-tight mt-0.5 truncate">
+            {product.name}
           </p>
         </div>
         <Link
@@ -608,12 +768,17 @@ export default function ProductEquipmentDetail({
         >
           Quote
         </Link>
-        <Link
-          href="/cart"
-          className="shrink-0 bg-navy hover:bg-charcoal text-white text-[11px] font-bold tracking-wider uppercase px-5 py-2.5 rounded-xl transition-colors"
+        <button
+          type="button"
+          onClick={handleAddToCart}
+          className={`shrink-0 text-[11px] font-bold tracking-wider uppercase px-5 py-2.5 rounded-xl transition-colors ${
+            cartAdded
+              ? "bg-green-600 text-white"
+              : "bg-navy hover:bg-charcoal text-white"
+          }`}
         >
-          Add to Cart
-        </Link>
+          {cartAdded ? "Added ✓" : "Add to Quote"}
+        </button>
       </div>
     </div>
   );

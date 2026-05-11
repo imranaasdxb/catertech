@@ -4,6 +4,7 @@ export type ShopProductCard = {
   category: string;
   price: string;
   tag: string | null;
+  image: string;
 };
 
 export type ProductReview = {
@@ -19,6 +20,11 @@ export type ProductColor = {
   label: string;
 };
 
+export type ProductSize = {
+  id: string;
+  label: string;
+};
+
 export type ShopProductDetail = ShopProductCard & {
   shortDescription: string;
   longDescription: string;
@@ -27,6 +33,7 @@ export type ShopProductDetail = ShopProductCard & {
   rating: number;
   reviewCountLabel: string;
   colors: ProductColor[];
+  sizes: ProductSize[];
   packaging: string;
   shipping: string;
   specs: {
@@ -39,14 +46,14 @@ export type ShopProductDetail = ShopProductCard & {
 };
 
 export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
-  { id: 1, name: "Stainless Chafing Dish Set", category: "Catering", price: "AED 280", tag: "Popular" },
-  { id: 2, name: "Folding Banquet Table 6ft", category: "Events", price: "AED 150 / day", tag: null },
-  { id: 3, name: "Commercial Convection Oven", category: "Kitchen", price: "AED 4,200", tag: "New" },
-  { id: 4, name: "Beverage Urn — 30L", category: "Catering", price: "AED 190", tag: null },
-  { id: 5, name: "Chiavari Chair — Gold", category: "Events", price: "AED 25 / day", tag: "Popular" },
-  { id: 6, name: "Undercounter Refrigerator", category: "Kitchen", price: "AED 2,800", tag: null },
-  { id: 7, name: "Serving Tray Set — 5pc", category: "Catering", price: "AED 120", tag: null },
-  { id: 8, name: "LED Stage Riser Panel", category: "Events", price: "AED 450 / day", tag: "New" },
+  { id: 1, name: "Stainless Chafing Dish Set", category: "Catering", price: "AED 280", tag: "Popular", image: "https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=600&q=80" },
+  { id: 2, name: "Folding Banquet Table 6ft", category: "Events", price: "AED 150 / day", tag: null, image: "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=600&q=80" },
+  { id: 3, name: "Commercial Convection Oven", category: "Kitchen", price: "AED 4,200", tag: "New", image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=600&q=80" },
+  { id: 4, name: "Beverage Urn — 30L", category: "Catering", price: "AED 190", tag: null, image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=600&q=80" },
+  { id: 5, name: "Chiavari Chair — Gold", category: "Events", price: "AED 25 / day", tag: "Popular", image: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=600&q=80" },
+  { id: 6, name: "Undercounter Refrigerator", category: "Kitchen", price: "AED 2,800", tag: null, image: "https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?auto=format&fit=crop&w=600&q=80" },
+  { id: 7, name: "Serving Tray Set — 5pc", category: "Catering", price: "AED 120", tag: null, image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=600&q=80" },
+  { id: 8, name: "LED Stage Riser Panel", category: "Events", price: "AED 450 / day", tag: "New", image: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=600&q=80" },
 ];
 
 const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = {
@@ -63,6 +70,12 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
       { id: "silver", label: "Stainless" },
       { id: "black", label: "Black trim" },
       { id: "gold", label: "Gold trim" },
+    ],
+    sizes: [
+      { id: "full", label: "Full Pan" },
+      { id: "half", label: "Half Pan" },
+      { id: "third", label: "Third Pan" },
+      { id: "round7", label: "Round 7 qt" },
     ],
     packaging: "Each set is carton-packed with protective corner inserts and pan separators. Frames ship flat; quick tool-free assembly on site.",
     shipping: "Available for UAE delivery and venue drop-off. Express slots for event dates subject to fleet availability—confirm at checkout enquiry.",
@@ -103,6 +116,12 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
       { id: "wood", label: "Woodgrain" },
       { id: "black", label: "Black" },
     ],
+    sizes: [
+      { id: "4ft", label: "4 ft × 2 ft" },
+      { id: "6ft", label: "6 ft × 2.5 ft" },
+      { id: "8ft", label: "8 ft × 2.5 ft" },
+      { id: "round60", label: "Round 60\"" },
+    ],
     packaging: "Legs folded flat; carton includes edge protectors. SKU tag for quick dock scanning.",
     shipping: "Rental carts available. Same-week warehouse pickup or white-glove delivery across Dubai.",
     specs: {
@@ -134,6 +153,12 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
       { id: "steel", label: "Stainless" },
       { id: "black", label: "Graphite panel" },
     ],
+    sizes: [
+      { id: "half", label: "Half-Size (5 trays)" },
+      { id: "full", label: "Full-Size (10 trays)" },
+      { id: "double", label: "Double Stack" },
+      { id: "compact", label: "Compact Combi" },
+    ],
     packaging: "Crated with shock mounts; technician hookup guide included.",
     shipping: "Requires lift-gate delivery. Installation slot booked after electrical survey.",
     specs: {
@@ -162,6 +187,12 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
     colors: [
       { id: "steel", label: "Stainless" },
       { id: "copper", label: "Copper accent" },
+    ],
+    sizes: [
+      { id: "10l", label: "10 L" },
+      { id: "20l", label: "20 L" },
+      { id: "30l", label: "30 L" },
+      { id: "50l", label: "50 L" },
     ],
     packaging: "Double-boxed drum with locking lid strap.",
     shipping: "Compatible with courier or venue staging—mention floor access for weight.",
@@ -194,6 +225,11 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
       { id: "gold", label: "Gold" },
       { id: "silver", label: "Silver" },
       { id: "black", label: "Black gloss" },
+    ],
+    sizes: [
+      { id: "standard", label: "Standard Adult" },
+      { id: "bar", label: "Bar Height" },
+      { id: "kids", label: "Children's 60 cm" },
     ],
     packaging: "Chair socks + protective films applied at warehouse.",
     shipping: "Rental manifests include QC photos; swaps available onsite during build windows.",
@@ -233,6 +269,12 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
       { id: "silver", label: "Stainless" },
       { id: "black", label: "Black door" },
     ],
+    sizes: [
+      { id: "45cm", label: "Under-bar 45 cm" },
+      { id: "60cm", label: "60 cm wide" },
+      { id: "90cm", label: "90 cm wide" },
+      { id: "120cm", label: "120 cm wide" },
+    ],
     packaging: "Palletized with corner guards.",
     shipping: "Requires placement path ≥ 82 cm width; inform concierge for loading dock slots.",
     specs: {
@@ -261,6 +303,12 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
     colors: [
       { id: "silver", label: "Steel" },
       { id: "gold", label: "Champagne rim" },
+    ],
+    sizes: [
+      { id: "sm", label: "Small 12\" × 9\"" },
+      { id: "md", label: "Medium 15\" × 11\"" },
+      { id: "lg", label: "Large 18\" × 13\"" },
+      { id: "mixed", label: "Mixed 5-pc Set" },
     ],
     packaging: "Nested with microfiber separators inside retail box.",
     shipping: "Lightweight courier OK; consolidated with other smallwares on pallets.",
@@ -292,6 +340,12 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
     colors: [
       { id: "black", label: "Matte black fascia" },
       { id: "white", label: "Frost diffuser" },
+    ],
+    sizes: [
+      { id: "8in", label: "8\" Single Tier" },
+      { id: "16in", label: "16\" Double Tier" },
+      { id: "combo", label: "8\"+16\" Combo" },
+      { id: "full", label: "Full Stage Kit" },
     ],
     packaging: "Flight-ready cases labeled by segment with cable bags.",
     shipping: "Truck pack manifests include weight distribution diagrams for riggers.",
