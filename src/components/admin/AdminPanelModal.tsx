@@ -1,0 +1,68 @@
+"use client";
+
+import { X } from "lucide-react";
+import type { ReactNode } from "react";
+
+type Props = {
+  open: boolean;
+  title: string;
+  subtitle?: string;
+  onClose: () => void;
+  children: ReactNode;
+  /** Default ~56rem wide, slightly shorter max height for compact admin lists. */
+  widthClass?: string;
+};
+
+/** Large centred card overlay for edit / detail inside admin (same screen). */
+export function AdminPanelModal({
+  open,
+  title,
+  subtitle,
+  onClose,
+  children,
+  widthClass = "max-w-[min(100%-1rem,52rem)]",
+}: Props) {
+  if (!open) return null;
+  return (
+    <div
+      className="fixed inset-0 z-[218] flex items-center justify-center p-3 sm:p-5"
+      role="presentation"
+    >
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/42 backdrop-blur-[1px] transition-opacity"
+        aria-label="Close panel"
+        onClick={onClose}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="admin-panel-title"
+        className={`relative flex max-h-[min(90vh,820px)] w-full flex-col overflow-hidden rounded-[22px] border border-black/8 bg-[#fafafa] shadow-[0px_28px_120px_rgba(0,0,0,0.2)] ${widthClass}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-black/8 bg-white px-5 py-4 sm:px-6">
+          <div className="min-w-0 pr-2">
+            <h2 id="admin-panel-title" className="text-lg font-bold tracking-tight text-[#1a1a1a]">
+              {title}
+            </h2>
+            {subtitle ? (
+              <p className="mt-1 text-sm leading-snug text-[#1a1a1a]/48">{subtitle}</p>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#1a1a1a]/45 transition-colors hover:bg-black/[0.06] hover:text-[#1a1a1a]"
+            aria-label="Close"
+            onClick={onClose}
+          >
+            <X className="h-5 w-5" aria-hidden />
+          </button>
+        </header>
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-[#fafafa] px-4 py-4 sm:px-6 sm:py-5">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}

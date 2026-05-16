@@ -1,8 +1,10 @@
+import { getWhatsAppDigits } from "@/lib/whatsapp-quote";
+
 export default function WhatsAppButton() {
   const message = encodeURIComponent(
     "Hello Catertech, I'd like to enquire about your services."
   );
-  const href = `https://wa.me/971400000000?text=${message}`;
+  const href = `https://wa.me/${getWhatsAppDigits()}?text=${message}`;
 
   return (
     <a

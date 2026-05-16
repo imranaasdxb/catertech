@@ -2,9 +2,6 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import type { ReactNode } from "react";
 import "./globals.css";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
-import WhatsAppButton from "@/components/layout/WhatsAppButton";
 import ClientProviders from "@/components/layout/ClientProviders";
 
 const inter = Inter({
@@ -36,12 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${playfair.variable} font-sans`}>
-        <ClientProviders>
-          <Header />
-          <main>{children}</main>
-          <Footer />
-          <WhatsAppButton />
-        </ClientProviders>
+        <ClientProviders>{children}</ClientProviders>
       </body>
     </html>
   );

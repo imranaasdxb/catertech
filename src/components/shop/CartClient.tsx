@@ -4,36 +4,76 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/lib/cart-context";
+import {
+  buildQuoteWhatsAppMessage,
+  buildWhatsAppUrl,
+} from "@/lib/whatsapp-quote";
 
-/* ─── Quote Request Modal ──────────────────────────────────────────── */
-type ModalState = "idle" | "open" | "sending" | "success";
+type QuoteModalVariant = "email" | "whatsapp";
+
+type QuoteFormFields = {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  message: string;
+};
+
+type ActiveQuoteModal = null | QuoteModalVariant;
 
 function QuoteModal({
+  variant,
   onClose,
   items,
   onSuccess,
 }: {
+  variant: QuoteModalVariant;
   onClose: () => void;
   items: ReturnType<typeof useCart>["items"];
   onSuccess: () => void;
 }) {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<QuoteFormFields>({
     name: "",
     email: "",
     phone: "",
+    address: "",
     message: "",
   });
-  const [errors, setErrors] = useState<Partial<typeof form>>({});
+  const [errors, setErrors] = useState<Partial<QuoteFormFields>>({});
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
   const validate = () => {
-    const e: Partial<typeof form> = {};
+    const e: Partial<QuoteFormFields> = {};
     if (!form.name.trim()) e.name = "Name is required";
     if (!form.email.trim()) e.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
       e.email = "Enter a valid email";
+    if (!form.phone.trim()) e.phone = "Phone is required";
+    if (!form.address.trim()) e.address = "Address is required";
     return e;
+  };
+
+  const postQuote = async () => {
+    const res = await fetch("/api/quote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customerName: form.name,
+        email: form.email,
+        phone: form.phone,
+        address: form.address,
+        message: form.message || undefined,
+        source: variant,
+        items: items.map((i) => ({
+          name: i.name,
+          category: i.category,
+          price: i.price,
+          qty: i.quantity,
+        })),
+      }),
+    });
+    return res;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,26 +85,47 @@ function QuoteModal({
     }
     setSending(true);
 
-    /* Simulate email send — replace with real API call when ready */
-    console.log("📧 Quote Request:", {
-      ...form,
-      items: items.map((i) => ({
-        name: i.name,
-        category: i.category,
-        price: i.price,
-        qty: i.quantity,
-      })),
-    });
+    try {
+      const res = await postQuote();
 
-    await new Promise((res) => setTimeout(res, 1800));
-    setSending(false);
-    setSent(true);
-    setTimeout(onSuccess, 2800);
+      if (!res.ok) {
+        setErrors({ email: "Could not submit. Please try again." });
+        setSending(false);
+        return;
+      }
+
+      if (variant === "whatsapp") {
+        const waText = buildQuoteWhatsAppMessage({
+          customerName: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          address: form.address.trim(),
+          message: form.message,
+          items: items.map((i) => ({
+            name: i.name,
+            category: i.category,
+            price: i.price,
+            qty: i.quantity,
+          })),
+        });
+        const url = buildWhatsAppUrl(waText);
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
+
+      setSending(false);
+      setSent(true);
+      setTimeout(onSuccess, variant === "whatsapp" ? 4000 : 2800);
+    } catch {
+      setErrors({ email: "Network error. Please try again." });
+      setSending(false);
+    }
   };
 
   const itemLines = items
     .map((i) => `${i.name} × ${i.quantity} (${i.price})`)
     .join("\n");
+
+  const isWhatsApp = variant === "whatsapp";
 
   return (
     <div
@@ -72,28 +133,41 @@ function QuoteModal({
       role="dialog"
       aria-modal
     >
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-navy/60 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Modal card */}
       <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
-        {/* Header */}
         <div className="flex items-start justify-between px-7 pt-7 pb-5 border-b border-border">
           <div>
             <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-sand mb-1">
               Quote Request
             </p>
-            <h2 className="font-serif text-2xl text-navy">Request a Quote</h2>
+            <h2 className="font-serif text-2xl text-navy">
+              {isWhatsApp ? "Quote via WhatsApp" : "Request a Quote"}
+            </h2>
+            {isWhatsApp ? (
+              <p className="text-[12px] text-muted mt-2 leading-snug max-w-md">
+                We save your enquiry and email our team first. Then WhatsApp
+                opens with your details — tap Send to message us. If
+                WhatsApp does not open, we still have your request.
+              </p>
+            ) : null}
           </div>
           <button
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-full text-muted hover:text-charcoal hover:bg-offwhite transition-colors"
             aria-label="Close"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -102,25 +176,50 @@ function QuoteModal({
 
         <div className="px-7 py-6 overflow-y-auto max-h-[70vh]">
           {sent ? (
-            /* ── Success State ── */
             <div className="text-center py-8">
               <div className="w-16 h-16 rounded-full bg-green-50 border border-green-200 flex items-center justify-center mx-auto mb-5">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5">
+                <svg
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#16a34a"
+                  strokeWidth="2.5"
+                >
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               </div>
-              <h3 className="font-serif text-2xl text-navy mb-2">Quote Request Sent!</h3>
+              <h3 className="font-serif text-2xl text-navy mb-2">
+                {isWhatsApp ? "Saved — check WhatsApp" : "Quote Request Sent!"}
+              </h3>
               <p className="text-[14px] text-muted leading-relaxed">
-                We&apos;ve received your enquiry for{" "}
-                <strong className="text-charcoal">{items.length} item{items.length !== 1 ? "s" : ""}</strong>.
-                <br />
-                Our team will reply to{" "}
-                <strong className="text-charcoal">{form.email}</strong> within 4 business hours.
+                {isWhatsApp ? (
+                  <>
+                    Your enquiry for{" "}
+                    <strong className="text-charcoal">
+                      {items.length} item{items.length !== 1 ? "s" : ""}
+                    </strong>{" "}
+                    is saved and our team has been notified by email. If
+                    WhatsApp opened, tap <strong>Send</strong> there to finish.
+                    We reply within 4 business hours.
+                  </>
+                ) : (
+                  <>
+                    We&apos;ve received your enquiry for{" "}
+                    <strong className="text-charcoal">
+                      {items.length} item{items.length !== 1 ? "s" : ""}
+                    </strong>
+                    .
+                    <br />
+                    Our team will reply to{" "}
+                    <strong className="text-charcoal">{form.email}</strong>{" "}
+                    within 4 business hours.
+                  </>
+                )}
               </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-              {/* Items summary */}
               <div className="bg-offwhite rounded-xl border border-border p-4">
                 <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-sand mb-3">
                   Items in This Quote ({items.length})
@@ -134,19 +233,21 @@ function QuoteModal({
                       <span className="text-charcoal font-medium truncate mr-3">
                         {item.name}
                         {item.quantity > 1 && (
-                          <span className="text-muted font-normal ml-1">× {item.quantity}</span>
+                          <span className="text-muted font-normal ml-1">
+                            × {item.quantity}
+                          </span>
                         )}
                       </span>
-                      <span className="text-muted shrink-0 text-xs">{item.price}</span>
+                      <span className="text-muted shrink-0 text-xs">
+                        {item.price}
+                      </span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Hidden items textarea (populated for reference) */}
               <input type="hidden" name="items" value={itemLines} readOnly />
 
-              {/* Name */}
               <div>
                 <label className="block text-[11px] font-bold tracking-[0.15em] uppercase text-charcoal mb-1.5">
                   Full Name <span className="text-sand">*</span>
@@ -160,15 +261,16 @@ function QuoteModal({
                   }}
                   placeholder="Your full name"
                   className={`w-full border rounded-xl px-4 py-3 text-sm text-charcoal placeholder:text-muted/50 outline-none transition-colors focus:border-sand ${
-                    errors.name ? "border-red-300 bg-red-50" : "border-border bg-white"
+                    errors.name
+                      ? "border-red-300 bg-red-50"
+                      : "border-border bg-white"
                   }`}
                 />
-                {errors.name && (
+                {errors.name ? (
                   <p className="text-[11px] text-red-500 mt-1">{errors.name}</p>
-                )}
+                ) : null}
               </div>
 
-              {/* Email */}
               <div>
                 <label className="block text-[11px] font-bold tracking-[0.15em] uppercase text-charcoal mb-1.5">
                   Email Address <span className="text-sand">*</span>
@@ -187,31 +289,63 @@ function QuoteModal({
                       : "border-border bg-white"
                   }`}
                 />
-                {errors.email && (
-                  <p className="text-[11px] text-red-500 mt-1">{errors.email}</p>
-                )}
+                {errors.email ? (
+                  <p className="text-[11px] text-red-500 mt-1">
+                    {errors.email}
+                  </p>
+                ) : null}
               </div>
 
-              {/* Phone */}
               <div>
                 <label className="block text-[11px] font-bold tracking-[0.15em] uppercase text-charcoal mb-1.5">
-                  Phone Number{" "}
-                  <span className="text-muted font-normal normal-case tracking-normal">
-                    (optional)
-                  </span>
+                  Phone Number <span className="text-sand">*</span>
                 </label>
                 <input
                   type="tel"
                   value={form.phone}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, phone: e.target.value }))
-                  }
+                  onChange={(e) => {
+                    setForm((f) => ({ ...f, phone: e.target.value }));
+                    setErrors((er) => ({ ...er, phone: undefined }));
+                  }}
                   placeholder="+971 5X XXX XXXX"
-                  className="w-full border border-border bg-white rounded-xl px-4 py-3 text-sm text-charcoal placeholder:text-muted/50 outline-none focus:border-sand transition-colors"
+                  className={`w-full border rounded-xl px-4 py-3 text-sm text-charcoal placeholder:text-muted/50 outline-none transition-colors focus:border-sand ${
+                    errors.phone
+                      ? "border-red-300 bg-red-50"
+                      : "border-border bg-white"
+                  }`}
                 />
+                {errors.phone ? (
+                  <p className="text-[11px] text-red-500 mt-1">
+                    {errors.phone}
+                  </p>
+                ) : null}
               </div>
 
-              {/* Message */}
+              <div>
+                <label className="block text-[11px] font-bold tracking-[0.15em] uppercase text-charcoal mb-1.5">
+                  Address <span className="text-sand">*</span>
+                </label>
+                <textarea
+                  rows={2}
+                  value={form.address}
+                  onChange={(e) => {
+                    setForm((f) => ({ ...f, address: e.target.value }));
+                    setErrors((er) => ({ ...er, address: undefined }));
+                  }}
+                  placeholder="Area, building, delivery address…"
+                  className={`w-full border rounded-xl px-4 py-3 text-sm text-charcoal placeholder:text-muted/50 outline-none focus:border-sand transition-colors resize-none ${
+                    errors.address
+                      ? "border-red-300 bg-red-50"
+                      : "border-border bg-white"
+                  }`}
+                />
+                {errors.address ? (
+                  <p className="text-[11px] text-red-500 mt-1">
+                    {errors.address}
+                  </p>
+                ) : null}
+              </div>
+
               <div>
                 <label className="block text-[11px] font-bold tracking-[0.15em] uppercase text-charcoal mb-1.5">
                   Additional Requirements
@@ -227,23 +361,56 @@ function QuoteModal({
                 />
               </div>
 
-              {/* Submit */}
               <button
                 type="submit"
                 disabled={sending}
-                className="w-full inline-flex items-center justify-center gap-2 bg-navy hover:bg-charcoal disabled:opacity-60 text-white text-sm font-semibold tracking-wide rounded-xl py-4 transition-colors"
+                className={`w-full inline-flex items-center justify-center gap-2 disabled:opacity-60 text-white text-sm font-semibold tracking-wide rounded-xl py-4 transition-colors ${
+                  isWhatsApp
+                    ? "bg-[#25D366] hover:bg-[#1ebe5d]"
+                    : "bg-navy hover:bg-charcoal"
+                }`}
               >
                 {sending ? (
                   <>
-                    <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeOpacity="0.25" />
+                    <svg
+                      className="animate-spin"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path
+                        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        strokeOpacity="0.25"
+                      />
                       <path d="M21 12a9 9 0 00-9-9" />
                     </svg>
-                    Sending your quote request…
+                    {isWhatsApp ? "Saving and opening WhatsApp…" : "Sending…"}
+                  </>
+                ) : isWhatsApp ? (
+                  <>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                    </svg>
+                    Save and open WhatsApp
                   </>
                 ) : (
                   <>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <line x1="22" y1="2" x2="11" y2="13" />
                       <polygon points="22 2 15 22 11 13 2 9 22 2" />
                     </svg>
@@ -263,19 +430,18 @@ function QuoteModal({
   );
 }
 
-/* ─── Cart Client ──────────────────────────────────────────────────── */
 export default function CartClient() {
   const { items, removeItem, updateQty, clearCart } = useCart();
-  const [modalState, setModalState] = useState<ModalState>("idle");
+  const [activeQuoteModal, setActiveQuoteModal] =
+    useState<ActiveQuoteModal>(null);
 
   const handleQuoteSuccess = () => {
     clearCart();
-    setModalState("idle");
+    setActiveQuoteModal(null);
   };
 
   return (
     <div className="min-h-screen bg-offwhite font-sans">
-      {/* Hero */}
       <section className="bg-navy pt-36 pb-14">
         <div className="max-w-7xl mx-auto px-5 md:px-8">
           <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-sand block mb-3">
@@ -286,7 +452,8 @@ export default function CartClient() {
           </h1>
           {items.length > 0 && (
             <p className="text-white/50 text-sm mt-2">
-              {items.length} item{items.length !== 1 ? "s" : ""} — review and request a quote
+              {items.length} item{items.length !== 1 ? "s" : ""} — review and
+              request a quote
             </p>
           )}
         </div>
@@ -294,7 +461,6 @@ export default function CartClient() {
 
       <section className="max-w-7xl mx-auto px-5 md:px-8 py-14">
         {items.length === 0 ? (
-          /* ── Empty State ── */
           <div className="flex flex-col items-center justify-center py-24 bg-white rounded-2xl border border-border">
             <svg
               className="text-border mb-6"
@@ -313,7 +479,8 @@ export default function CartClient() {
               Your basket is empty
             </h2>
             <p className="text-muted text-sm mb-8 text-center max-w-xs leading-relaxed">
-              Add products from our shop or services from our services page to build your quote.
+              Add products from our shop or services from our services page to
+              build your quote.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <Link
@@ -331,13 +498,12 @@ export default function CartClient() {
             </div>
           </div>
         ) : (
-          /* ── Items Grid ── */
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 items-start">
-            {/* Items list */}
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="font-semibold text-charcoal text-sm tracking-wide">
-                  {items.length} Item{items.length !== 1 ? "s" : ""} in Your Quote
+                  {items.length} Item{items.length !== 1 ? "s" : ""} in Your
+                  Quote
                 </h2>
                 <button
                   onClick={clearCart}
@@ -352,7 +518,6 @@ export default function CartClient() {
                   key={item.id}
                   className="bg-white rounded-2xl border border-border p-4 sm:p-5 flex gap-4"
                 >
-                  {/* Image */}
                   <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden shrink-0 bg-cream">
                     {item.image ? (
                       <Image
@@ -364,7 +529,14 @@ export default function CartClient() {
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C4A265" strokeWidth="1">
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#C4A265"
+                          strokeWidth="1"
+                        >
                           <rect x="3" y="3" width="18" height="18" rx="2" />
                           <circle cx="8.5" cy="8.5" r="1.5" />
                           <polyline points="21 15 16 10 5 21" />
@@ -373,7 +545,6 @@ export default function CartClient() {
                     )}
                   </div>
 
-                  {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
@@ -392,21 +563,34 @@ export default function CartClient() {
                         className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-muted hover:text-red-500 hover:bg-red-50 transition-colors"
                         aria-label={`Remove ${item.name}`}
                       >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <svg
+                          width="13"
+                          height="13"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                        >
                           <line x1="18" y1="6" x2="6" y2="18" />
                           <line x1="6" y1="6" x2="18" y2="18" />
                         </svg>
                       </button>
                     </div>
 
-                    {/* Qty stepper */}
                     <div className="flex items-center gap-0 mt-3 border border-border rounded-lg overflow-hidden w-fit bg-offwhite">
                       <button
                         onClick={() => updateQty(item.id, item.quantity - 1)}
                         className="w-8 h-8 flex items-center justify-center text-muted hover:text-charcoal hover:bg-cream transition-colors"
                         aria-label="Decrease"
                       >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                        >
                           <path d="M5 12h14" />
                         </svg>
                       </button>
@@ -418,7 +602,14 @@ export default function CartClient() {
                         className="w-8 h-8 flex items-center justify-center text-muted hover:text-charcoal hover:bg-cream transition-colors"
                         aria-label="Increase"
                       >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                        >
                           <path d="M12 5v14M5 12h14" />
                         </svg>
                       </button>
@@ -427,13 +618,19 @@ export default function CartClient() {
                 </div>
               ))}
 
-              {/* Continue shopping */}
               <div className="flex flex-wrap gap-3 pt-2">
                 <Link
                   href="/shop"
                   className="inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-sand transition-colors"
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <path d="M15 18l-6-6 6-6" />
                   </svg>
                   Continue Shopping
@@ -442,7 +639,14 @@ export default function CartClient() {
                   href="/services"
                   className="inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-sand transition-colors"
                 >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <path d="M15 18l-6-6 6-6" />
                   </svg>
                   Browse Services
@@ -450,18 +654,24 @@ export default function CartClient() {
               </div>
             </div>
 
-            {/* Summary Panel */}
             <div className="lg:sticky lg:top-28">
               <div className="bg-white rounded-2xl border border-border p-6 shadow-[0_4px_24px_rgba(26,31,46,0.06)]">
-                <h3 className="font-serif text-xl text-navy mb-5">Quote Summary</h3>
+                <h3 className="font-serif text-xl text-navy mb-5">
+                  Quote Summary
+                </h3>
 
                 <div className="space-y-3 mb-5">
                   {items.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between text-sm">
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between text-sm"
+                    >
                       <span className="text-muted truncate mr-3">
                         {item.name}
                         {item.quantity > 1 && (
-                          <span className="ml-1 text-xs">× {item.quantity}</span>
+                          <span className="ml-1 text-xs">
+                            × {item.quantity}
+                          </span>
                         )}
                       </span>
                       <span className="text-charcoal font-medium shrink-0 text-xs">
@@ -481,19 +691,44 @@ export default function CartClient() {
                     </span>
                   </div>
                   <p className="text-[11px] text-muted mt-1.5 leading-snug">
-                    Prices confirmed in your personalised quote — typically sent within 4 hours.
+                    Prices confirmed in your personalised quote — typically sent
+                    within 4 hours.
                   </p>
                 </div>
 
                 <button
-                  onClick={() => setModalState("open")}
+                  type="button"
+                  onClick={() => setActiveQuoteModal("email")}
                   className="w-full inline-flex items-center justify-center gap-2 bg-navy hover:bg-charcoal text-white text-sm font-semibold tracking-wide rounded-xl py-4 transition-colors mb-3"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <line x1="22" y1="2" x2="11" y2="13" />
                     <polygon points="22 2 15 22 11 13 2 9 22 2" />
                   </svg>
                   Request a Quote
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveQuoteModal("whatsapp")}
+                  className="w-full inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebe5d] text-white text-sm font-semibold tracking-wide rounded-xl py-4 transition-colors mb-3"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                  </svg>
+                  Ask for quotation on WhatsApp
                 </button>
 
                 <Link
@@ -503,15 +738,24 @@ export default function CartClient() {
                   Trade / Bulk Enquiry
                 </Link>
 
-                {/* Trust */}
                 <div className="mt-5 pt-5 border-t border-border space-y-2.5">
                   {[
                     "Response within 4 business hours",
                     "No obligation — quotes are free",
                     "UAE delivery available",
                   ].map((t) => (
-                    <div key={t} className="flex items-center gap-2 text-[11px] text-muted">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C4A265" strokeWidth="2.5">
+                    <div
+                      key={t}
+                      className="flex items-center gap-2 text-[11px] text-muted"
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#C4A265"
+                        strokeWidth="2.5"
+                      >
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
                       {t}
@@ -524,14 +768,14 @@ export default function CartClient() {
         )}
       </section>
 
-      {/* Quote Modal */}
-      {modalState === "open" && (
+      {activeQuoteModal ? (
         <QuoteModal
+          variant={activeQuoteModal}
           items={items}
-          onClose={() => setModalState("idle")}
+          onClose={() => setActiveQuoteModal(null)}
           onSuccess={handleQuoteSuccess}
         />
-      )}
+      ) : null}
     </div>
   );
 }

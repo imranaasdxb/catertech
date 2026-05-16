@@ -180,7 +180,13 @@ export default function Footer() {
           <p className="text-white/30 text-xs">
             © {new Date().getFullYear()} Catertech. All rights reserved.
           </p>
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-5 flex-wrap justify-center sm:justify-end">
+            <Link
+              href="/admin/login"
+              className="text-white/25 hover:text-sand/80 text-xs transition-colors"
+            >
+              Staff login
+            </Link>
             <Link href="/privacy-policy" className="text-white/30 hover:text-white/60 text-xs transition-colors">
               Privacy Policy
             </Link>

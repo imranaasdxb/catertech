@@ -80,7 +80,23 @@ export default function Header() {
           </nav>
 
           {/* Right Actions */}
-          <div className="hidden lg:flex items-center gap-4">
+          <div className="hidden lg:flex items-center gap-3">
+            <Link
+              href="/auth?tab=login"
+              className={`text-xs font-semibold tracking-widest uppercase px-4 py-2.5 border transition-colors duration-200 shrink-0 ${
+                barSolid
+                  ? "border-border text-charcoal hover:border-sand hover:text-sand"
+                  : "border-white/35 text-white/90 hover:border-sand hover:text-sand"
+              }`}
+            >
+              Log in
+            </Link>
+            <Link
+              href="/auth?tab=signup"
+              className="bg-sand text-white text-xs font-semibold tracking-widest uppercase px-4 py-2.5 hover:bg-sand-dark transition-colors duration-200 shrink-0"
+            >
+              Sign up
+            </Link>
             <button
               className={`text-xs font-medium tracking-widest uppercase transition-colors duration-200 hover:text-sand ${
                 barSolid ? "text-muted" : "text-white/70"
@@ -208,11 +224,27 @@ export default function Header() {
             ))}
           </nav>
 
-          <div className="mt-auto flex flex-col gap-4">
+          <div className="mt-auto flex flex-col gap-3">
+            <div className="flex gap-3">
+              <Link
+                href="/auth?tab=login"
+                onClick={() => setMenuOpen(false)}
+                className="flex-1 border border-white/25 text-white text-center text-sm font-semibold tracking-widest uppercase py-4 hover:border-sand hover:text-sand transition-colors"
+              >
+                Log in
+              </Link>
+              <Link
+                href="/auth?tab=signup"
+                onClick={() => setMenuOpen(false)}
+                className="flex-1 bg-sand text-white text-center text-sm font-semibold tracking-widest uppercase py-4 hover:bg-sand-dark transition-colors"
+              >
+                Sign up
+              </Link>
+            </div>
             <Link
               href="/trade/rfq"
               onClick={() => setMenuOpen(false)}
-              className="bg-sand text-white text-sm font-semibold tracking-widest uppercase px-6 py-4 text-center hover:bg-sand-dark transition-colors duration-200"
+              className="bg-white/10 border border-white/20 text-white text-sm font-semibold tracking-widest uppercase px-6 py-4 text-center hover:bg-white/15 transition-colors duration-200"
             >
               Get a Quote
             </Link>

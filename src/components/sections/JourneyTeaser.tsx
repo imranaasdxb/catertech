@@ -83,10 +83,14 @@ export default function JourneyTeaser() {
       const n = MILESTONES.length;
 
       // ── Initial states ────────────────────────────────────
-      // Only panel 0 is visible; rest are hidden below
+      // Panel 0 is visible; further milestones sit to the right (off-stage)
       panelRefs.current.forEach((p, i) => {
         if (!p) return;
-        gsap.set(p, { opacity: i === 0 ? 1 : 0, y: i === 0 ? 0 : 36 });
+        gsap.set(p, {
+          opacity: i === 0 ? 1 : 0,
+          xPercent: i === 0 ? 0 : i > 0 ? 100 : 0,
+          x: 0,
+        });
       });
       imgElRefs.current.forEach((img, i) => {
         if (!img) return;
@@ -115,16 +119,31 @@ export default function JourneyTeaser() {
 
       // ── Chapter transition ─────────────────────────────────
       function showChapter(index: number) {
-        // Transition right-side panels
+        // Right column: horizontal cross-fade — same vertical slot, slides on X axis
         panelRefs.current.forEach((p, pi) => {
           if (!p) return;
           if (pi === index) {
-            gsap.to(p, { opacity: 1, y: 0, duration: 0.75, ease: "power3.out" });
+            gsap.to(p, {
+              opacity: 1,
+              xPercent: 0,
+              x: 0,
+              duration: 0.85,
+              ease: "power3.out",
+            });
+          } else if (pi < index) {
+            gsap.to(p, {
+              opacity: 0,
+              xPercent: -42,
+              x: 0,
+              duration: 0.5,
+              ease: "power2.in",
+            });
           } else {
             gsap.to(p, {
               opacity: 0,
-              y: pi < index ? -32 : 36,
-              duration: 0.45,
+              xPercent: 42,
+              x: 0,
+              duration: 0.5,
               ease: "power2.in",
             });
           }
@@ -307,15 +326,15 @@ export default function JourneyTeaser() {
               ))}
             </div>
 
-            {/* Scroll cue — top right of right panel */}
-            <div className="absolute top-6 right-6 flex flex-col items-center gap-1.5 opacity-30">
-              <span className="text-[8px] tracking-[0.25em] uppercase text-charcoal font-medium">Scroll</span>
-              <div className="w-px h-6 bg-charcoal/40 relative overflow-hidden">
+            {/* Scroll cue — suggests horizontal milestone advance */}
+            <div className="absolute top-6 right-6 flex items-center gap-2 opacity-30">
+              <span className="text-[8px] tracking-[0.25em] uppercase text-charcoal font-medium whitespace-nowrap">Scroll</span>
+              <div className="h-px w-7 bg-charcoal/40 relative overflow-hidden">
                 <div
-                  className="absolute top-0 left-0 w-full bg-sand"
+                  className="absolute top-0 left-0 h-full bg-sand"
                   style={{
-                    height: "40%",
-                    animation: "scrollDrop 2s ease-in-out infinite",
+                    width: "40%",
+                    animation: "scrollSweep 2s ease-in-out infinite",
                   }}
                 />
               </div>
@@ -327,11 +346,11 @@ export default function JourneyTeaser() {
       </div>
 
       <style>{`
-        @keyframes scrollDrop {
-          0%   { transform: translateY(-100%); opacity: 0; }
+        @keyframes scrollSweep {
+          0%   { transform: translateX(-100%); opacity: 0; }
           25%  { opacity: 1; }
           75%  { opacity: 1; }
-          100% { transform: translateY(300%); opacity: 0; }
+          100% { transform: translateX(300%); opacity: 0; }
         }
       `}</style>
     </section>
