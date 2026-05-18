@@ -17,7 +17,6 @@ export function buildWhatsAppUrl(prefilledMessage: string): string {
 export type QuoteLineForMessage = {
   name: string;
   category: string;
-  price: string;
   qty: number;
 };
 
@@ -40,8 +39,7 @@ export function buildQuoteWhatsAppMessage(opts: {
     "",
     "Items requested:",
     ...opts.items.map(
-      (i, idx) =>
-        `${idx + 1}. ${i.name} × ${i.qty} — ${i.price} (${i.category})`
+      (i, idx) => `${idx + 1}. ${i.name} × ${i.qty} (${i.category})`
     ),
   ];
   if (opts.message?.trim()) {

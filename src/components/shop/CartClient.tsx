@@ -68,7 +68,6 @@ function QuoteModal({
         items: items.map((i) => ({
           name: i.name,
           category: i.category,
-          price: i.price,
           qty: i.quantity,
         })),
       }),
@@ -104,7 +103,6 @@ function QuoteModal({
           items: items.map((i) => ({
             name: i.name,
             category: i.category,
-            price: i.price,
             qty: i.quantity,
           })),
         });
@@ -121,9 +119,7 @@ function QuoteModal({
     }
   };
 
-  const itemLines = items
-    .map((i) => `${i.name} × ${i.quantity} (${i.price})`)
-    .join("\n");
+  const itemLines = items.map((i) => `${i.name} × ${i.quantity}`).join("\n");
 
   const isWhatsApp = variant === "whatsapp";
 
@@ -226,20 +222,14 @@ function QuoteModal({
                 </p>
                 <div className="space-y-2 max-h-32 overflow-y-auto">
                   {items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between text-sm"
-                    >
-                      <span className="text-charcoal font-medium truncate mr-3">
+                    <div key={item.id} className="text-sm">
+                      <span className="text-charcoal font-medium">
                         {item.name}
                         {item.quantity > 1 && (
                           <span className="text-muted font-normal ml-1">
                             × {item.quantity}
                           </span>
                         )}
-                      </span>
-                      <span className="text-muted shrink-0 text-xs">
-                        {item.price}
                       </span>
                     </div>
                   ))}
@@ -554,9 +544,6 @@ export default function CartClient() {
                         <h3 className="font-medium text-charcoal text-sm leading-snug truncate">
                           {item.name}
                         </h3>
-                        <p className="text-sm font-bold text-navy mt-1 tabular-nums">
-                          {item.price}
-                        </p>
                       </div>
                       <button
                         onClick={() => removeItem(item.id)}
@@ -662,11 +649,8 @@ export default function CartClient() {
 
                 <div className="space-y-3 mb-5">
                   {items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between text-sm"
-                    >
-                      <span className="text-muted truncate mr-3">
+                    <div key={item.id} className="text-sm">
+                      <span className="text-muted">
                         {item.name}
                         {item.quantity > 1 && (
                           <span className="ml-1 text-xs">
@@ -674,25 +658,14 @@ export default function CartClient() {
                           </span>
                         )}
                       </span>
-                      <span className="text-charcoal font-medium shrink-0 text-xs">
-                        {item.price}
-                      </span>
                     </div>
                   ))}
                 </div>
 
                 <div className="border-t border-border pt-4 mb-6">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-charcoal">
-                      Total
-                    </span>
-                    <span className="text-sm text-muted italic">
-                      Price on quote
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-muted mt-1.5 leading-snug">
-                    Prices confirmed in your personalised quote — typically sent
-                    within 4 hours.
+                  <p className="text-[13px] text-charcoal leading-snug">
+                    Line-item pricing is not shown here. Your formal quotation
+                    will include all rates — typically within 4 business hours.
                   </p>
                 </div>
 

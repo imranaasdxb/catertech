@@ -52,6 +52,48 @@ h1, h2, h3 {
   animation-play-state: paused;
 }
 
+/* PDP product rails — single horizontal row + seamless auto-scroll */
+.shop-pdp-marquee-outer {
+  overflow: hidden;
+  width: 100%;
+}
+
+.shop-pdp-marquee {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  width: max-content;
+  gap: 0.625rem;
+  animation: marquee var(--shop-pdp-marquee-duration, 42s) linear infinite;
+  will-change: transform;
+}
+
+@media (min-width: 640px) {
+  .shop-pdp-marquee {
+    gap: 0.75rem;
+  }
+}
+
+.shop-pdp-marquee:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shop-pdp-marquee-outer {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .shop-pdp-marquee {
+    animation: none;
+    flex-wrap: nowrap;
+    width: max-content;
+  }
+}
+
 /* Scroll fade-in utility */
 .fade-up {
   opacity: 0;

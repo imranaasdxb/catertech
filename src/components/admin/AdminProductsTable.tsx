@@ -1,7 +1,7 @@
 "use client";
 
 import ProductEditClient from "@/app/admin/products/[id]/ProductEditClient";
-import { ADMIN_PURPLE, admin, adminCardShadow } from "@/components/admin/adminTheme";
+import { ADMIN_PURPLE, admin } from "@/components/admin/adminTheme";
 import { AdminPanelModal } from "@/components/admin/AdminPanelModal";
 import AdminProductTaxonomyModal from "@/components/admin/AdminProductTaxonomyModal";
 import { AdminTypedDeleteDialog } from "@/components/admin/AdminTypedDeleteDialog";
@@ -17,7 +17,7 @@ export type AdminProductListRow = {
   title: string;
   slug: string;
   category: string | null;
-  /** Gallery image count — compact “bulk” hint in the list. */
+  /** Gallery image count — compact "bulk" hint in the list. */
   galleryCount: number;
   published: boolean;
   thumbUrl: string | null;
@@ -28,18 +28,14 @@ type ProductRow = InferSelectModel<typeof products>;
 function Thumb({ url }: { url: string | null }) {
   if (!url) {
     return (
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#ede9f7] to-[#e4ddf3] text-[11px] font-semibold text-[#5B2D9B]/45">
+      <div className="flex h-10 w-10 items-center justify-center rounded-md bg-neutral-100 text-xs font-medium text-neutral-400">
         —
-      </span>
+      </div>
     );
   }
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={url}
-      alt=""
-      className="h-11 w-11 shrink-0 rounded-xl border border-black/8 object-cover shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
-    />
+    <img src={url} alt="" className="h-10 w-10 rounded-md object-cover" />
   );
 }
 
@@ -132,20 +128,20 @@ export default function AdminProductsTable({
     <div className="mx-auto w-full max-w-6xl lg:max-w-7xl">
       <AdminProductTaxonomyModal open={taxonomyOpen} onClose={() => setTaxonomyOpen(false)} />
 
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+      <div className="mb-5 flex items-center justify-between gap-3">
         <button
           type="button"
           onClick={() => setTaxonomyOpen(true)}
-          className={`${admin.secondaryBtn} shrink-0 justify-center border border-black/12 bg-white py-3 text-sm`}
+          className={`${admin.secondaryBtn} shrink-0 border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium`}
         >
           Category master
         </button>
         <Link
           href="/admin/products/new"
-          className={`${admin.primaryBtn} shrink-0 justify-center py-3 text-sm`}
+          className={`${admin.primaryBtn} shrink-0 px-4 py-2.5 text-sm font-medium`}
           style={{ backgroundColor: ADMIN_PURPLE }}
         >
-          New product
+          + New product
         </Link>
       </div>
 
@@ -178,58 +174,92 @@ export default function AdminProductsTable({
       <AdminPanelModal
         open={Boolean(viewId)}
         title={viewProduct?.title ?? viewRowMeta?.title ?? "View product"}
-        subtitle="Read-only catalogue preview"
-        widthClass="max-w-[min(100%-1rem,44rem)]"
+        subtitle="Product preview"
+        widthClass="max-w-[min(100%-1rem,48rem)]"
         onClose={() => setViewId(null)}
       >
         {viewLoading ? (
-          <div className="flex flex-col items-center gap-3 py-20 text-[#1a1a1a]/50">
-            <Loader2 className="h-8 w-8 animate-spin text-[#5B2D9B]" aria-hidden />
-            <p className="text-sm">Loading…</p>
+          <div className="flex flex-col items-center gap-3 py-16">
+            <Loader2 className="h-7 w-7 animate-spin text-gray-400" aria-hidden />
+            <p className="text-sm text-gray-400">Loading…</p>
           </div>
         ) : viewLoadErr ? (
-          <p className={`${admin.error} py-8 text-center`}>{viewLoadErr}</p>
+          <div className="rounded-lg bg-red-50 px-4 py-8 text-center text-sm text-red-600">
+            {viewLoadErr}
+          </div>
         ) : viewProduct ? (
-          <div className="space-y-5 rounded-xl border border-black/8 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap gap-2 text-xs">
-              {viewProduct.category ? (
-                <span className={`rounded-full px-3 py-1 ${admin.secondaryBtn} border-black/10`}>
+          <div className="space-y-6">
+            {/* Meta Info */}
+            <div className="flex flex-wrap items-center gap-2">
+              {viewProduct.category && (
+                <span className="inline-flex items-center rounded-md bg-purple-100 px-2.5 py-1 text-xs font-medium text-purple-700">
                   {viewProduct.category}
                 </span>
-              ) : null}
-              <span className={`rounded-full px-3 py-1 font-mono ${admin.secondaryBtn} border-black/10`}>
+              )}
+              <span className="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1 text-xs font-mono text-gray-500">
                 /{viewProduct.slug}
               </span>
             </div>
-            <div className="flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-wide">
-              <span className={`rounded-full px-2 py-0.5 ${viewProduct.published ? "bg-emerald-50 text-emerald-800" : "bg-neutral-100 text-neutral-600"}`}>
+
+            {/* Status Badges */}
+            <div className="flex flex-wrap gap-2">
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${viewProduct.published ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"}`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${viewProduct.published ? "bg-emerald-500" : "bg-gray-400"}`} />
                 {viewProduct.published ? "Published" : "Draft"}
               </span>
-              {viewProduct.isFeatured ? (
-                <span className="rounded-full bg-amber-50 px-2 py-0.5 text-amber-900">Featured</span>
-              ) : null}
-              <span className={`rounded-full px-2 py-0.5 ${viewProduct.isAvailable ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-700"}`}>
+              {viewProduct.isFeatured && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                  Featured
+                </span>
+              )}
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${viewProduct.isAvailable ? "bg-blue-100 text-blue-700" : "bg-red-100 text-red-700"}`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${viewProduct.isAvailable ? "bg-blue-500" : "bg-red-500"}`} />
                 {viewProduct.isAvailable ? "Available" : "Unavailable"}
               </span>
             </div>
+
+            {/* Gallery */}
             {viewProduct.images?.length ? (
-              <div className="flex flex-wrap gap-2">
-                {viewProduct.images.slice(0, 6).map((src) => (
-                  <div key={src} className="h-20 w-20 overflow-hidden rounded-lg border border-black/6 bg-neutral-100">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={src} alt="" className="h-full w-full object-cover" />
-                  </div>
-                ))}
+              <div>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">Gallery ({viewProduct.images.length})</p>
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                  {viewProduct.images.slice(0, 8).map((src, idx) => (
+                    <div
+                      key={src}
+                      className="group relative aspect-square overflow-hidden rounded-lg bg-gray-100"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={src}
+                        alt=""
+                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      />
+                      {idx === 7 && viewProduct.images!.length > 8 && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-sm font-medium text-white">
+                          +{viewProduct.images!.length - 8}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : (
-              <p className={`text-xs ${admin.muted}`}>No gallery images</p>
+              <div className="rounded-lg border border-dashed border-gray-200 py-8 text-center">
+                <p className="text-xs text-gray-400">No gallery images</p>
+              </div>
             )}
-            <div className={`rounded-lg border border-black/6 bg-[#faf8ff]/50 p-4 text-sm leading-relaxed [&_img]:max-w-full [&_video]:max-w-full`}>
-              {viewProduct.description ? (
-                <div dangerouslySetInnerHTML={{ __html: viewProduct.description }} />
-              ) : (
-                <p className={admin.muted}>No description.</p>
-              )}
+
+            {/* Description */}
+            <div>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">Description</p>
+              <div className="rounded-lg border border-gray-100 bg-gray-50/50 p-4 text-sm leading-relaxed text-gray-700 [&_img]:max-w-full [&_video]:max-w-full">
+                {viewProduct.description ? (
+                  <div dangerouslySetInnerHTML={{ __html: viewProduct.description }} />
+                ) : (
+                  <p className="text-gray-400">No description provided.</p>
+                )}
+              </div>
             </div>
           </div>
         ) : null}
@@ -253,117 +283,95 @@ export default function AdminProductsTable({
         }}
       />
 
-      <div className={admin.tableShell} style={adminCardShadow}>
+      {/* Modern Card Table Design */}
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1024px] border-collapse text-left text-sm">
+          <table className="w-full min-w-[900px] border-collapse">
             <thead>
-              <tr className="border-b border-black/[0.07] bg-gradient-to-b from-[#faf9fc] via-[#f7f6fa] to-[#f3f1f7]">
-                <th
-                  scope="col"
-                  className="w-14 px-4 py-3.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#1a1a1a]/40"
-                >
-                  <span className="sr-only">Thumb</span>
-                  <span aria-hidden className="text-[#1a1a1a]/30">
-                    •
-                  </span>
+              <tr className="border-b border-gray-100 bg-gray-50/80">
+                <th className="px-4 py-3 text-left">
+                  <span className="sr-only">Image</span>
                 </th>
-                <th
-                  scope="col"
-                  className="min-w-[200px] max-w-[26%] px-4 py-3.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#1a1a1a]/40"
-                >
-                  Title
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Product
                 </th>
-                <th
-                  scope="col"
-                  className="w-[11rem] min-w-[8rem] px-4 py-3.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#1a1a1a]/40"
-                >
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                   Category
                 </th>
-                <th
-                  scope="col"
-                  className="w-[4.75rem] px-2 py-3.5 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-[#1a1a1a]/40"
-                  title="Number of gallery images"
-                >
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
                   Photos
                 </th>
-                <th
-                  scope="col"
-                  className="w-[6.5rem] px-2 py-3.5 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-[#1a1a1a]/40"
-                >
+                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
                   Status
                 </th>
-                <th
-                  scope="col"
-                  className="w-[7.75rem] px-3 py-3.5 text-right text-[10px] font-bold uppercase tracking-[0.12em] text-[#1a1a1a]/40"
-                >
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white">
+            <tbody className="divide-y divide-gray-100">
               {rows.map((r) => (
                 <tr
                   key={r.id}
-                  className="border-b border-black/[0.05] transition-colors last:border-b-0 hover:bg-[#5B2D9B]/[0.035]"
+                  className="transition-colors hover:bg-gray-50/60"
                 >
-                  <td className="px-4 py-3 align-middle">
+                  <td className="px-4 py-3">
                     <Thumb url={r.thumbUrl} />
                   </td>
-                  <td className="max-w-0 px-4 py-3 align-middle">
-                    <p className="truncate font-semibold leading-snug text-[#1a1a1a]" title={r.title}>
-                      {r.title}
-                    </p>
+                  <td className="px-4 py-3">
+                    <p className="font-medium text-gray-900 truncate max-w-[200px]">{r.title}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">/{r.slug}</p>
                   </td>
-                  <td className="max-w-0 px-4 py-3 align-middle">
-                    <p className="truncate text-[13px] leading-snug text-[#1a1a1a]/55" title={r.category ?? undefined}>
+                  <td className="px-4 py-3">
+                    <span className="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">
                       {r.category ?? "—"}
-                    </p>
+                    </span>
                   </td>
-                  <td className="px-2 py-3 align-middle text-center tabular-nums">
-                    <span className="inline-flex min-h-[2rem] min-w-[2rem] items-center justify-center rounded-lg bg-[#f3f1f8] px-2 text-[13px] font-semibold text-[#5B2D9B] ring-1 ring-[#5B2D9B]/10">
+                  <td className="px-4 py-3 text-center">
+                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-purple-50 text-xs font-semibold text-purple-700">
                       {r.galleryCount}
                     </span>
                   </td>
-                  <td className="px-2 py-3 align-middle text-center">
+                  <td className="px-4 py-3 text-center">
                     {r.published ? (
-                      <span className="inline-flex min-w-[4.25rem] justify-center rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-800 ring-1 ring-emerald-200/60">
+                      <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
                         Live
                       </span>
                     ) : (
-                      <span className="inline-flex min-w-[4.25rem] justify-center rounded-full bg-neutral-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-neutral-600 ring-1 ring-black/6">
+                      <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500">
                         Draft
                       </span>
                     )}
                   </td>
-                  <td className="px-3 py-3 align-middle">
-                    <div className="flex items-center justify-end gap-0.5">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-1">
                       <button
                         type="button"
-                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#5B2D9B] transition-colors hover:bg-[#5B2D9B]/12"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-purple-100 hover:text-purple-700"
                         title="Edit"
                         aria-label={`Edit ${r.title}`}
                         onClick={() => setEditId(r.id)}
                       >
-                        <Pencil className="h-4 w-4" aria-hidden />
+                        <Pencil className="h-3.5 w-3.5" aria-hidden />
                       </button>
                       <button
                         type="button"
-                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#1a1a1a]/60 transition-colors hover:bg-black/[0.06]"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100"
                         title="View"
                         aria-label={`View ${r.title}`}
                         onClick={() => setViewId(r.id)}
                       >
-                        <Eye className="h-4 w-4" aria-hidden />
+                        <Eye className="h-3.5 w-3.5" aria-hidden />
                       </button>
                       <button
                         type="button"
                         disabled={deletingId === r.id}
-                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-red-600 transition-colors hover:bg-red-50 disabled:opacity-45"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
                         title="Delete"
                         aria-label={`Delete ${r.title}`}
                         onClick={() => setDeleteTarget(r)}
                       >
-                        <Trash2 className="h-4 w-4" aria-hidden />
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden />
                       </button>
                     </div>
                   </td>
@@ -371,7 +379,7 @@ export default function AdminProductsTable({
               ))}
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className={admin.emptyCell}>
+                  <td colSpan={6} className="px-4 py-16 text-center text-sm text-gray-400">
                     {emptyMessage}
                   </td>
                 </tr>

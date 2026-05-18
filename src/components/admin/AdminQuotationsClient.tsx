@@ -31,7 +31,7 @@ function rowMatchesSearch(row: QuotationAdminRow, q: string) {
     row.company ?? "",
     row.message ?? "",
     row.status,
-    ...row.items.map((i) => `${i.name} ${i.category} ${i.price}`),
+    ...row.items.map((i) => `${i.name} ${i.category}`),
   ]
     .join(" ")
     .toLowerCase();
@@ -337,9 +337,6 @@ export default function AdminQuotationsClient({
                             <th className="px-3 py-2.5 font-bold text-right whitespace-nowrap">
                               Qty
                             </th>
-                            <th className="px-3 py-2.5 font-bold text-right whitespace-nowrap">
-                              Price
-                            </th>
                           </tr>
                         </thead>
                         <tbody>
@@ -359,9 +356,6 @@ export default function AdminQuotationsClient({
                               </td>
                               <td className="px-3 py-3 text-right tabular-nums font-semibold text-charcoal">
                                 {item.qty}
-                              </td>
-                              <td className="px-3 py-3 text-right text-charcoal whitespace-nowrap">
-                                {item.price}
                               </td>
                             </tr>
                           ))}

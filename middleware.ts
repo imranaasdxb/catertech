@@ -7,6 +7,17 @@ import {
 } from "@/lib/user-auth-session";
 import { isStaffRole, isSuperadminRole } from "@/lib/admin-roles";
 
+/** While signed in as staff, only these URL prefixes may load (cookie is site-wide `path: /`). */
+function isStaffBrowseAllowed(pathname: string): boolean {
+  if (pathname.startsWith("/admin")) return true;
+  if (pathname.startsWith("/api")) return true;
+  if (pathname.startsWith("/_next")) return true;
+  if (pathname === "/favicon.ico") return true;
+  return /\.(?:ico|png|jpg|jpeg|gif|svg|webp|woff2?|ttf|eot|pdf|txt)$/i.test(
+    pathname
+  );
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const secret = getAuthSigningSecret();
@@ -27,6 +38,13 @@ export async function middleware(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     return NextResponse.next();
+  }
+
+  if (staffAuthed && !isStaffBrowseAllowed(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/admin";
+    url.search = "";
+    return NextResponse.redirect(url);
   }
 
   if (pathname.startsWith("/admin/login")) {
@@ -53,5 +71,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

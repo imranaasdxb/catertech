@@ -2,8 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
-import { type ShopProductDetail, SHOP_PRODUCT_CARDS } from "@/lib/shop-products";
+import { useMemo, useState, type CSSProperties } from "react";
+import {
+  type ShopProductDetail,
+  type ShopProductCard,
+  getCollectionSiblings,
+  getCrossSellProducts,
+  getFamilyMeta,
+} from "@/lib/shop-products";
 import { useCart } from "@/lib/cart-context";
 
 type AccordionKey = "description" | "packaging" | "shipping";
@@ -102,6 +108,109 @@ function ImgPlaceholder({ label, active }: { label?: string; active?: boolean })
   );
 }
 
+function ProductMarqueeTrack({
+  durationSec,
+  children,
+}: {
+  durationSec: number;
+  children: React.ReactNode;
+}) {
+  const style = {
+    "--shop-pdp-marquee-duration": `${durationSec}s`,
+  } as CSSProperties;
+
+  return (
+    <div className="shop-pdp-marquee-outer -mx-5 md:-mx-8">
+      <div className="shop-pdp-marquee px-5 md:px-8 py-1 items-stretch" style={style}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function VariantPickCard({
+  kind,
+  image,
+  label,
+  selected,
+  onSelect,
+}: {
+  kind: "size" | "color";
+  image: string;
+  label: string;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={[
+        "shrink-0 w-[118px] sm:w-[132px] text-left rounded-lg border overflow-hidden bg-white transition-all duration-200",
+        selected
+          ? "border-sand ring-2 ring-sand/35 shadow-[0_8px_28px_rgba(196,162,101,0.18)]"
+          : "border-border hover:border-sand/45 hover:shadow-md",
+      ].join(" ")}
+    >
+      <div className="relative aspect-4/3 bg-cream">
+        <Image
+          src={image}
+          alt=""
+          fill
+          className="object-cover"
+          sizes="132px"
+        />
+        <span className="absolute top-2 left-2 text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-navy/88 text-white shadow-sm">
+          {kind === "size" ? "Size" : "Finish"}
+        </span>
+      </div>
+      <div className="p-2">
+        <p className="text-[10px] font-semibold text-charcoal leading-snug line-clamp-3">{label}</p>
+        <p className="text-[8px] text-muted mt-0.5">Tap to select</p>
+      </div>
+    </button>
+  );
+}
+
+function RelatedTile({ p }: { p: ShopProductCard }) {
+  return (
+    <Link
+      href={`/shop/${p.id}`}
+      className="group shrink-0 w-[118px] sm:w-[132px] snap-start bg-white rounded-lg border border-border hover:border-sand/50 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col"
+    >
+      <div className="relative aspect-square bg-cream overflow-hidden w-full">
+        <Image
+          src={p.image}
+          alt={p.name}
+          fill
+          className="object-cover group-hover:scale-105 transition-transform duration-500"
+          sizes="132px"
+        />
+        {p.tag ? (
+          <span className="absolute top-1.5 left-1.5 bg-sand text-white text-[7px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded-full max-w-[calc(100%-12px)] truncate">
+            {p.tag}
+          </span>
+        ) : null}
+      </div>
+      <div className="p-2 flex flex-col flex-1 min-h-0">
+        <p className="text-[7px] text-muted tracking-widest uppercase mb-0.5 truncate">{p.category}</p>
+        <h4 className="text-[10px] font-semibold text-charcoal leading-snug group-hover:text-sand transition-colors line-clamp-2 min-h-10">
+          {p.name}
+        </h4>
+        {p.cardSubtitle ? (
+          <p className="text-[9px] text-muted mt-0.5 line-clamp-2 leading-snug">{p.cardSubtitle}</p>
+        ) : null}
+        <p className="text-[9px] text-sand font-semibold mt-auto pt-1.5 flex items-center gap-0.5">
+          Details
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </p>
+      </div>
+    </Link>
+  );
+}
+
 /* ─── Main Component ───────────────────────────────────────────────── */
 export default function ProductEquipmentDetail({
   product,
@@ -117,11 +226,49 @@ export default function ProductEquipmentDetail({
   const [openSection, setOpenSection] = useState<AccordionKey>("description");
   const [cartAdded, setCartAdded] = useState(false);
 
+  const thumbSources = useMemo(() => {
+    const extras = product.galleryImages ?? [];
+    const merged = [product.image, ...extras];
+    const seen = new Set<string>();
+    const uniq: string[] = [];
+    for (const u of merged) {
+      if (!seen.has(u)) {
+        seen.add(u);
+        uniq.push(u);
+      }
+    }
+    while (uniq.length < 4) uniq.push(product.image);
+    return uniq.slice(0, 4);
+  }, [product.image, product.galleryImages]);
+
+  const mainSrc = thumbSources[activeThumb] ?? product.image;
+
+  const collectionSiblings = useMemo(
+    () => getCollectionSiblings(product.id, product.familyId),
+    [product.id, product.familyId]
+  );
+
+  const crossSell = useMemo(() => {
+    const sid = new Set(collectionSiblings.map((s) => s.id));
+    return getCrossSellProducts(product.id, product.category, product.familyId)
+      .filter((p) => !sid.has(p.id))
+      .slice(0, 12);
+  }, [product.id, product.category, product.familyId, collectionSiblings]);
+
+  const collectionMeta = getFamilyMeta(product.familyId);
+
+  const selectedColor = product.colors.find((c) => c.id === colorId);
+
   const handleAddToCart = () => {
+    const sizeLabel = product.sizes.find((s) => s.id === sizeId)?.label;
+    const variantParts = [selectedColor?.label, sizeLabel].filter(Boolean);
+    const displayName =
+      variantParts.length > 0 ? `${product.name} (${variantParts.join(" · ")})` : product.name;
+    const cartId = `product-${product.id}-${sizeId}-${colorId}`;
     for (let i = 0; i < qty; i++) {
       addItem({
-        id: `product-${product.id}`,
-        name: product.name,
+        id: cartId,
+        name: displayName,
         category: product.category,
         price: product.price,
         image: product.image ?? "",
@@ -132,12 +279,31 @@ export default function ProductEquipmentDetail({
     setTimeout(() => setCartAdded(false), 2500);
   };
 
-  const selectedColor = product.colors.find((c) => c.id === colorId);
+  const variantPickCards = useMemo(() => {
+    type Row = { kind: "size" | "color"; id: string; label: string; image: string };
+    const imgs = thumbSources;
+    const rows: Row[] = [];
+    product.sizes.forEach((s, i) => {
+      rows.push({
+        kind: "size",
+        id: s.id,
+        label: s.label,
+        image: imgs[i % imgs.length],
+      });
+    });
+    product.colors.forEach((c, i) => {
+      rows.push({
+        kind: "color",
+        id: c.id,
+        label: c.label,
+        image: imgs[(i + 1) % imgs.length],
+      });
+    });
+    return rows;
+  }, [product.sizes, product.colors, thumbSources]);
 
   const toggleSection = (key: AccordionKey) =>
     setOpenSection((prev) => (prev === key ? "description" : key));
-
-  const thumbLabels = ["Main", "Alt 2", "Alt 3", "Alt 4"];
 
   return (
     <div className="min-h-screen bg-offwhite font-sans antialiased">
@@ -177,9 +343,9 @@ export default function ProductEquipmentDetail({
           <div className="lg:sticky lg:top-28 lg:self-start space-y-3">
             {/* Main image */}
             <div className="relative aspect-4/3 rounded-2xl overflow-hidden border border-border shadow-[0_4px_32px_rgba(26,31,46,0.07)]">
-              {product.image ? (
+              {mainSrc ? (
                 <Image
-                  src={product.image}
+                  src={mainSrc}
                   alt={product.name}
                   fill
                   className="object-cover"
@@ -236,9 +402,9 @@ export default function ProductEquipmentDetail({
 
             {/* Thumbnails */}
             <div className="grid grid-cols-4 gap-2.5">
-              {thumbLabels.map((lbl, i) => (
+              {thumbSources.map((src, i) => (
                 <button
-                  key={i}
+                  key={`${src}-${i}`}
                   type="button"
                   onClick={() => setActiveThumb(i)}
                   className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-200 ${
@@ -247,16 +413,16 @@ export default function ProductEquipmentDetail({
                       : "border-border hover:border-sand/40"
                   }`}
                 >
-                  {product.image ? (
+                  {src ? (
                     <Image
-                      src={product.image}
+                      src={src}
                       alt={`${product.name} view ${i + 1}`}
                       fill
                       className="object-cover"
                       sizes="96px"
                     />
                   ) : (
-                    <ImgPlaceholder label={lbl} active={activeThumb === i} />
+                    <ImgPlaceholder label={`${i + 1}`} active={activeThumb === i} />
                   )}
                 </button>
               ))}
@@ -528,6 +694,57 @@ export default function ProductEquipmentDetail({
           </div>
         </div>
 
+        {variantPickCards.length > 0 ? (
+          <section
+            className="mt-10 md:mt-12 pt-10 border-t border-border/90"
+            aria-label="Sizes and finishes for this product"
+          >
+            <div className="mb-4 px-1">
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-sand mb-1">
+                This product — sizes & finishes
+              </p>
+              <p className="text-[13px] text-muted leading-snug max-w-3xl">
+                Scrolls automatically — hover to pause. Tap a card to update the selectors above before you add to
+                quote.
+              </p>
+            </div>
+            <ProductMarqueeTrack
+              durationSec={Math.min(85, Math.max(28, variantPickCards.length * 11))}
+            >
+              <>
+                {variantPickCards.map((v) => (
+                  <VariantPickCard
+                    key={`v1-${v.kind}-${v.id}`}
+                    kind={v.kind}
+                    image={v.image}
+                    label={v.label}
+                    selected={
+                      v.kind === "size" ? sizeId === v.id : colorId === v.id
+                    }
+                    onSelect={() =>
+                      v.kind === "size" ? setSizeId(v.id) : setColorId(v.id)
+                    }
+                  />
+                ))}
+                {variantPickCards.map((v) => (
+                  <VariantPickCard
+                    key={`v2-${v.kind}-${v.id}`}
+                    kind={v.kind}
+                    image={v.image}
+                    label={v.label}
+                    selected={
+                      v.kind === "size" ? sizeId === v.id : colorId === v.id
+                    }
+                    onSelect={() =>
+                      v.kind === "size" ? setSizeId(v.id) : setColorId(v.id)
+                    }
+                  />
+                ))}
+              </>
+            </ProductMarqueeTrack>
+          </section>
+        ) : null}
+
         {/* ── Accordion — Description / Specs / Packaging / Shipping ── */}
         <div className="mt-16 rounded-2xl border border-border bg-white overflow-hidden shadow-[0_2px_16px_rgba(26,31,46,0.04)]">
           {(
@@ -674,63 +891,53 @@ export default function ProductEquipmentDetail({
           </div>
         </section>
 
-        {/* ── Related Products ─────────────────────────────────────── */}
-        {(() => {
-          const related = SHOP_PRODUCT_CARDS.filter(
-            (p) => p.category === product.category && p.id !== product.id
-          ).slice(0, 4);
-          if (!related.length) return null;
-          return (
-            <section className="mt-20 pt-14 border-t border-border">
-              <div className="mb-8">
-                <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-sand mb-2">
-                  Similar Equipment
-                </p>
-                <h2 className="font-serif text-2xl text-navy tracking-tight">
-                  You Might Also Need
-                </h2>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                {related.map((p) => (
-                  <Link
-                    key={p.id}
-                    href={`/shop/${p.id}`}
-                    className="group bg-white rounded-xl border border-border hover:border-sand/40 hover:shadow-md transition-all duration-300 overflow-hidden"
-                  >
-                    <div className="relative aspect-square overflow-hidden bg-cream">
-                      <Image
-                        src={p.image}
-                        alt={p.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        sizes="(max-width: 640px) 50vw, 25vw"
-                      />
-                      {p.tag && (
-                        <span className="absolute top-2 left-2 bg-sand text-white text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full">
-                          {p.tag}
-                        </span>
-                      )}
-                    </div>
-                    <div className="p-3">
-                      <p className="text-[9px] text-muted tracking-widest uppercase mb-1">
-                        {p.category}
-                      </p>
-                      <h4 className="text-xs font-medium text-charcoal leading-snug group-hover:text-sand transition-colors">
-                        {p.name}
-                      </h4>
-                      <p className="text-[10px] text-sand font-semibold mt-2 flex items-center gap-1">
-                        View Details
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <path d="M5 12h14M12 5l7 7-7 7" />
-                        </svg>
-                      </p>
-                    </div>
-                  </Link>
+        {collectionSiblings.length > 0 ? (
+          <section className="mt-16 pt-12 border-t border-border">
+            <div className="mb-5 px-1">
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-sand mb-1">
+                {collectionMeta.title}
+              </p>
+              <p className="text-[13px] text-muted leading-snug max-w-3xl">{collectionMeta.blurb}</p>
+            </div>
+            <ProductMarqueeTrack
+              durationSec={Math.min(90, Math.max(30, collectionSiblings.length * 14))}
+            >
+              <>
+                {collectionSiblings.map((p) => (
+                  <RelatedTile key={`c1-${p.id}`} p={p} />
                 ))}
-              </div>
-            </section>
-          );
-        })()}
+                {collectionSiblings.map((p) => (
+                  <RelatedTile key={`c2-${p.id}`} p={p} />
+                ))}
+              </>
+            </ProductMarqueeTrack>
+          </section>
+        ) : null}
+
+        {crossSell.length > 0 ? (
+          <section className="mt-12">
+            <div className="mb-5 px-1">
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-sand mb-1">
+                More you may need
+              </p>
+              <p className="text-[13px] text-muted leading-snug max-w-3xl">
+                Popular picks from the same department — open any tile to configure quantity and finishes.
+              </p>
+            </div>
+            <ProductMarqueeTrack
+              durationSec={Math.min(95, Math.max(32, crossSell.length * 9))}
+            >
+              <>
+                {crossSell.map((p) => (
+                  <RelatedTile key={`x1-${p.id}`} p={p} />
+                ))}
+                {crossSell.map((p) => (
+                  <RelatedTile key={`x2-${p.id}`} p={p} />
+                ))}
+              </>
+            </ProductMarqueeTrack>
+          </section>
+        ) : null}
 
         {/* ── Back to Shop CTA ─────────────────────────────────────── */}
         <div className="mt-20 pt-14 border-t border-border text-center">

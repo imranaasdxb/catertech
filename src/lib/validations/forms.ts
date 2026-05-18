@@ -30,7 +30,8 @@ export const quoteSchema = z.object({
       z.object({
         name: z.string(),
         category: z.string(),
-        price: z.string(),
+        /** Ignored — not stored or emailed; kept optional for older clients. */
+        price: z.string().max(120).optional(),
         qty: z.number().int().positive(),
       })
     )
