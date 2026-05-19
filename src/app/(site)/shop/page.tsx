@@ -1,10 +1,11 @@
+import Container from "@/components/Container";
 import ShopCatalogueClient from "@/components/shop/ShopCatalogueClient";
 
 export default function ShopPage() {
   return (
     <>
       <section className="pt-40 pb-24 bg-navy">
-        <div className="max-w-7xl mx-auto px-5 md:px-8">
+        <Container>
           <span className="text-xs font-semibold tracking-[0.2em] uppercase text-sand block mb-4">
             Browse & Rent
           </span>
@@ -15,7 +16,7 @@ export default function ShopPage() {
           <p className="text-white/50 text-lg mt-4 max-w-xl leading-relaxed">
             Explore catering, kitchen and events inventory with live search and tab-aware filters — open any tile for variants, finishes and RFQ-ready quoting.
           </p>
-        </div>
+        </Container>
       </section>
 
       <ShopCatalogueClient />

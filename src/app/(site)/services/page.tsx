@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import Container from "@/components/Container";
 import { useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import { SERVICES_LIST } from "@/lib/services";
@@ -96,7 +97,7 @@ export default function ServicesPage() {
         />
         <div className="absolute inset-0 bg-linear-to-b from-navy/80 via-navy/60 to-navy" />
 
-        <div className="relative max-w-7xl mx-auto px-5 md:px-8 w-full">
+        <Container className="relative w-full">
           <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-sand block mb-3">
             Our Services
           </span>
@@ -125,12 +126,12 @@ export default function ServicesPage() {
               View My Quote Basket
             </Link>
           </div>
-        </div>
+        </Container>
       </section>
 
       {/* ── Stats Bar ─────────────────────────────────────────────── */}
       <div className="bg-sand">
-        <div className="max-w-7xl mx-auto px-5 md:px-8 py-5 grid grid-cols-2 md:grid-cols-4 gap-5">
+        <Container className="py-5 grid grid-cols-2 md:grid-cols-4 gap-5">
           {STATS.map((s) => (
             <div key={s.label} className="text-center">
               <p className="font-serif text-2xl font-bold text-white">{s.value}</p>
@@ -139,12 +140,12 @@ export default function ServicesPage() {
               </p>
             </div>
           ))}
-        </div>
+        </Container>
       </div>
 
       {/* ── Services Grid ─────────────────────────────────────────── */}
       <section className="py-24">
-        <div className="max-w-7xl mx-auto px-5 md:px-8">
+        <Container>
           <div className="text-center mb-14">
             <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-sand block mb-3">
               What We Offer
@@ -154,7 +155,7 @@ export default function ServicesPage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
             {SERVICES_LIST.map((service, i) => {
               const added = addedIds.includes(service.cartId);
               return (
@@ -250,12 +251,12 @@ export default function ServicesPage() {
               );
             })}
           </div>
-        </div>
+        </Container>
       </section>
 
       {/* ── How We Work ───────────────────────────────────────────── */}
       <section className="bg-navy py-24">
-        <div className="max-w-7xl mx-auto px-5 md:px-8">
+        <Container>
           <div className="text-center mb-14">
             <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-sand block mb-3">
               The Process
@@ -288,12 +289,13 @@ export default function ServicesPage() {
               </div>
             ))}
           </div>
-        </div>
+        </Container>
       </section>
 
       {/* ── CTA ───────────────────────────────────────────────────── */}
       <section className="py-20 bg-offwhite border-t border-border">
-        <div className="max-w-2xl mx-auto px-5 md:px-8 text-center">
+        <Container>
+          <div className="max-w-2xl mx-auto text-center">
           <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-sand block mb-3">
             Ready to Start?
           </span>
@@ -318,7 +320,8 @@ export default function ServicesPage() {
               Contact Us
             </Link>
           </div>
-        </div>
+          </div>
+        </Container>
       </section>
     </div>
   );

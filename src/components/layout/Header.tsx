@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Container from "@/components/Container";
 import { useCart } from "@/lib/cart-context";
 
 const NAV_LINKS = [
@@ -49,7 +50,7 @@ export default function Header() {
             : "bg-transparent"
         }`}
       >
-        <div className="max-w-7xl mx-auto px-5 md:px-8 h-[72px] flex items-center justify-between">
+        <Container className="h-[72px] flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0">
             <span
@@ -198,7 +199,7 @@ export default function Header() {
               />
             </button>
           </div>
-        </div>
+        </Container>
       </header>
 
       {/* Mobile Menu Overlay */}

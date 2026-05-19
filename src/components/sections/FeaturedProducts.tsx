@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import Container from "@/components/Container";
 import SectionHeader from "@/components/ui/SectionHeader";
 import {
   SHOP_PRODUCT_CARDS,
@@ -72,7 +73,7 @@ export default function FeaturedProducts() {
     return list;
   }, [activeTab, highlight, search, selectedEquipment]);
 
-  const displayed = filtered.slice(0, 16);
+  const displayed = filtered.slice(0, 15);
 
   function toggleEquipment(label: string) {
     setSelectedEquipment((prev) => {
@@ -104,7 +105,7 @@ export default function FeaturedProducts() {
 
   return (
     <section className="bg-cream py-24">
-      <div className="max-w-7xl mx-auto px-5 md:px-8">
+      <Container>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <SectionHeader
             eyebrow="Shop Our Range"
@@ -137,8 +138,8 @@ export default function FeaturedProducts() {
           ))}
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 items-start">
-          <aside className="w-full lg:w-[280px] shrink-0 space-y-5 lg:sticky lg:top-28">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
+          <aside className="w-full lg:w-[252px] xl:w-[260px] shrink-0 space-y-5 lg:sticky lg:top-28">
             <div>
               <label htmlFor="featured-shop-search" className="sr-only">
                 Search featured products
@@ -260,7 +261,7 @@ export default function FeaturedProducts() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-4 lg:gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-3.5 lg:gap-4">
                 {displayed.map((product) => (
                   <div
                     key={product.id}
@@ -273,7 +274,7 @@ export default function FeaturedProducts() {
                           alt={product.name}
                           fill
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          sizes="(max-width: 1024px) 45vw, 220px"
+                          sizes="(max-width: 640px) 45vw, (max-width: 1024px) 28vw, 18vw"
                         />
                         {product.tag ? (
                           <span className="absolute top-2 left-2 bg-sand text-white text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 z-10 rounded-full">
@@ -324,7 +325,7 @@ export default function FeaturedProducts() {
             </svg>
           </Link>
         </div>
-      </div>
+      </Container>
     </section>
   );
 }

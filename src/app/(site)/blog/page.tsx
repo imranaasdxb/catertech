@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Container from "@/components/Container";
 
 const CATEGORIES = ["All", "Hotel", "Corporate", "Wedding", "Government", "F&B"];
 
@@ -21,18 +22,17 @@ export default function BlogPage() {
   return (
     <>
       <section className="pt-40 pb-24 bg-navy">
-        <div className="max-w-7xl mx-auto px-5 md:px-8">
+        <Container>
           <span className="text-xs font-semibold tracking-[0.2em] uppercase text-sand block mb-4">Our Blog</span>
           <div className="w-10 h-0.5 bg-sand mb-6" />
           <h1 className="font-serif text-5xl md:text-6xl text-white leading-tight max-w-2xl">
             Stories, Guides &amp; Industry Insights
           </h1>
-        </div>
+        </Container>
       </section>
 
       <section className="bg-offwhite py-16">
-        <div className="max-w-7xl mx-auto px-5 md:px-8">
-          {/* Filters */}
+        <Container>
           <div className="flex gap-1 mb-12 border-b border-border overflow-x-auto">
             {CATEGORIES.map((cat) => (
               <button key={cat} onClick={() => setActive(cat)}
@@ -43,8 +43,7 @@ export default function BlogPage() {
             ))}
           </div>
 
-          {/* Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filtered.map((post, i) => (
               <Link key={i} href={`/blog/${post.slug}`} className="group bg-white border border-border hover:border-sand/30 hover:shadow-md transition-all block">
                 <div className="aspect-[16/9] bg-cream relative">
@@ -65,7 +64,7 @@ export default function BlogPage() {
               </Link>
             ))}
           </div>
-        </div>
+        </Container>
       </section>
     </>
   );

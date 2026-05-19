@@ -1,26 +1,26 @@
+import Container from "@/components/Container";
 import { ContactForm } from "./ContactForm";
 
 export default function ContactPage() {
   return (
     <>
       <section className="pt-40 pb-24 bg-navy">
-        <div className="max-w-7xl mx-auto px-5 md:px-8">
+        <Container>
           <span className="text-xs font-semibold tracking-[0.2em] uppercase text-sand block mb-4">Contact</span>
           <div className="w-10 h-0.5 bg-sand mb-6" />
           <h1 className="font-serif text-5xl md:text-6xl text-white leading-tight max-w-2xl">
-            Let's Talk About Your Requirements
+            Let&apos;s Talk About Your Requirements
           </h1>
-        </div>
+        </Container>
       </section>
 
       <section className="bg-offwhite py-24">
-        <div className="max-w-7xl mx-auto px-5 md:px-8">
+        <Container>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-            {/* Contact Info */}
             <div>
               <span className="text-xs font-semibold tracking-[0.2em] uppercase text-sand block mb-4">Get In Touch</span>
               <div className="w-10 h-0.5 bg-sand mb-6" />
-              <h2 className="font-serif text-3xl text-charcoal mb-8">We're Here to Help</h2>
+              <h2 className="font-serif text-3xl text-charcoal mb-8">We&apos;re Here to Help</h2>
 
               <div className="space-y-6">
                 {[
@@ -45,13 +45,11 @@ export default function ContactPage() {
                 ))}
               </div>
 
-              {/* Map placeholder */}
               <div className="mt-8 aspect-video bg-cream border border-border flex items-center justify-center">
                 <p className="text-muted text-sm tracking-wider">Map Embed Placeholder</p>
               </div>
             </div>
 
-            {/* Form */}
             <div>
               <span className="text-xs font-semibold tracking-[0.2em] uppercase text-sand block mb-4">Send a Message</span>
               <div className="w-10 h-0.5 bg-sand mb-6" />
@@ -60,7 +58,7 @@ export default function ContactPage() {
               <ContactForm />
             </div>
           </div>
-        </div>
+        </Container>
       </section>
     </>
   );

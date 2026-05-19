@@ -21,6 +21,47 @@
   backface-visibility: hidden;
 }
 
+/* Icon rail (desktop only — mobile drawer stays full width) */
+@media (min-width: 768px) {
+  .admin-slotted-sidebar--collapsed {
+    width: 76px;
+  }
+
+  .admin-slotted-sidebar--collapsed .admin-slotted-nav__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .admin-slotted-sidebar--collapsed .admin-slotted-nav__link {
+    margin-left: 8px;
+    margin-right: 8px;
+    justify-content: center;
+    gap: 0;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .admin-slotted-sidebar--collapsed .admin-slotted-nav__link:not(.admin-slotted-nav__link--active) {
+    margin-right: 8px;
+  }
+
+  .admin-slotted-sidebar--collapsed .admin-slotted-nav__link--active {
+    margin-right: 8px;
+  }
+
+  .admin-slotted-sidebar--collapsed .admin-slotted-nav__link--active::before,
+  .admin-slotted-sidebar--collapsed .admin-slotted-nav__link--active::after {
+    display: none;
+  }
+}
+
 .admin-slotted-nav {
   list-style: none;
   margin: 0;

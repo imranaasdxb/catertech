@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import Link from "next/link";
+import Container from "@/components/Container";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -202,7 +203,7 @@ export default function JourneyTeaser() {
       {/* ── Sticky frame — stays in viewport while section scrolls ── */}
       <div className="sticky top-0 h-screen overflow-hidden bg-offwhite">
         {/* Max-width wrapper — matches spacing of every other section */}
-        <div className="max-w-7xl mx-auto px-5 md:px-8 h-full">
+        <Container className="h-full">
         <div className="h-full flex flex-col md:flex-row">
 
           {/* ════════════════════════════════════════════
@@ -342,7 +343,7 @@ export default function JourneyTeaser() {
 
           </div>
         </div>
-        </div>{/* end max-w-7xl */}
+        </Container>
       </div>
 
       <style>{`

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Container from "@/components/Container";
 import SectionHeader from "@/components/ui/SectionHeader";
 
 const POSTS = [
@@ -40,7 +41,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 export default function BlogPreview() {
   return (
     <section className="bg-offwhite py-24">
-      <div className="max-w-7xl mx-auto px-5 md:px-8">
+      <Container>
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <SectionHeader
@@ -57,7 +58,7 @@ export default function BlogPreview() {
         </div>
 
         {/* Posts Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {POSTS.map((post, i) => (
             <Link
               key={i}
@@ -105,7 +106,7 @@ export default function BlogPreview() {
             </Link>
           ))}
         </div>
-      </div>
+      </Container>
     </section>
   );
 }

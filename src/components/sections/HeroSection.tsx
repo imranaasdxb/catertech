@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
+import Container from "@/components/Container";
 
 export default function HeroSection() {
   const headlineRef = useRef<HTMLHeadingElement>(null);
@@ -45,7 +46,7 @@ export default function HeroSection() {
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-linear-to-t from-[#0D1220]/80 to-transparent" />
 
       {/* Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-5 md:px-8 w-full">
+      <Container className="relative z-10 w-full">
         <div className="max-w-2xl">
           {/* Eyebrow */}
           <div className="flex items-center gap-3 mb-8">
@@ -87,7 +88,7 @@ export default function HeroSection() {
             </Link>
           </div>
         </div>
-      </div>
+      </Container>
 
       {/* Scroll cue */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/30">

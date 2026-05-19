@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Container from "@/components/Container";
 
 const PERKS = [
   { value: "4 hrs", label: "Enquiry response time" },
@@ -35,7 +36,7 @@ export default function TradeCTASection() {
         }}
       />
 
-      <div className="max-w-7xl mx-auto px-5 md:px-8">
+      <Container>
 
         {/* ── Top section heading bar ───────────────────── */}
         <div className="flex items-end justify-between py-7 border-b border-white/8 gap-6">
@@ -176,7 +177,7 @@ export default function TradeCTASection() {
         {/* ── Bottom gold fade line ──────────────────────── */}
         <div className="h-px bg-linear-to-r from-transparent via-sand/25 to-transparent" />
 
-      </div>
+      </Container>
     </section>
   );
 }

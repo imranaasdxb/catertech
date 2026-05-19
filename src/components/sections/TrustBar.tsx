@@ -1,5 +1,6 @@
 "use client";
 
+import Container from "@/components/Container";
 import { useEffect, useRef, useState } from "react";
 
 const STATS = [
@@ -58,13 +59,13 @@ function StatItem({ value, suffix, label }: (typeof STATS)[0]) {
 export default function TrustBar() {
   return (
     <section className="bg-navy border-y border-white/5 py-14">
-      <div className="max-w-7xl mx-auto px-5 md:px-8">
+      <Container>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-0 divide-x divide-white/10">
           {STATS.map((stat, i) => (
             <StatItem key={i} {...stat} />
           ))}
         </div>
-      </div>
+      </Container>
     </section>
   );
 }

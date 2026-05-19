@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Container from "@/components/Container";
 
 const NAV_COLUMN = [
   { label: "Home", href: "/" },
@@ -23,7 +24,7 @@ export default function Footer() {
     <footer className="bg-navy text-white">
       {/* Newsletter Strip */}
       <div className="border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-5 md:px-8 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <Container className="py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
             <p className="text-xs font-semibold tracking-[0.18em] uppercase text-sand mb-1">
               Stay Updated
@@ -45,11 +46,11 @@ export default function Footer() {
               Subscribe
             </button>
           </form>
-        </div>
+        </Container>
       </div>
 
       {/* Main Footer */}
-      <div className="max-w-7xl mx-auto px-5 md:px-8 py-16">
+      <Container className="py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
           {/* Column 1 — Company Info */}
           <div>
@@ -172,11 +173,11 @@ export default function Footer() {
             </div>
           </div>
         </div>
-      </div>
+      </Container>
 
       {/* Bottom Bar */}
       <div className="border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-5 md:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <Container className="py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-white/30 text-xs">
             © {new Date().getFullYear()} Catertech. All rights reserved.
           </p>
@@ -194,7 +195,7 @@ export default function Footer() {
               Terms & Conditions
             </Link>
           </div>
-        </div>
+        </Container>
       </div>
     </footer>
   );

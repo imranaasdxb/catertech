@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import Container from "@/components/Container";
 import { useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import type { ServiceData } from "@/lib/services";
@@ -37,7 +38,7 @@ export default function ServiceDetailClient({ service }: { service: ServiceData 
           />
           <div className="absolute inset-0 bg-linear-to-t from-navy via-navy/70 to-navy/30" />
         </div>
-        <div className="relative max-w-7xl mx-auto px-5 md:px-8 w-full">
+        <Container className="relative w-full">
           <nav className="flex items-center gap-2 text-[11px] text-white/50 mb-6">
             <Link href="/" className="hover:text-sand transition-colors">Home</Link>
             <span>/</span>
@@ -54,12 +55,12 @@ export default function ServiceDetailClient({ service }: { service: ServiceData 
           <p className="text-white/60 text-base max-w-xl leading-relaxed">
             {service.description}
           </p>
-        </div>
+        </Container>
       </section>
 
       {/* Content */}
       <section className="py-20">
-        <div className="max-w-7xl mx-auto px-5 md:px-8">
+        <Container>
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-12 items-start">
             {/* Left */}
             <div>
@@ -156,11 +157,12 @@ export default function ServiceDetailClient({ service }: { service: ServiceData 
               </div>
             </div>
           </div>
-        </div>
+        </Container>
       </section>
 
       {/* Back to services */}
-      <div className="max-w-7xl mx-auto px-5 md:px-8 pb-16 border-t border-border pt-10">
+      <div className="border-t border-border pt-10 pb-16">
+        <Container>
         <Link
           href="/services"
           className="inline-flex items-center gap-2 text-sm font-medium text-muted hover:text-sand transition-colors"
@@ -170,6 +172,7 @@ export default function ServiceDetailClient({ service }: { service: ServiceData 
           </svg>
           Back to All Services
         </Link>
+        </Container>
       </div>
     </div>
   );

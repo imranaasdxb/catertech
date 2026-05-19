@@ -1,3 +1,5 @@
+import Container from "@/components/Container";
+
 const CLIENTS = [
   "Marriott Hotels",
   "Jumeirah Group",
@@ -18,11 +20,11 @@ export default function ClientLogos() {
 
   return (
     <section className="bg-cream py-16 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-5 md:px-8 mb-10">
+      <Container className="mb-10">
         <p className="text-center text-xs tracking-[0.25em] uppercase text-muted font-medium">
           Trusted by Leading Hospitality Brands
         </p>
-      </div>
+      </Container>
 
       {/* Marquee */}
       <div className="relative overflow-hidden">

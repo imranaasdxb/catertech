@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import Container from "@/components/Container";
 import {
   SHOP_PRODUCT_CARDS,
   getFeaturedSidebarEquipmentFilters,
@@ -200,7 +201,7 @@ function ProductTile({ product }: { product: ShopProductCard }) {
             alt={product.name}
             fill
             className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 260px"
+            sizes="(max-width: 640px) 45vw, (max-width: 1024px) 28vw, 18vw"
           />
           {product.tag ? (
             <span className="absolute top-2 left-2 bg-sand text-white text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 z-10 rounded-full">
@@ -345,7 +346,7 @@ export default function ShopCatalogueClient() {
 
   return (
     <section className="bg-offwhite py-12 md:py-16">
-      <div className="max-w-7xl mx-auto px-5 md:px-8">
+      <Container>
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-8 lg:mb-10">
           <div className="max-w-2xl">
             <p className="text-xs font-semibold tracking-[0.2em] uppercase text-sand mb-2">Full catalogue</p>
@@ -401,8 +402,8 @@ export default function ShopCatalogueClient() {
           </div>
         </details>
 
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 items-start">
-          <aside className="hidden lg:block w-[300px] shrink-0 lg:sticky lg:top-28">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
+          <aside className="hidden lg:block w-[252px] xl:w-[260px] shrink-0 lg:sticky lg:top-28">
             <CatalogueFilterPanel {...filterPanelProps} />
           </aside>
 
@@ -422,7 +423,7 @@ export default function ShopCatalogueClient() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-3.5 lg:gap-4">
                 {sortedProducts.map((product) => (
                   <ProductTile key={product.id} product={product} />
                 ))}
@@ -434,7 +435,7 @@ export default function ShopCatalogueClient() {
         <p className="text-center text-[11px] text-muted mt-12 max-w-lg mx-auto leading-relaxed">
           Prefer a curated shortlist? Head home for featured picks — everything here opens the full PDP with variants and bundle-ready quoting.
         </p>
-      </div>
+      </Container>
     </section>
   );
 }

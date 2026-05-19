@@ -1,22 +1,23 @@
 import Link from "next/link";
+import Container from "@/components/Container";
 
 export default function AboutPage() {
   return (
     <>
       {/* Hero */}
       <section className="pt-40 pb-24 bg-navy">
-        <div className="max-w-7xl mx-auto px-5 md:px-8">
+        <Container>
           <span className="text-xs font-semibold tracking-[0.2em] uppercase text-sand block mb-4">About Us</span>
           <div className="w-10 h-0.5 bg-sand mb-6" />
           <h1 className="font-serif text-5xl md:text-6xl text-white leading-tight max-w-2xl">
             Dubai's Equipment Partner Since 2005
           </h1>
-        </div>
+        </Container>
       </section>
 
       {/* Intro */}
       <section className="bg-offwhite py-24">
-        <div className="max-w-7xl mx-auto px-5 md:px-8 grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+        <Container className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
           <div>
             <span className="text-xs font-semibold tracking-[0.2em] uppercase text-sand block mb-4">Who We Are</span>
             <div className="w-10 h-0.5 bg-sand mb-6" />
@@ -57,12 +58,12 @@ export default function AboutPage() {
               </div>
             ))}
           </div>
-        </div>
+        </Container>
       </section>
 
       {/* Why Choose Us */}
       <section className="bg-cream py-24">
-        <div className="max-w-7xl mx-auto px-5 md:px-8">
+        <Container>
           <div className="text-center mb-14">
             <span className="text-xs font-semibold tracking-[0.2em] uppercase text-sand block mb-4">Why Catertech</span>
             <div className="w-10 h-0.5 bg-sand mx-auto mb-6" />
@@ -84,7 +85,7 @@ export default function AboutPage() {
               </div>
             ))}
           </div>
-        </div>
+        </Container>
       </section>
     </>
   );

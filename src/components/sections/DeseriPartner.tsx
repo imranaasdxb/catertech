@@ -1,7 +1,9 @@
+import Container from "@/components/Container";
+
 export default function DeseriPartner() {
   return (
     <section className="bg-cream py-16">
-      <div className="max-w-7xl mx-auto px-5 md:px-8">
+      <Container>
         <div className="border border-border bg-white p-8 md:p-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
           {/* Label */}
           <div className="shrink-0">
@@ -36,7 +38,7 @@ export default function DeseriPartner() {
             </svg>
           </a>
         </div>
-      </div>
+      </Container>
     </section>
   );
 }

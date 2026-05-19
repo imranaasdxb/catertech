@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Container from "@/components/Container";
 import { useReducedMotion } from "framer-motion";
 import { Star } from "lucide-react";
 import {
@@ -216,7 +217,7 @@ export default function TestimonialsSection() {
 
   return (
     <section className="bg-offwhite border-t border-border/40">
-      <div className="max-w-7xl mx-auto px-5 md:px-8 py-24 md:py-32 lg:py-36">
+      <Container className="py-24 md:py-32 lg:py-36">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-14 items-start">
           <header className="lg:col-span-4 xl:col-span-3 flex flex-col gap-7 lg:pr-6 lg:sticky lg:top-28">
             <div className="space-y-5">
@@ -350,7 +351,7 @@ export default function TestimonialsSection() {
             />
           </div>
         </div>
-      </div>
+      </Container>
     </section>
   );
 }
