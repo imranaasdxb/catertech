@@ -1,20 +1,20 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { DM_Sans, Syne } from "next/font/google";
 import type { ReactNode } from "react";
 import "./globals.css";
 import ClientProviders from "@/components/layout/ClientProviders";
 
-const inter = Inter({
+const dmSans = DM_Sans({
   subsets: ["latin"],
-  variable: "--font-inter",
-  weight: ["300", "400", "500", "600"],
+  variable: "--font-dm-sans",
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
-const playfair = Playfair_Display({
+const syne = Syne({
   subsets: ["latin"],
-  variable: "--font-playfair",
-  weight: ["400", "500", "600", "700"],
+  variable: "--font-syne",
+  weight: ["600", "700", "800"],
   display: "swap",
 });
 
@@ -32,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${playfair.variable} font-sans`}>
+      <body className={`${dmSans.variable} ${syne.variable} font-sans antialiased`}>
         <ClientProviders>{children}</ClientProviders>
       </body>
     </html>

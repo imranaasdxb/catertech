@@ -524,7 +524,7 @@ export default function CartClient() {
                           height="24"
                           viewBox="0 0 24 24"
                           fill="none"
-                          stroke="#C4A265"
+                          stroke="#c21722"
                           strokeWidth="1"
                         >
                           <rect x="3" y="3" width="18" height="18" rx="2" />
@@ -726,7 +726,7 @@ export default function CartClient() {
                         height="12"
                         viewBox="0 0 24 24"
                         fill="none"
-                        stroke="#C4A265"
+                        stroke="#c21722"
                         strokeWidth="2.5"
                       >
                         <polyline points="20 6 9 17 4 12" />

@@ -5,6 +5,7 @@ import { productCategories, productSubcategories } from "@/db/schema";
 import {
   uniqueCategorySlug,
 } from "@/lib/product-taxonomy";
+import { upsertCategoryTemplate, DEFAULT_TEMPLATE_FIELDS } from "@/lib/category-template";
 import { z } from "zod";
 
 const createSchema = z.object({
@@ -58,6 +59,8 @@ export async function POST(request: Request) {
     .insert(productCategories)
     .values({ name, slug })
     .returning();
+
+  await upsertCategoryTemplate(db, row.id, null, DEFAULT_TEMPLATE_FIELDS);
 
   return NextResponse.json(row, { status: 201 });
 }

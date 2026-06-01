@@ -6,9 +6,14 @@ import AdminGalleryUpload, {
 } from "@/components/admin/AdminGalleryUpload";
 import { AdminBlockingOverlay, AdminSuccessModal } from "@/components/admin/AdminFormOverlays";
 import { AdminTypedDeleteDialog } from "@/components/admin/AdminTypedDeleteDialog";
+import {
+  parseProductAttributes,
+  ProductTemplateFields,
+} from "@/components/admin/ProductTemplateFields";
 import { ProductCategorySelects } from "@/components/admin/ProductCategorySelects";
 import { ADMIN_PURPLE, admin, adminCardShadow } from "@/components/admin/adminTheme";
 import { products } from "@/db/schema";
+import type { TemplateFieldDef } from "@/lib/category-template";
 import type { InferSelectModel } from "drizzle-orm";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -36,6 +41,12 @@ export default function ProductEditClient({
   const [blockingSubtitle, setBlockingSubtitle] = useState("");
   const [showSaved, setShowSaved] = useState(false);
   const [typedDeleteOpen, setTypedDeleteOpen] = useState(false);
+  const [categoryId, setCategoryId] = useState(product.categoryId ?? "");
+  const [subCategoryId, setSubCategoryId] = useState(product.subCategoryId ?? "");
+  const [templateFields, setTemplateFields] = useState<TemplateFieldDef[]>([]);
+  const [publishIntent, setPublishIntent] = useState<"draft" | "live">(
+    product.published ? "live" : "draft"
+  );
 
   const isModal = variant === "modal";
 
@@ -70,9 +81,10 @@ export default function ProductEditClient({
         return s === "" ? null : s;
       })(),
       images: commit.urls,
-      published: fd.get("published") === "on",
+      published: publishIntent === "live",
       isFeatured: fd.get("isFeatured") === "on",
       isAvailable: fd.get("isAvailable") === "on",
+      attributes: parseProductAttributes(fd, templateFields),
     };
 
     setLoading(true);
@@ -152,9 +164,24 @@ export default function ProductEditClient({
             <ProductCategorySelects
               initialCategoryId={product.categoryId}
               initialSubCategoryId={product.subCategoryId}
-              hint='Update the master list from the products screen (“Category master”).'
+              hint='Update the master list from the products screen (“Category master”). Sub-categories are optional.'
+              onSelectionChange={(sel) => {
+                setCategoryId(sel.categoryId);
+                setSubCategoryId(sel.subCategoryId);
+              }}
             />
           </div>
+
+          {categoryId ? (
+            <ProductTemplateFields
+              key={`${categoryId}-${subCategoryId}`}
+              categoryId={categoryId}
+              subCategoryId={subCategoryId}
+              initialAttributes={(product.attributes ?? {}) as Record<string, string | { value: string; unit?: string }>}
+              onFieldsLoaded={setTemplateFields}
+            />
+          ) : null}
+
           <div>
             <label className={admin.labelModern}>Description</label>
             <RichText
@@ -176,10 +203,6 @@ export default function ProductEditClient({
           </div>
           <div className={`${admin.checkRow} mt-4 flex-wrap`}>
             <label className="flex cursor-pointer items-center gap-2">
-              <input type="checkbox" name="published" defaultChecked={product.published} className={admin.checkbox} />
-              Published
-            </label>
-            <label className="flex cursor-pointer items-center gap-2">
               <input type="checkbox" name="isFeatured" defaultChecked={product.isFeatured} className={admin.checkbox} />
               Featured
             </label>
@@ -200,10 +223,19 @@ export default function ProductEditClient({
             <button
               type="submit"
               disabled={loading || blockingOpen}
+              onClick={() => setPublishIntent("draft")}
+              className={`${admin.secondaryBtn} ${isModal ? "text-xs py-3" : ""}`}
+            >
+              {loading && publishIntent === "draft" ? "Saving…" : "Save as draft"}
+            </button>
+            <button
+              type="submit"
+              disabled={loading || blockingOpen}
+              onClick={() => setPublishIntent("live")}
               className={`${admin.primaryBtn} ${isModal ? "text-xs py-3" : ""}`}
               style={{ backgroundColor: ADMIN_PURPLE }}
             >
-              {loading ? "Saving…" : "Save changes"}
+              {loading && publishIntent === "live" ? "Publishing…" : "Publish live"}
             </button>
             <button
               type="button"

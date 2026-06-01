@@ -35,19 +35,19 @@ function StarRating({
       {stars.map((type, i) => (
         <svg key={i} width={px} height={px} viewBox="0 0 24 24">
           {type === "full" ? (
-            <path fill="#C4A265" d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 5 2-7L2 9h7l3-7z" />
+            <path fill="#c21722" d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 5 2-7L2 9h7l3-7z" />
           ) : type === "half" ? (
             <>
               <defs>
                 <linearGradient id={`h${i}`} x1="0" x2="1" y1="0" y2="0">
-                  <stop offset="50%" stopColor="#C4A265" />
-                  <stop offset="50%" stopColor="#E5DDD0" />
+                  <stop offset="50%" stopColor="#c21722" />
+                  <stop offset="50%" stopColor="#dee2e6" />
                 </linearGradient>
               </defs>
               <path fill={`url(#h${i})`} d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 5 2-7L2 9h7l3-7z" />
             </>
           ) : (
-            <path fill="#E5DDD0" d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 5 2-7L2 9h7l3-7z" />
+            <path fill="#dee2e6" d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 5 2-7L2 9h7l3-7z" />
           )}
         </svg>
       ))}
@@ -91,7 +91,7 @@ function ImgPlaceholder({ label, active }: { label?: string; active?: boolean })
         height="48"
         viewBox="0 0 24 24"
         fill="none"
-        stroke="#C4A265"
+        stroke="#c21722"
         strokeWidth="0.8"
         className="opacity-60"
       >
@@ -382,8 +382,8 @@ export default function ProductEquipmentDetail({
                   width="17"
                   height="17"
                   viewBox="0 0 24 24"
-                  fill={wishlist ? "#C4A265" : "none"}
-                  stroke={wishlist ? "#C4A265" : "#2C2826"}
+                  fill={wishlist ? "#c21722" : "none"}
+                  stroke={wishlist ? "#c21722" : "#14131f"}
                   strokeWidth="1.75"
                 >
                   <path d="M12 21s-8-5.33-8-11a5 5 0 019-3 5 5 0 019 3c0 5.67-8 11-8 11z" />
@@ -409,7 +409,7 @@ export default function ProductEquipmentDetail({
                   onClick={() => setActiveThumb(i)}
                   className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-200 ${
                     activeThumb === i
-                      ? "border-sand shadow-[0_0_0_1px_#C4A265]"
+                      ? "border-sand shadow-[0_0_0_1px_#c21722]"
                       : "border-border hover:border-sand/40"
                   }`}
                 >
@@ -499,7 +499,7 @@ export default function ProductEquipmentDetail({
 
             {/* Enquiry note (replaces price) */}
             <div className="flex items-center gap-2.5 bg-sand/10 border border-sand/30 rounded-xl px-4 py-3 mb-7">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#C4A265" strokeWidth="2">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c21722" strokeWidth="2">
                 <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
               </svg>
               <span className="text-[12px] text-sand font-semibold tracking-wide">
@@ -774,7 +774,7 @@ export default function ProductEquipmentDetail({
                     height="18"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke={open ? "#C4A265" : "#2C2826"}
+                    stroke={open ? "#c21722" : "#14131f"}
                     strokeWidth="2"
                     className={`shrink-0 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
                   >
@@ -872,7 +872,7 @@ export default function ProductEquipmentDetail({
                   <div
                     className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
                     style={{
-                      background: "linear-gradient(135deg, #C4A265 0%, #1A1F2E 100%)",
+                      background: "linear-gradient(135deg, #c21722 0%, #322b81 100%)",
                     }}
                   >
                     {r.initial}

@@ -8,6 +8,7 @@ import SectionHeader from "@/components/ui/SectionHeader";
 import {
   SHOP_PRODUCT_CARDS,
   getFeaturedSidebarEquipmentFilters,
+  getShopProductDetail,
 } from "@/lib/shop-products";
 
 const TABS = ["All", "Catering", "Events", "Kitchen"] as const;
@@ -15,9 +16,105 @@ const TABS = ["All", "Catering", "Events", "Kitchen"] as const;
 type HighlightFilter = "all" | "Popular" | "New";
 
 const EQUIPMENT_PREVIEW_COUNT = 10;
+const CARDS_PER_ROW = 4;
+const ROW_COUNT = 2;
+const PAGE_SIZE = CARDS_PER_ROW * ROW_COUNT;
 
 function norm(s: string) {
   return s.toLowerCase().trim();
+}
+
+type ProductCard = (typeof SHOP_PRODUCT_CARDS)[number];
+
+function FeaturedProductCard({ product }: { product: ProductCard }) {
+  const detail = getShopProductDetail(String(product.id));
+  const description =
+    detail?.shortDescription ?? product.cardSubtitle ?? "";
+
+  return (
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-surface-card transition-all duration-300 hover:-translate-y-0.5 hover:border-border hover:bg-white hover:shadow-[0_12px_40px_-24px_rgba(20,19,31,0.18)]">
+      <Link href={`/shop/${product.id}`} className="flex min-h-0 flex-1 flex-col">
+        <div className="relative aspect-4/5 shrink-0 overflow-hidden bg-surface-container">
+          <Image
+            src={product.image}
+            alt={product.name}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 22vw"
+          />
+          {product.tag ? (
+            <span className="absolute left-3 top-3 z-10 rounded-full bg-ink px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
+              {product.tag}
+            </span>
+          ) : null}
+        </div>
+
+        <div className="flex flex-1 flex-col px-4 pb-4 pt-4">
+          <p className="mb-1.5 truncate text-[10px] uppercase tracking-widest text-muted">
+            {product.category}
+          </p>
+          <h4 className="line-clamp-2 text-[15px] font-semibold leading-snug text-ink lg:text-base">
+            {product.name}
+          </h4>
+          {product.cardSubtitle ? (
+            <p className="mt-1.5 text-[11px] font-medium text-body-muted">
+              {product.cardSubtitle}
+            </p>
+          ) : null}
+          {description ? (
+            <p className="mt-2 line-clamp-3 text-[12px] leading-relaxed text-body-muted">
+              {description}
+            </p>
+          ) : null}
+
+          <span className="on-card-hover-gradient mt-auto inline-flex w-fit items-center gap-1 rounded-md border border-border bg-surface-container px-2.5 py-1.5 pt-3 text-[9px] font-semibold uppercase tracking-wide text-ink transition-all duration-200">
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+            View &amp; quote
+          </span>
+        </div>
+      </Link>
+    </div>
+  );
+}
+
+function CarouselNavButton({
+  direction,
+  onClick,
+  disabled,
+  label,
+}: {
+  direction: "prev" | "next";
+  onClick: () => void;
+  disabled: boolean;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      className="inline-flex size-10 items-center justify-center rounded-full border border-border bg-surface-card text-ink shadow-sm transition-all duration-200 hover:border-border hover:bg-white disabled:pointer-events-none disabled:opacity-35"
+    >
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        aria-hidden
+      >
+        {direction === "prev" ? (
+          <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+        ) : (
+          <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+        )}
+      </svg>
+    </button>
+  );
 }
 
 export default function FeaturedProducts() {
@@ -26,6 +123,7 @@ export default function FeaturedProducts() {
   const [highlight, setHighlight] = useState<HighlightFilter>("all");
   const [selectedEquipment, setSelectedEquipment] = useState<Set<string>>(() => new Set());
   const [equipmentExpanded, setEquipmentExpanded] = useState(false);
+  const [carouselStart, setCarouselStart] = useState(0);
 
   const equipmentOptions = useMemo(
     () => getFeaturedSidebarEquipmentFilters(activeTab),
@@ -36,6 +134,10 @@ export default function FeaturedProducts() {
     setSelectedEquipment(new Set());
     setEquipmentExpanded(false);
   }, [activeTab]);
+
+  useEffect(() => {
+    setCarouselStart(0);
+  }, [activeTab, highlight, search, selectedEquipment]);
 
   const filtered = useMemo(() => {
     let list =
@@ -73,7 +175,21 @@ export default function FeaturedProducts() {
     return list;
   }, [activeTab, highlight, search, selectedEquipment]);
 
-  const displayed = filtered.slice(0, 15);
+  const displayed = filtered;
+
+  const rowOne = displayed.slice(carouselStart, carouselStart + CARDS_PER_ROW);
+  const rowTwo = displayed.slice(carouselStart + CARDS_PER_ROW, carouselStart + PAGE_SIZE);
+  const maxCarouselStart = Math.max(0, displayed.length - CARDS_PER_ROW);
+  const canGoPrev = carouselStart > 0;
+  const canGoNext = carouselStart + PAGE_SIZE < displayed.length;
+
+  function goPrevRow() {
+    setCarouselStart((prev) => Math.max(0, prev - CARDS_PER_ROW));
+  }
+
+  function goNextRow() {
+    setCarouselStart((prev) => Math.min(maxCarouselStart, prev + CARDS_PER_ROW));
+  }
 
   function toggleEquipment(label: string) {
     setSelectedEquipment((prev) => {
@@ -104,8 +220,9 @@ export default function FeaturedProducts() {
     selectedEquipment.size > 0;
 
   return (
-    <section className="bg-cream py-24">
+    <section className="bg-white py-24">
       <Container>
+        <div className="rounded-[2rem] border border-border/50 bg-surface-container p-5 md:p-8 lg:p-10">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <SectionHeader
             eyebrow="Shop Our Range"
@@ -114,7 +231,7 @@ export default function FeaturedProducts() {
           />
           <Link
             href="/shop"
-            className="text-sand text-sm font-medium tracking-wider hover:text-sand-dark transition-colors shrink-0 flex items-center gap-2"
+            className="flex shrink-0 items-center gap-2 text-sm font-medium tracking-wider text-ink/70 transition-colors hover:text-ink"
           >
             View All →
           </Link>
@@ -132,7 +249,7 @@ export default function FeaturedProducts() {
             >
               {tab}
               {activeTab === tab && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-sand" />
+                <span className="brand-gradient-bg absolute bottom-0 left-0 right-0 h-0.5" />
               )}
             </button>
           ))}
@@ -158,12 +275,12 @@ export default function FeaturedProducts() {
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search name, category, equipment…"
                   autoComplete="off"
-                  className="w-full rounded-xl border border-border bg-white pl-11 pr-4 py-3 text-sm text-charcoal shadow-[0_2px_12px_rgba(26,31,46,0.04)] placeholder:text-muted/80 outline-none focus:border-sand focus:ring-2 focus:ring-sand/20"
+                  className="w-full rounded-xl border border-border bg-surface-card pl-11 pr-4 py-3 text-sm text-charcoal shadow-[0_2px_12px_rgba(26,31,46,0.04)] placeholder:text-muted/80 outline-none focus:border-ink/20 focus:ring-2 focus:ring-ink/10"
                 />
               </div>
             </div>
 
-            <div className="rounded-xl border border-border bg-white p-4 md:p-5 shadow-[0_2px_12px_rgba(26,31,46,0.04)] space-y-6">
+            <div className="rounded-xl border border-border/60 bg-surface-card p-4 md:p-5 shadow-[0_2px_12px_rgba(26,31,46,0.04)] space-y-6">
               <h3 className="text-[15px] font-semibold text-charcoal tracking-tight">
                 Filter by
               </h3>
@@ -186,9 +303,9 @@ export default function FeaturedProducts() {
                             type="checkbox"
                             checked={selectedEquipment.has(opt)}
                             onChange={() => toggleEquipment(opt)}
-                            className="mt-0.5 size-[15px] shrink-0 rounded border-border text-sand accent-sand focus:ring-sand/40 focus:ring-offset-0 cursor-pointer"
+                            className="mt-0.5 size-[15px] shrink-0 rounded border-border text-ink accent-ink focus:ring-ink/20 focus:ring-offset-0 cursor-pointer"
                           />
-                          <span className="text-[13px] text-charcoal leading-snug group-hover:text-navy transition-colors">
+                          <span className="text-[13px] text-charcoal leading-snug group-hover:text-ink transition-colors">
                             {opt}
                           </span>
                         </label>
@@ -200,7 +317,7 @@ export default function FeaturedProducts() {
                   <button
                     type="button"
                     onClick={() => setEquipmentExpanded((e) => !e)}
-                    className="mt-4 text-[13px] font-semibold text-navy hover:text-sand underline underline-offset-2 transition-colors"
+                    className="mt-4 text-[13px] font-semibold text-ink/70 hover:text-ink underline underline-offset-2 transition-colors"
                   >
                     {equipmentExpanded ? "Show less" : `See ${hiddenEquipmentCount} more`}
                   </button>
@@ -225,8 +342,8 @@ export default function FeaturedProducts() {
                       onClick={() => setHighlight(val)}
                       className={`rounded-full px-3 py-1.5 text-[11px] font-semibold tracking-wide border transition-colors ${
                         highlight === val
-                          ? "border-sand bg-sand text-white"
-                          : "border-border bg-offwhite text-muted hover:border-sand/40 hover:text-charcoal"
+                          ? "brand-gradient-bg border-transparent text-white"
+                          : "border-border bg-surface-container text-muted hover:border-border hover:text-charcoal"
                       }`}
                     >
                       {label}
@@ -239,7 +356,7 @@ export default function FeaturedProducts() {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="text-[11px] font-semibold text-sand hover:text-sand-dark underline underline-offset-2"
+                  className="text-[11px] font-semibold text-ink/70 hover:text-ink underline underline-offset-2"
                 >
                   Clear all filters
                 </button>
@@ -255,60 +372,63 @@ export default function FeaturedProducts() {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="text-xs font-bold uppercase tracking-wider text-sand hover:text-sand-dark underline underline-offset-2"
+                  className="text-xs font-bold uppercase tracking-wider text-ink/70 hover:text-ink underline underline-offset-2"
                 >
                   Clear filters
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-3.5 lg:gap-4">
-                {displayed.map((product) => (
-                  <div
-                    key={product.id}
-                    className="group relative bg-white border border-border hover:border-sand/40 transition-all duration-300 hover:shadow-md rounded-lg overflow-hidden flex flex-col"
-                  >
-                    <Link href={`/shop/${product.id}`} className="flex flex-col flex-1 min-h-0">
-                      <div className="relative aspect-5/6 overflow-hidden bg-cream shrink-0">
-                        <Image
-                          src={product.image}
-                          alt={product.name}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          sizes="(max-width: 640px) 45vw, (max-width: 1024px) 28vw, 18vw"
-                        />
-                        {product.tag ? (
-                          <span className="absolute top-2 left-2 bg-sand text-white text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 z-10 rounded-full">
-                            {product.tag}
-                          </span>
-                        ) : null}
-                      </div>
-
-                      <div className="px-3 pt-3 pb-10 flex flex-col flex-1">
-                        <p className="text-[9px] text-muted tracking-widest uppercase mb-1 truncate">
-                          {product.category}
-                        </p>
-                        <h4 className="text-[13px] font-medium text-charcoal leading-snug group-hover:text-sand transition-colors line-clamp-2">
-                          {product.name}
-                        </h4>
-                        {product.cardSubtitle ? (
-                          <p className="text-[10px] text-muted mt-1 leading-snug line-clamp-2">
-                            {product.cardSubtitle}
-                          </p>
-                        ) : null}
-                      </div>
-                    </Link>
-
-                    <Link
-                      href={`/shop/${product.id}`}
-                      className="absolute bottom-2.5 right-2.5 z-10 inline-flex items-center gap-1 text-[9px] font-bold tracking-wide uppercase px-2.5 py-1 rounded-full transition-all duration-200 shadow-sm bg-white border border-navy/20 text-navy hover:bg-navy hover:text-white"
-                    >
-                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                        <path d="M5 12h14M12 5l7 7-7 7" />
-                      </svg>
-                      View & quote
-                    </Link>
+              <div className="space-y-5">
+                <div className="flex items-stretch gap-3 sm:gap-4 lg:gap-5">
+                  <div className="min-w-0 flex-1 space-y-5">
+                    {[rowOne, rowTwo].map((rowProducts, rowIndex) => {
+                      const slots = Array.from(
+                        { length: CARDS_PER_ROW },
+                        (_, i) => rowProducts[i] ?? null
+                      );
+                      return (
+                        <div
+                          key={rowIndex}
+                          className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5"
+                        >
+                          {slots.map((product, slotIndex) =>
+                            product ? (
+                              <FeaturedProductCard key={product.id} product={product} />
+                            ) : (
+                              <div
+                                key={`empty-${rowIndex}-${slotIndex}`}
+                                className="hidden rounded-xl border border-dashed border-border/60 bg-offwhite/50 lg:block"
+                                aria-hidden
+                              />
+                            )
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
+
+                  <div className="flex shrink-0 flex-col items-center justify-center gap-2 self-center">
+                    <CarouselNavButton
+                      direction="prev"
+                      onClick={goPrevRow}
+                      disabled={!canGoPrev}
+                      label="Previous products"
+                    />
+                    <CarouselNavButton
+                      direction="next"
+                      onClick={goNextRow}
+                      disabled={!canGoNext}
+                      label="Next products"
+                    />
+                  </div>
+                </div>
+
+                {displayed.length > PAGE_SIZE ? (
+                  <p className="pr-14 text-right text-[11px] text-muted">
+                    Showing {carouselStart + 1}–
+                    {Math.min(carouselStart + PAGE_SIZE, displayed.length)} of {displayed.length}
+                  </p>
+                ) : null}
               </div>
             )}
           </div>
@@ -317,13 +437,14 @@ export default function FeaturedProducts() {
         <div className="text-center mt-12">
           <Link
             href="/shop"
-            className="inline-flex items-center gap-2 border border-sand text-sand text-sm font-semibold tracking-widest uppercase px-8 py-3.5 hover:bg-sand hover:text-white transition-all duration-200"
+            className="brand-gradient-bg inline-flex items-center gap-2 px-8 py-3.5 text-sm font-semibold tracking-widest uppercase text-white transition-opacity duration-200 hover:opacity-95"
           >
             Browse Full Catalogue
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
           </Link>
+        </div>
         </div>
       </Container>
     </section>

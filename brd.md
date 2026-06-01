@@ -4,7 +4,6 @@
 1. Generate corporate enquiries and RFQ submissions from hotels, venues, caterers
 2. Allow general customers to browse products and submit cart-based RFQ
 3. Build brand trust through Company Journey, blog, client logos, testimonials
-4. Support Arabic-speaking visitors with full RTL layout
 5. Be fully self-manageable by Catertech team via admin panel
 
 ---

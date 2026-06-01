@@ -142,7 +142,7 @@ export default function AuthPageClient() {
         className="absolute inset-0 opacity-[0.07]"
         style={{
           backgroundImage:
-            "radial-gradient(circle at 20% 20%, #C4A265 0%, transparent 45%), radial-gradient(circle at 80% 60%, #C4A265 0%, transparent 35%)",
+            "radial-gradient(circle at 20% 20%, #322b81 0%, transparent 45%), radial-gradient(circle at 80% 60%, #c21722 0%, transparent 35%)",
         }}
       />
       <div className="absolute top-0 left-0 right-0 h-px bg-white/10" />

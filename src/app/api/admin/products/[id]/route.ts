@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { products } from "@/db/schema";
+import { products, type ProductAttributeValue } from "@/db/schema";
 import {
   buildCategoryDisplayLabel,
   validateSubcategoryForCategory,
@@ -18,6 +18,7 @@ const updateSchema = z.object({
   isAvailable: z.boolean().optional(),
   isFeatured: z.boolean().optional(),
   published: z.boolean().optional(),
+  attributes: z.record(z.string(), z.unknown()).optional(),
 });
 
 export async function GET(
@@ -113,6 +114,10 @@ export async function PUT(
       isAvailable: d.isAvailable ?? row.isAvailable,
       isFeatured: d.isFeatured ?? row.isFeatured,
       published: d.published ?? row.published,
+      attributes:
+        d.attributes !== undefined
+          ? (d.attributes as Record<string, ProductAttributeValue>)
+          : row.attributes,
       updatedAt: new Date(),
     })
     .where(eq(products.id, id))

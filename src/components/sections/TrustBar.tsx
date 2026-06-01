@@ -37,7 +37,9 @@ function StatItem({ value, suffix, label }: (typeof STATS)[0]) {
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+      ([entry]) => {
+        if (entry.isIntersecting) setVisible(true);
+      },
       { threshold: 0.5 }
     );
     if (ref.current) observer.observe(ref.current);
@@ -45,11 +47,12 @@ function StatItem({ value, suffix, label }: (typeof STATS)[0]) {
   }, []);
 
   return (
-    <div ref={ref} className="flex flex-col items-center text-center px-6">
-      <span className="font-serif text-4xl md:text-5xl font-medium text-sand leading-none mb-2">
-        {count}{suffix}
+    <div ref={ref} className="flex flex-col items-center px-6 text-center">
+      <span className="font-display mb-2 text-4xl leading-none font-bold text-ink md:text-5xl">
+        {count}
+        {suffix}
       </span>
-      <span className="text-white/50 text-xs tracking-[0.15em] uppercase font-medium">
+      <span className="text-xs font-medium uppercase tracking-[0.15em] text-muted">
         {label}
       </span>
     </div>
@@ -58,9 +61,9 @@ function StatItem({ value, suffix, label }: (typeof STATS)[0]) {
 
 export default function TrustBar() {
   return (
-    <section className="bg-navy border-y border-white/5 py-14">
+    <section className="border-y border-border/70 bg-white py-14">
       <Container>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-0 divide-x divide-white/10">
+        <div className="grid grid-cols-2 gap-y-10 divide-x divide-border lg:grid-cols-4">
           {STATS.map((stat, i) => (
             <StatItem key={i} {...stat} />
           ))}

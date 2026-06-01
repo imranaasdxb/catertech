@@ -132,20 +132,20 @@ export default function ServiceDetailClient({ service }: { service: ServiceData 
 
                 <div className="mt-6 pt-5 border-t border-border space-y-3">
                   <div className="flex items-center gap-2.5 text-xs text-muted">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C4A265" strokeWidth="1.75">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c21722" strokeWidth="1.75">
                       <circle cx="12" cy="12" r="10" />
                       <polyline points="12 6 12 12 16 14" />
                     </svg>
                     Response within 4 business hours
                   </div>
                   <div className="flex items-center gap-2.5 text-xs text-muted">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C4A265" strokeWidth="1.75">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c21722" strokeWidth="1.75">
                       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                     </svg>
                     Quality assured since 2005
                   </div>
                   <div className="flex items-center gap-2.5 text-xs text-muted">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C4A265" strokeWidth="1.75">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c21722" strokeWidth="1.75">
                       <rect x="1" y="3" width="15" height="13" rx="1" />
                       <path d="M16 8h4l3 5v3h-7V8z" />
                       <circle cx="5.5" cy="18.5" r="2.5" />

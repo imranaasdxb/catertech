@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import Container from "@/components/Container";
+import logo from "@/assets/logo.png";
 import { useCart } from "@/lib/cart-context";
 
 const NAV_LINKS = [
@@ -17,22 +19,14 @@ const NAV_LINKS = [
   { label: "Contact", href: "/contact" },
 ];
 
+const headerBtnBase =
+  "btn-outline-ghost shrink-0 rounded-xl px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.12em]";
+
 export default function Header() {
   const pathname = usePathname();
   const { totalItems } = useCart();
-  const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-
-  const isShopProductDetail =
-    pathname.length > "/shop".length && pathname.startsWith("/shop/");
-  const barSolid = scrolled || isShopProductDetail;
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 15);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
@@ -41,77 +35,69 @@ export default function Header() {
     };
   }, [menuOpen]);
 
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const navLinkClass = (href: string) =>
+    `text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors duration-200 ${
+      pathname === href ? "text-ink" : "text-body-muted hover:text-ink"
+    }`;
+
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          barSolid
-            ? "bg-white/80 backdrop-blur-xl border-b border-border/60 shadow-[0_1px_16px_rgba(26,31,46,0.08)]"
-            : "bg-transparent"
+        className={`site-header fixed top-0 left-0 right-0 z-50 ${
+          scrolled ? "site-header--scrolled" : ""
         }`}
       >
-        <Container className="h-[72px] flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 shrink-0">
-            <span
-              className={`text-lg font-bold tracking-[0.18em] uppercase transition-colors duration-300 ${
-                barSolid ? "text-navy" : "text-white"
-              }`}
-            >
-              Cater
-            </span>
-            <span className="text-lg font-light tracking-[0.18em] uppercase text-sand">
-              TECH
-            </span>
+        <Container className="flex h-[var(--header-height)] min-h-[84px] items-center justify-between gap-4">
+          <Link
+            href="/"
+            className="flex shrink-0 items-center rounded-lg bg-white px-2 py-1.5 ring-1 ring-border/60"
+            aria-label="Catertech home"
+          >
+            <Image
+              src={logo}
+              alt="Catertech"
+              width={300}
+              height={130}
+              priority
+              className="h-9 w-auto max-h-[36px] object-contain"
+            />
           </Link>
 
-          {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-7">
+          <nav className="hidden items-center gap-6 lg:flex xl:gap-7">
             {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`text-xs font-medium tracking-widest uppercase transition-colors duration-200 hover:text-sand ${
-                  barSolid ? "text-charcoal" : "text-white/80"
-                } ${pathname === link.href ? "text-sand" : ""}`}
-              >
+              <Link key={link.href} href={link.href} className={navLinkClass(link.href)}>
                 {link.label}
               </Link>
             ))}
           </nav>
 
-          {/* Right Actions */}
-          <div className="hidden lg:flex items-center gap-3">
+          <div className="hidden items-center gap-2.5 lg:flex">
             <Link
               href="/auth?tab=login"
-              className={`text-xs font-semibold tracking-widest uppercase px-4 py-2.5 border transition-colors duration-200 shrink-0 ${
-                barSolid
-                  ? "border-border text-charcoal hover:border-sand hover:text-sand"
-                  : "border-white/35 text-white/90 hover:border-sand hover:text-sand"
-              }`}
+              className={`${headerBtnBase} btn-hover-primary`}
             >
               Log in
             </Link>
             <Link
               href="/auth?tab=signup"
-              className="bg-sand text-white text-xs font-semibold tracking-widest uppercase px-4 py-2.5 hover:bg-sand-dark transition-colors duration-200 shrink-0"
+              className={`${headerBtnBase} btn-hover-accent`}
             >
               Sign up
             </Link>
-            <button
-              className={`text-xs font-medium tracking-widest uppercase transition-colors duration-200 hover:text-sand ${
-                barSolid ? "text-muted" : "text-white/70"
-              }`}
-            >
+            <button className="px-1 text-[11px] font-medium uppercase tracking-[0.12em] text-muted transition-colors duration-200 hover:text-ink">
               EN&nbsp;·&nbsp;AR
             </button>
 
-            {/* Cart */}
             <Link
               href="/cart"
-              className={`relative transition-colors duration-200 hover:text-sand ${
-                barSolid ? "text-charcoal" : "text-white"
-              }`}
+              className="relative text-ink/70 transition-colors duration-200 hover:text-ink"
               aria-label={`Cart — ${totalItems} item${totalItems !== 1 ? "s" : ""}`}
             >
               <svg
@@ -126,34 +112,16 @@ export default function Header() {
                 <line x1="3" y1="6" x2="21" y2="6" />
                 <path d="M16 10a4 4 0 01-8 0" />
               </svg>
-              {totalItems > 0 ? (
-                <span className="absolute -top-1.5 -right-1.5 bg-sand text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
-                  {totalItems > 99 ? "99+" : totalItems}
-                </span>
-              ) : (
-                <span className="absolute -top-1.5 -right-1.5 bg-sand text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
-                  0
-                </span>
-              )}
-            </Link>
-
-            {/* CTA */}
-            <Link
-              href="/trade/rfq"
-              className="bg-sand text-white text-xs font-semibold tracking-widest uppercase px-5 py-2.5 hover:bg-sand-dark transition-colors duration-200"
-            >
-              Get Quote
+              <span className="brand-gradient-bg absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] leading-none font-bold text-white">
+                {totalItems > 99 ? "99+" : totalItems}
+              </span>
             </Link>
           </div>
 
-          {/* Mobile Hamburger */}
-          <div className="lg:hidden flex items-center gap-4">
-            {/* Mobile Cart */}
+          <div className="flex items-center gap-4 lg:hidden">
             <Link
               href="/cart"
-              className={`relative transition-colors duration-200 hover:text-sand ${
-                barSolid ? "text-charcoal" : "text-white"
-              }`}
+              className="relative text-ink/70 transition-colors duration-200 hover:text-ink"
               aria-label="Cart"
             >
               <svg
@@ -169,32 +137,30 @@ export default function Header() {
                 <path d="M16 10a4 4 0 01-8 0" />
               </svg>
               {totalItems > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-sand text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                <span className="brand-gradient-bg absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] leading-none font-bold text-white">
                   {totalItems}
                 </span>
               )}
             </Link>
 
             <button
-              className={`flex flex-col gap-1.5 p-1 transition-colors duration-200 ${
-                barSolid ? "text-charcoal" : "text-white"
-              }`}
+              className="flex flex-col gap-1.5 p-1 text-ink transition-colors duration-200"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Toggle menu"
             >
               <span
-                className={`block h-0.5 bg-current transition-all duration-300 origin-center ${
-                  menuOpen ? "w-6 rotate-45 translate-y-2" : "w-6"
+                className={`block h-0.5 origin-center bg-current transition-all duration-300 ${
+                  menuOpen ? "w-6 translate-y-2 rotate-45" : "w-6"
                 }`}
               />
               <span
                 className={`block h-0.5 bg-current transition-all duration-300 ${
-                  menuOpen ? "opacity-0 w-0" : "w-4"
+                  menuOpen ? "w-0 opacity-0" : "w-4"
                 }`}
               />
               <span
-                className={`block h-0.5 bg-current transition-all duration-300 origin-center ${
-                  menuOpen ? "w-6 -rotate-45 -translate-y-2" : "w-6"
+                className={`block h-0.5 origin-center bg-current transition-all duration-300 ${
+                  menuOpen ? "w-6 -translate-y-2 -rotate-45" : "w-6"
                 }`}
               />
             </button>
@@ -202,22 +168,21 @@ export default function Header() {
         </Container>
       </header>
 
-      {/* Mobile Menu Overlay */}
       <div
-        className={`fixed inset-0 z-40 bg-navy transition-opacity duration-300 lg:hidden ${
+        className={`fixed inset-0 z-40 bg-white transition-opacity duration-300 lg:hidden ${
           menuOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0"
         }`}
       >
-        <div className="flex flex-col h-full px-8 pt-24 pb-10">
+        <div className="flex h-full flex-col px-8 pt-24 pb-10">
           <nav className="flex flex-col gap-1">
             {NAV_LINKS.map((link, i) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setMenuOpen(false)}
-                className="text-white/80 hover:text-white font-light text-3xl py-3 border-b border-white/10 transition-colors duration-150"
+                className="border-b border-border py-3 font-display text-3xl font-light text-ink/80 transition-colors duration-150 hover:text-ink"
                 style={{ transitionDelay: `${i * 40}ms` }}
               >
                 {link.label}
@@ -230,26 +195,19 @@ export default function Header() {
               <Link
                 href="/auth?tab=login"
                 onClick={() => setMenuOpen(false)}
-                className="flex-1 border border-white/25 text-white text-center text-sm font-semibold tracking-widest uppercase py-4 hover:border-sand hover:text-sand transition-colors"
+                className="btn-outline-ghost btn-hover-primary flex-1 rounded-xl py-4 text-center text-sm font-semibold uppercase tracking-widest"
               >
                 Log in
               </Link>
               <Link
                 href="/auth?tab=signup"
                 onClick={() => setMenuOpen(false)}
-                className="flex-1 bg-sand text-white text-center text-sm font-semibold tracking-widest uppercase py-4 hover:bg-sand-dark transition-colors"
+                className="btn-outline-ghost btn-hover-accent flex-1 rounded-xl py-4 text-center text-sm font-semibold uppercase tracking-widest"
               >
                 Sign up
               </Link>
             </div>
-            <Link
-              href="/trade/rfq"
-              onClick={() => setMenuOpen(false)}
-              className="bg-white/10 border border-white/20 text-white text-sm font-semibold tracking-widest uppercase px-6 py-4 text-center hover:bg-white/15 transition-colors duration-200"
-            >
-              Get a Quote
-            </Link>
-            <div className="flex items-center justify-between text-sm text-white/50">
+            <div className="flex items-center justify-between text-sm text-muted">
               <span>+971 4 XXX XXXX</span>
               <span>EN · AR</span>
             </div>

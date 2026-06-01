@@ -165,12 +165,10 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
       },
     }));
 
-    const defaultHint =
-      hint ??
-      "Choose images below — previews stay local until you save. They upload to storage when you create or update.";
+    const showHint = Boolean(hint?.trim());
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         <input
           ref={fileRef}
           id={id}
@@ -199,7 +197,7 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
           </label>
         </div>
 
-        <p className={admin.hint}>{defaultHint}</p>
+        {showHint ? <p className={admin.hint}>{hint}</p> : null}
 
         {lastError ? (
           <p
@@ -224,7 +222,15 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
             ))}
           </div>
         ) : items.length === 0 ? (
-          <p className={`${admin.hint}`}>No images yet — pick files above.</p>
+          <label
+            htmlFor={id}
+            className={`flex min-h-[7.5rem] w-full cursor-pointer items-center justify-center rounded-xl border border-dashed border-black/12 bg-[#F5F5F7]/50 transition-colors hover:border-[#5B2D9B]/35 hover:bg-[#faf8ff]/80 ${committing ? "pointer-events-none opacity-50" : ""}`}
+          >
+            <span className="inline-flex items-center gap-2 text-xs font-medium text-[#1a1a1a]/40">
+              <ImagePlus className="h-4 w-4 text-[#5B2D9B]/60" aria-hidden />
+              Add images
+            </span>
+          </label>
         ) : (
           <div
             role="list"

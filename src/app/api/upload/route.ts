@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { createPresignedPutUrl, putPublicObjectToR2 } from "@/lib/r2";
-import { getSessionUser } from "@/lib/auth-user";
+import { isAdminSession } from "@/lib/auth-user";
 
 export const maxDuration = 120;
 
@@ -47,8 +47,7 @@ async function unauthorized() {
 
 /** Multipart: body field `file` — stored from the server on R2 (no browser→R2 CORS). */
 export async function POST(request: Request) {
-  const s = await getSessionUser();
-  if (!s || s.role !== "admin") {
+  if (!(await isAdminSession())) {
     return unauthorized();
   }
 

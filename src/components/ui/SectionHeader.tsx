@@ -16,28 +16,28 @@ export default function SectionHeader({
   className = "",
 }: SectionHeaderProps) {
   const textAlign = align === "center" ? "text-center items-center" : "text-left items-start";
-  const titleColor = light ? "text-white" : "text-charcoal";
-  const eyebrowColor = light ? "text-sand-light" : "text-sand";
-  const subtitleColor = light ? "text-white/60" : "text-muted";
-  const lineColor = light ? "bg-sand-light" : "bg-sand";
+  const titleColor = light ? "text-white" : "text-ink";
+  const eyebrowColor = light ? "text-white/70" : "text-muted";
+  const subtitleColor = light ? "text-white/65" : "text-body-muted";
+  const lineColor = light ? "bg-white/40" : "bg-ink/15";
 
   return (
     <div className={`flex flex-col ${textAlign} ${className}`}>
       {eyebrow && (
         <span
-          className={`text-xs font-semibold tracking-[0.2em] uppercase mb-4 ${eyebrowColor}`}
+          className={`mb-4 text-[11px] font-semibold uppercase tracking-[0.2em] ${eyebrowColor}`}
         >
           {eyebrow}
         </span>
       )}
-      <div className={`w-10 h-0.5 mb-5 ${lineColor}`} />
+      <div className={`mb-5 h-0.5 w-10 ${lineColor}`} />
       <h2
-        className={`font-serif text-3xl md:text-4xl lg:text-[2.6rem] leading-tight ${titleColor}`}
+        className={`font-display text-3xl leading-tight md:text-4xl lg:text-[2.6rem] ${titleColor}`}
       >
         {title}
       </h2>
       {subtitle && (
-        <p className={`mt-4 text-base md:text-lg leading-relaxed max-w-xl ${subtitleColor}`}>
+        <p className={`mt-4 max-w-xl text-base leading-relaxed md:text-lg ${subtitleColor}`}>
           {subtitle}
         </p>
       )}

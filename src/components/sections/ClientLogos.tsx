@@ -1,4 +1,7 @@
+"use client";
+
 import Container from "@/components/Container";
+import { LogoCloud, type Logo } from "@/components/ui/logo-cloud-3";
 
 const CLIENTS = [
   "Marriott Hotels",
@@ -15,37 +18,33 @@ const CLIENTS = [
   "Hilton",
 ];
 
-export default function ClientLogos() {
-  const doubled = [...CLIENTS, ...CLIENTS];
+const logos: Logo[] = CLIENTS.map((name) => ({
+  alt: name,
+  label: name,
+}));
 
+export default function ClientLogos() {
   return (
-    <section className="bg-cream py-16 overflow-hidden">
-      <Container className="mb-10">
-        <p className="text-center text-xs tracking-[0.25em] uppercase text-muted font-medium">
-          Trusted by Leading Hospitality Brands
-        </p>
+    <section className="relative overflow-x-hidden bg-white py-14 md:py-16">
+      <Container className="relative z-10">
+        <div className="relative mx-auto max-w-3xl text-center">
+          <h2 className="mb-5 text-xl font-medium tracking-tight text-ink md:text-3xl">
+            <span className="text-body-muted">Trusted by leading hospitality brands.</span>
+            <br />
+            <span className="font-semibold text-ink">Partners across Dubai &amp; the UAE.</span>
+          </h2>
+
+          <div className="mx-auto my-5 h-px max-w-sm bg-border mask-[linear-gradient(to_right,transparent,black,transparent)]" />
+        </div>
       </Container>
 
-      {/* Marquee */}
-      <div className="relative overflow-hidden">
-        {/* Fade edges */}
-        <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-cream to-transparent z-10 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-cream to-transparent z-10 pointer-events-none" />
+      <LogoCloud logos={logos} />
 
-        <div className="marquee-track flex items-center gap-0 whitespace-nowrap" style={{ width: "max-content" }}>
-          {doubled.map((name, i) => (
-            <div
-              key={i}
-              className="inline-flex items-center justify-center px-10 py-3 mx-2 border border-border/60 bg-white/60 hover:border-sand/40 hover:bg-white transition-all duration-200 group cursor-default"
-              style={{ minWidth: 180 }}
-            >
-              <span className="text-muted group-hover:text-charcoal text-xs font-medium tracking-widest uppercase transition-colors duration-200 select-none">
-                {name}
-              </span>
-            </div>
-          ))}
+      <Container className="relative z-10 mt-5">
+        <div className="mx-auto max-w-3xl">
+          <div className="h-px bg-border mask-[linear-gradient(to_right,transparent,black,transparent)]" />
         </div>
-      </div>
+      </Container>
     </section>
   );
 }

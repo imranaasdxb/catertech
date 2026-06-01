@@ -27,6 +27,8 @@ export default async function AdminProductsPage({ searchParams }: SearchProps) {
     slug: products.slug,
     category: products.category,
     published: products.published,
+    isFeatured: products.isFeatured,
+    isAvailable: products.isAvailable,
     updatedAt: products.updatedAt,
     images: products.images,
   };
@@ -52,6 +54,8 @@ export default async function AdminProductsPage({ searchParams }: SearchProps) {
     category: r.category ?? null,
     galleryCount: r.images?.filter(Boolean).length ?? 0,
     published: r.published,
+    isFeatured: r.isFeatured,
+    isAvailable: r.isAvailable,
     thumbUrl: r.images?.[0] ?? null,
   }));
 
@@ -74,6 +78,7 @@ export default async function AdminProductsPage({ searchParams }: SearchProps) {
       </div>
       <AdminProductsTable
         rows={rows}
+        initialSearch={q}
         emptyMessage={q ? "No products match your search." : "No products yet."}
       />
     </div>

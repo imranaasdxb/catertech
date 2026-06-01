@@ -13,6 +13,16 @@ type Props = {
   initialCategoryId?: string | null;
   initialSubCategoryId?: string | null;
   hint?: string;
+  /** Top toolbar: category + sub-category in one row */
+  layout?: "default" | "row";
+  onSelectionChange?: (selection: {
+    categoryId: string;
+    subCategoryId: string;
+    categoryName: string;
+    subCategoryName: string;
+    hasSubcategories: boolean;
+    subCategoryRequired: boolean;
+  }) => void;
 };
 
 export function notifyProductTaxonomyChanged() {
@@ -25,6 +35,8 @@ export function ProductCategorySelects({
   initialCategoryId = null,
   initialSubCategoryId = null,
   hint,
+  layout = "default",
+  onSelectionChange,
 }: Props) {
   const [taxonomy, setTaxonomy] = useState<TaxonomyRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +59,7 @@ export function ProductCategorySelects({
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
 
@@ -57,6 +70,7 @@ export function ProductCategorySelects({
   }, [load]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCategoryId(initialCategoryId ?? "");
     setSubCategoryId(initialSubCategoryId ?? "");
   }, [initialCategoryId, initialSubCategoryId]);
@@ -69,11 +83,32 @@ export function ProductCategorySelects({
   useEffect(() => {
     if (!subCategoryId) return;
     const ok = subs.some((s) => s.id === subCategoryId);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!ok) setSubCategoryId("");
   }, [subs, subCategoryId]);
 
+  useEffect(() => {
+    const category = taxonomy.find((x) => x.id === categoryId);
+    const subCategory = subs.find((x) => x.id === subCategoryId);
+    const hasSubcategories = subs.length > 0;
+    onSelectionChange?.({
+      categoryId,
+      subCategoryId,
+      categoryName: category?.name ?? "",
+      subCategoryName: subCategory?.name ?? "",
+      hasSubcategories,
+      subCategoryRequired: hasSubcategories,
+    });
+  }, [categoryId, onSelectionChange, subCategoryId, subs, taxonomy]);
+
+  const isRow = layout === "row";
+  const fieldGrid = isRow
+    ? "flex flex-col gap-3 sm:flex-row sm:items-end"
+    : "grid grid-cols-1 gap-4 sm:grid-cols-2";
+  const fieldWrap = isRow ? "min-w-0 flex-1 sm:max-w-[240px]" : "";
+
   return (
-    <div className="space-y-3">
+    <div className={isRow ? "space-y-2" : "space-y-3"}>
       <input type="hidden" name="categoryId" value={categoryId} readOnly />
       <input type="hidden" name="subCategoryId" value={subCategoryId} readOnly />
 
@@ -83,8 +118,8 @@ export function ProductCategorySelects({
       {loading ? (
         <p className={`${admin.hint}`}>Loading categories…</p>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
+        <div className={fieldGrid}>
+          <div className={fieldWrap}>
             <label htmlFor="product-category-id" className={admin.labelModern}>
               Category
             </label>
@@ -97,7 +132,7 @@ export function ProductCategorySelects({
               }}
               className={admin.fieldModern}
             >
-              <option value="">— None —</option>
+              <option value="">— Select —</option>
               {taxonomy.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -105,9 +140,20 @@ export function ProductCategorySelects({
               ))}
             </select>
           </div>
-          <div>
+          <div className={fieldWrap}>
             <label htmlFor="product-subcategory-id" className={admin.labelModern}>
               Sub-category
+              {!isRow ? (
+                subs.length === 0 ? (
+                  <span className="ml-1 font-normal normal-case tracking-normal text-[#1a1a1a]/40">
+                    (optional — none defined)
+                  </span>
+                ) : (
+                  <span className="ml-1 font-normal normal-case tracking-normal text-[#1a1a1a]/40">
+                    (optional)
+                  </span>
+                )
+              ) : null}
             </label>
             <select
               id="product-subcategory-id"
@@ -116,7 +162,7 @@ export function ProductCategorySelects({
               onChange={(e) => setSubCategoryId(e.target.value)}
               className={admin.fieldModern}
             >
-              <option value="">— None —</option>
+              <option value="">— Optional —</option>
               {subs.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
