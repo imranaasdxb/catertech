@@ -1,87 +1,87 @@
+import Image from "next/image";
 import Link from "next/link";
 import Container from "@/components/Container";
-import SectionHeader from "@/components/ui/SectionHeader";
 
 const POSTS = [
   {
     slug: "top-catering-equipment-trends-2025",
     category: "Industry",
-    date: "12 Apr 2025",
+    date: "April 12, 2025",
     title: "Top Catering Equipment Trends Shaping UAE Events in 2025",
-    excerpt:
-      "From sustainable serving ware to smart kitchen appliances, discover what's changing in UAE's catering and hospitality space.",
-    readTime: "5 min read",
+    image:
+      "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=900&h=560&fit=crop&q=80",
+    imageAlt: "Professional chef preparing food in a commercial kitchen",
   },
   {
     slug: "how-to-plan-a-corporate-event-dubai",
     category: "Corporate",
-    date: "02 Mar 2025",
+    date: "March 02, 2025",
     title: "How to Plan a Flawless Corporate Event in Dubai",
-    excerpt:
-      "A practical guide to venue selection, equipment rental, and coordination for corporate events at Dubai's leading business venues.",
-    readTime: "7 min read",
+    image:
+      "https://images.unsplash.com/photo-1511578314322-379afb476865?w=900&h=560&fit=crop&q=80",
+    imageAlt: "Corporate conference and event setup",
   },
   {
     slug: "wedding-equipment-rental-guide-uae",
     category: "Wedding",
-    date: "18 Jan 2025",
+    date: "January 18, 2025",
     title: "The Complete Wedding Equipment Rental Guide for UAE Couples",
-    excerpt:
-      "Tables, chairs, linen, chafing dishes — everything you need to know about renting wedding equipment in Dubai and Abu Dhabi.",
-    readTime: "6 min read",
+    image:
+      "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=900&h=560&fit=crop&q=80",
+    imageAlt: "Elegant wedding reception table setting",
   },
 ];
 
 export default function BlogPreview() {
   return (
-    <section className="bg-white py-24">
+    <section className="bg-white py-16 md:py-24">
       <Container>
-        <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-          <SectionHeader
-            eyebrow="From Our Blog"
-            title="Stories & Insights"
-            subtitle="Industry news, event guides, and Catertech updates."
-          />
-          <Link
-            href="/blog"
-            className="flex shrink-0 items-center gap-2 text-sm font-medium tracking-wider text-ink/70 transition-colors hover:text-ink"
-          >
-            View All Stories →
-          </Link>
-        </div>
+        <header className="mb-12 max-w-2xl md:mb-16">
+          <h2 className="text-3xl font-bold tracking-tight text-[#0a0a0a] md:text-4xl md:leading-tight">
+            Read latest collection
+          </h2>
+          <p className="mt-4 text-base leading-relaxed text-[#6b7280] md:text-lg">
+            Industry news, event guides, and CaterTech insights for hotels, caterers,
+            and event teams across the UAE.
+          </p>
+        </header>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {POSTS.map((post, i) => (
-            <Link
-              key={i}
-              href={`/blog/${post.slug}`}
-              className="group block rounded-2xl border border-border/60 bg-surface-card transition-all duration-300 hover:-translate-y-0.5 hover:border-border hover:bg-white hover:shadow-md"
-            >
-              <div className="relative aspect-[16/9] overflow-hidden rounded-t-2xl bg-surface-container">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#6b6860" strokeWidth="1">
-                    <rect x="3" y="3" width="18" height="18" rx="1" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                  </svg>
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+          {POSTS.map((post) => (
+            <article key={post.slug}>
+              <Link href={`/blog/${post.slug}`} className="group block">
+                <div className="relative mb-4 aspect-[16/10] overflow-hidden rounded-2xl bg-[#f3f4f6]">
+                  <Image
+                    src={post.image}
+                    alt={post.imageAlt}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                  />
+                  <span className="absolute left-4 top-4 rounded-sm bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-[#0a0a0a]">
+                    {post.category}
+                  </span>
                 </div>
-                <span className="absolute left-3 top-3 bg-surface-container px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-ink">
-                  {post.category}
-                </span>
-              </div>
 
-              <div className="p-6">
-                <div className="mb-3 flex items-center gap-3 text-[11px] text-muted">
-                  <span>{post.date}</span>
-                  <span>·</span>
-                  <span>{post.readTime}</span>
-                </div>
-                <h3 className="font-display mb-3 text-lg leading-snug text-ink transition-colors group-hover:text-ink">
+                <time
+                  dateTime={post.date}
+                  className="mb-3 block text-sm text-[#9ca3af]"
+                >
+                  {post.date}
+                </time>
+
+                <h3 className="mb-5 text-xl font-bold leading-snug text-[#0a0a0a] transition-colors group-hover:text-[#322b81]">
                   {post.title}
                 </h3>
-                <p className="line-clamp-2 text-sm leading-relaxed text-body-muted">{post.excerpt}</p>
-              </div>
-            </Link>
+
+                <span className="inline-flex items-center gap-1 border-b-2 border-[#0a0a0a] pb-1 text-[11px] font-bold uppercase tracking-wide text-[#0a0a0a] transition-colors group-hover:border-[#322b81] group-hover:text-[#322b81]">
+                  Continue Reading
+                  <span aria-hidden className="text-sm leading-none">
+                    →
+                  </span>
+                </span>
+              </Link>
+            </article>
           ))}
         </div>
       </Container>

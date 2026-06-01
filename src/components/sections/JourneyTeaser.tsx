@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import { useRef } from "react";
 import Container from "@/components/Container";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -9,291 +10,391 @@ import { useGSAP } from "@gsap/react";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-const VH_PER_CHAPTER = 76;
+const BRAND_PURPLE = "#322b81";
+const BRAND_RED = "#c21722";
+const BG = "#f3f2ef";
+const COLUMN_W = 420;
+const COLUMN_GAP = 56;
+const TRACK_PAD_X = 40;
+/** Vertical inset while pinned — keeps timeline centered with space top & bottom */
+const PIN_VIEWPORT_CLASS =
+  "relative flex min-h-[calc(100svh-11rem)] w-full items-center justify-center overflow-hidden py-8 sm:py-10";
+const CARD_STACK_CLASS = "relative flex h-[min(480px,58vh)] flex-col sm:h-[min(500px,60vh)]";
 
 const MILESTONES = [
   {
-    year: "2005",
-    chapter: "01",
-    label: "The Founding",
-    event:
-      "Established in Dubai with a clear standard: reliable, premium catering equipment for the UAE's fast-growing hospitality sector.",
+    year: "2002",
+    title: "Where It All Began",
+    description:
+      "Catertech started from a small Dubai warehouse with a clear promise: dependable, hotel-grade catering supply for the UAE hospitality market.",
     image:
-      "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1100&q=82&fit=crop&crop=center",
-    alt: "Elegant fine dining table setup",
+      "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=900&h=640&fit=crop&q=80",
+    alt: "Fine dining and hospitality table setup",
+  },
+  {
+    year: "2005",
+    title: "Founded in Dubai",
+    description:
+      "Formally established to serve hotels, restaurants and banqueting teams with premium catering equipment across a fast-growing city.",
+    image:
+      "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=900&h=640&fit=crop&q=80",
+    alt: "Dubai hospitality district",
   },
   {
     year: "2010",
-    chapter: "02",
-    label: "Events Division",
-    event:
-      "Expanded into event rentals with marquees, tables, linen and staging for the region's most demanding event teams.",
+    title: "Events Division",
+    description:
+      "Event rentals joined the offer — tables, chairs, linen, staging and decor with disciplined delivery for corporate and wedding teams.",
     image:
-      "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=1100&q=82&fit=crop&crop=center",
-    alt: "Grand banquet hall event setup",
+      "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=900&h=640&fit=crop&q=80",
+    alt: "Grand banquet and event setup",
   },
   {
     year: "2015",
-    chapter: "03",
-    label: "Kitchen Equipment",
-    event:
-      "Built a commercial kitchen equipment division for restaurants, hotels and institutional clients across every Emirate.",
+    title: "Kitchen Equipment",
+    description:
+      "Commercial kitchen lines for restaurants, hotel back-of-house and institutional clients — ovens, refrigeration and prep systems.",
     image:
-      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1100&q=82&fit=crop&crop=center",
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=900&h=640&fit=crop&q=80",
     alt: "Professional commercial kitchen",
   },
   {
     year: "2020",
-    chapter: "04",
-    label: "Northern Expansion",
-    event:
-      "Opened a second warehouse and logistics centre in Ras Al Khaimah, improving reach and delivery speed across the North.",
+    title: "Northern Expansion",
+    description:
+      "A Ras Al Khaimah warehouse and logistics hub shortened lead times and extended reach across the Northern Emirates.",
     image:
-      "https://images.unsplash.com/photo-1553413077-190dd305871c?w=1100&q=82&fit=crop&crop=center",
-    alt: "Modern logistics warehouse",
+      "https://images.unsplash.com/photo-1553413077-190dd305871c?w=900&h=640&fit=crop&q=80",
+    alt: "Warehouse and logistics operations",
   },
   {
-    year: "2025",
-    chapter: "05",
-    label: "Full Event Management",
-    event:
-      "Now delivering end-to-end event support, from equipment and logistics to guest check-in, photography and digital badges.",
+    year: "2024",
+    title: "Full-Service Partner",
+    description:
+      "End-to-end support for 500+ clients — catering hire, kitchen supply, event management and digital quoting across the UAE.",
     image:
-      "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1100&q=82&fit=crop&crop=center",
-    alt: "Professional event with dramatic lighting",
+      "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=900&h=640&fit=crop&q=80",
+    alt: "Large-scale corporate event",
   },
 ];
 
-const STATS = [
-  { value: 20, suffix: "+", label: "Years" },
-  { value: 1000, suffix: "+", label: "Events" },
-  { value: 500, suffix: "+", label: "Clients" },
-];
+function buildSpringPath(points: { x: number; y: number }[]): string {
+  if (points.length === 0) return "";
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 1; i < points.length; i++) {
+    const prev = points[i - 1];
+    const curr = points[i];
+    const midX = (prev.x + curr.x) / 2;
+    const wave = i % 2 === 0 ? -78 : 78;
+    d += ` C ${midX} ${prev.y + wave}, ${midX} ${curr.y - wave}, ${curr.x} ${curr.y}`;
+  }
+  return d;
+}
+
+/** Cumulative path length at each milestone dot (for segment-by-segment draw on scroll) */
+function getCumulativePathLengths(
+  pathEl: SVGPathElement,
+  points: { x: number; y: number }[],
+): number[] {
+  if (points.length === 0) return [0];
+
+  const cumulative: number[] = [0];
+  for (let i = 1; i < points.length; i++) {
+    pathEl.setAttribute("d", buildSpringPath(points.slice(0, i + 1)));
+    cumulative.push(pathEl.getTotalLength());
+  }
+  pathEl.setAttribute("d", buildSpringPath(points));
+  return cumulative;
+}
+
+function visiblePathLength(
+  scrollProgress: number,
+  cumulative: number[],
+): number {
+  const total = cumulative[cumulative.length - 1] ?? 0;
+  if (total <= 0 || cumulative.length < 2) return 0;
+
+  const segmentCount = cumulative.length - 1;
+  const travel = scrollProgress * segmentCount;
+  const segIndex = Math.min(segmentCount - 1, Math.floor(travel));
+  const segLocal = travel - segIndex;
+  const from = cumulative[segIndex] ?? 0;
+  const to = cumulative[segIndex + 1] ?? total;
+
+  return from + (to - from) * segLocal;
+}
+
+function MilestoneText({
+  year,
+  title,
+  description,
+}: {
+  year: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="flex h-full flex-col justify-center px-1">
+      <p className="text-4xl font-bold tracking-tight text-[#1f2937] sm:text-[2.75rem]">{year}</p>
+      <h3 className="mt-2 text-lg font-bold text-[#0a0a0a] sm:text-xl">{title}</h3>
+      <p className="mt-3 max-w-[360px] text-sm leading-relaxed text-[#6b7280] sm:text-[15px]">
+        {description}
+      </p>
+    </div>
+  );
+}
+
+function MilestoneImage({ src, alt }: { src: string; alt: string }) {
+  return (
+    <div className="relative h-full min-h-[200px] w-full overflow-hidden bg-[#e5e7eb] sm:min-h-[220px]">
+      <Image src={src} alt={alt} fill className="object-cover" sizes="420px" />
+    </div>
+  );
+}
 
 export default function JourneyTeaser() {
   const sectionRef = useRef<HTMLElement>(null);
-  const panelRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const imageRefs = useRef<(HTMLImageElement | null)[]>([]);
-  const markerRefs = useRef<(HTMLSpanElement | null)[]>([]);
-  const progressRef = useRef<HTMLDivElement>(null);
-  const statCountRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const pinStageRef = useRef<HTMLDivElement>(null);
+  const pinRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const pathRef = useRef<SVGPathElement>(null);
+  const dotRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const pathMetricsRef = useRef({ total: 0, cumulative: [0] as number[] });
 
   useGSAP(
     () => {
-      panelRefs.current.forEach((panel, index) => {
-        if (!panel) return;
-        gsap.set(panel, {
-          autoAlpha: index === 0 ? 1 : 0,
-          y: index === 0 ? 0 : 18,
-          pointerEvents: index === 0 ? "auto" : "none",
-        });
-      });
+      const pinStage = pinStageRef.current;
+      const pin = pinRef.current;
+      const track = trackRef.current;
+      const pathEl = pathRef.current;
+      if (!pinStage || !pin || !track || !pathEl) return;
 
-      imageRefs.current.forEach((image, index) => {
-        if (!image) return;
-        gsap.set(image, {
-          autoAlpha: index === 0 ? 1 : 0,
-          scale: index === 0 ? 1 : 1.025,
-        });
-      });
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-      STATS.forEach((stat, index) => {
-        const el = statCountRefs.current[index];
-        if (!el) return;
+      const getScrollDistance = () =>
+        Math.max(0, track.scrollWidth - window.innerWidth + TRACK_PAD_X * 2);
 
-        gsap.fromTo(
-          el,
-          { textContent: "0" },
-          {
-            textContent: stat.value,
-            duration: 1.15,
-            ease: "power2.out",
-            snap: { textContent: 1 },
-            scrollTrigger: {
-              trigger: sectionRef.current,
-              start: "top 72%",
-              once: true,
-            },
-          }
-        );
-      });
+      const syncPathMetrics = () => {
+        const trackRect = track.getBoundingClientRect();
+        const points = dotRefs.current
+          .map((dot) => {
+            if (!dot) return null;
+            const r = dot.getBoundingClientRect();
+            return {
+              x: r.left + r.width / 2 - trackRect.left,
+              y: r.top + r.height / 2 - trackRect.top,
+            };
+          })
+          .filter((p): p is { x: number; y: number } => p !== null);
 
-      function showChapter(index: number) {
-        panelRefs.current.forEach((panel, panelIndex) => {
-          if (!panel) return;
-          gsap.to(panel, {
-            autoAlpha: panelIndex === index ? 1 : 0,
-            y: panelIndex === index ? 0 : panelIndex < index ? -14 : 18,
-            pointerEvents: panelIndex === index ? "auto" : "none",
-            duration: panelIndex === index ? 0.62 : 0.28,
-            ease: "power3.out",
-          });
+        const cumulative = getCumulativePathLengths(pathEl, points);
+        const total = cumulative[cumulative.length - 1] ?? 0;
+        pathMetricsRef.current = { total, cumulative };
+        return total;
+      };
+
+      const setupScroll = () => {
+        const pathLen = syncPathMetrics();
+        if (!pathLen) return;
+
+        gsap.set(pathEl, {
+          strokeDasharray: pathLen,
+          strokeDashoffset: pathLen,
+          opacity: 1,
         });
 
-        imageRefs.current.forEach((image, imageIndex) => {
-          if (!image) return;
-          gsap.to(image, {
-            autoAlpha: imageIndex === index ? 1 : 0,
-            scale: imageIndex === index ? 1 : 1.025,
-            duration: 0.72,
-            ease: "power2.out",
-          });
-        });
+        if (reduced) {
+          gsap.set(track, { x: 0 });
+          gsap.set(pathEl, { strokeDashoffset: 0 });
+          track.classList.add("overflow-x-auto");
+          pin.classList.remove("overflow-hidden");
+          return;
+        }
 
-        markerRefs.current.forEach((marker, markerIndex) => {
-          if (!marker) return;
-          gsap.to(marker, {
-            backgroundColor: markerIndex <= index ? "#0a0a0a" : "rgba(10,10,10,0.18)",
-            width: markerIndex === index ? 34 : 8,
-            duration: 0.25,
-            ease: "power2.out",
-          });
-        });
-
-        gsap.to(progressRef.current, {
-          scaleX: (index + 1) / MILESTONES.length,
-          duration: 0.34,
-          ease: "power2.out",
-        });
-      }
-
-      MILESTONES.forEach((_, index) => {
-        const step = 100 / MILESTONES.length;
         ScrollTrigger.create({
-          trigger: sectionRef.current,
-          start: `${index * step}% top`,
-          end: `${(index + 1) * step}% top`,
-          onEnter: () => showChapter(index),
-          onEnterBack: () => showChapter(index),
+          trigger: pinStage,
+          start: "top 12%",
+          end: () => `+=${getScrollDistance()}`,
+          pin: pin,
+          pinSpacing: true,
+          scrub: 1,
+          invalidateOnRefresh: true,
+          anticipatePin: 0,
+          onUpdate: (self) => {
+            const { total, cumulative } = pathMetricsRef.current;
+            const distance = getScrollDistance();
+            const drawn = visiblePathLength(self.progress, cumulative);
+            gsap.set(pathEl, {
+              strokeDashoffset: total - drawn,
+            });
+            gsap.set(track, { x: -distance * self.progress });
+          },
         });
+      };
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(setupScroll);
       });
+
+      const onResize = () => {
+        syncPathMetrics();
+        ScrollTrigger.refresh();
+      };
+
+      window.addEventListener("resize", onResize);
+      ScrollTrigger.addEventListener("refreshInit", syncPathMetrics);
+
+      return () => {
+        window.removeEventListener("resize", onResize);
+        ScrollTrigger.removeEventListener("refreshInit", syncPathMetrics);
+      };
     },
-    { scope: sectionRef }
+    { scope: sectionRef },
   );
 
   return (
     <section
       ref={sectionRef}
-      className="relative bg-white text-[#0a0a0a]"
-      style={{ height: `${MILESTONES.length * VH_PER_CHAPTER}vh` }}
+      className="journey-teaser relative w-full text-[#0a0a0a]"
+      style={{ backgroundColor: BG }}
+      aria-labelledby="journey-teaser-heading"
     >
-      <div className="sticky top-0 min-h-[100svh] overflow-hidden bg-white">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-black/10" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-black/10" />
-
-        <Container className="relative min-h-[100svh]">
-          <div className="grid min-h-[100svh] gap-6 py-7 lg:grid-cols-[0.78fr_1.22fr] lg:items-center lg:gap-12 lg:py-10">
-            <div className="max-w-[31rem]">
-              <div className="mb-6 flex items-center gap-4">
-                <span className="h-px w-12 bg-black" />
-                <p className="text-[10px] font-semibold uppercase tracking-[0.34em] text-black/48">
-                  Company Journey
-                </p>
-              </div>
-
-              <h2 className="font-serif text-[2.35rem] font-bold leading-[1.02] text-black sm:text-5xl lg:text-[4.25rem]">
-                A story told through progress.
-              </h2>
-              <p className="mt-5 max-w-md text-sm leading-7 text-black/58 sm:text-base">
-                Scroll through the chapters that shaped Catertech from a focused Dubai supplier into a trusted UAE event and kitchen partner.
-              </p>
-
-              <div className="mt-7 grid grid-cols-3 border-y border-black/10">
-                {STATS.map((stat, index) => (
-                  <div key={stat.label} className="py-4 pr-4">
-                    <div className="font-serif text-2xl font-bold leading-none text-black sm:text-3xl">
-                      <span ref={(el) => { statCountRefs.current[index] = el; }}>0</span>
-                      {stat.suffix}
-                    </div>
-                    <p className="mt-2 text-[10px] font-medium uppercase tracking-[0.22em] text-black/45">
-                      {stat.label}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              <Link
-                href="/about/journey"
-                className="group mt-7 inline-flex w-fit items-center gap-3 text-sm font-semibold text-black"
+      <Container className="pt-14 pb-6 sm:pt-16 sm:pb-8">
+        <div className="max-w-[1920px]">
+          <span
+            className="mb-4 block size-2.5 rounded-full"
+            style={{ backgroundColor: BRAND_PURPLE }}
+            aria-hidden
+          />
+          <h2
+            id="journey-teaser-heading"
+            className="max-w-3xl text-3xl font-bold leading-[1.1] tracking-tight sm:text-4xl lg:text-[2.65rem]"
+          >
+            Behind the years of{" "}
+            <span style={{ color: BRAND_PURPLE }}>CaterTech</span>
+          </h2>
+          <div className="mt-4 flex flex-wrap items-start justify-between gap-x-8 gap-y-3">
+            <p className="max-w-xl flex-1 text-base leading-relaxed text-[#6b7280] sm:text-lg">
+              Scroll through the milestones that shaped our equipment, events and kitchen
+              capabilities across the UAE.
+            </p>
+            <Link
+              href="/about/journey"
+              className="group inline-flex shrink-0 items-center gap-2 pt-0.5 text-sm font-semibold text-[#0a0a0a] transition-colors duration-300 ease-out hover:text-[#322b81] sm:pt-1"
+            >
+              <span className="border-b border-transparent pb-0.5 transition-[border-color,color] duration-300 ease-out group-hover:border-[#322b81]">
+                Full company journey
+              </span>
+              <span
+                className="inline-block transition-transform duration-300 ease-out group-hover:translate-x-1"
+                aria-hidden
               >
-                <span className="border-b border-black/25 pb-1 transition-colors duration-300 group-hover:border-black">
-                  Read the full story
-                </span>
-                <span className="grid h-8 w-8 place-items-center rounded-full border border-black/15 transition duration-300 group-hover:translate-x-1 group-hover:border-black">
-                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
-                    <path d="M5 12h14M13 6l6 6-6 6" />
-                  </svg>
-                </span>
-              </Link>
-            </div>
-
-            <div className="relative min-h-[390px] sm:min-h-[480px] lg:min-h-[560px]">
-              <div className="absolute left-0 top-0 h-px w-full bg-black/10">
-                <div ref={progressRef} className="h-full origin-left scale-x-[0.2] bg-black" />
-              </div>
-
-              <div className="grid h-full min-h-[390px] grid-rows-[190px_1fr] gap-6 sm:min-h-[480px] sm:grid-rows-[250px_1fr] lg:min-h-[560px] lg:grid-rows-[320px_1fr]">
-                <div className="relative overflow-hidden border-y border-black/10">
-                  {MILESTONES.map((milestone, index) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      key={milestone.year}
-                      ref={(el) => { imageRefs.current[index] = el; }}
-                      src={milestone.image}
-                      alt={milestone.alt}
-                      className="absolute inset-0 h-full w-full object-cover grayscale"
-                      loading={index === 0 ? "eager" : "lazy"}
-                    />
-                  ))}
-                  <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.76),rgba(255,255,255,0.08)_42%,rgba(255,255,255,0.52)_100%)]" />
-                </div>
-
-                <div className="relative">
-                  {MILESTONES.map((milestone, index) => (
-                    <div
-                      key={milestone.chapter}
-                      ref={(el) => { panelRefs.current[index] = el; }}
-                      className="absolute inset-x-0 top-0"
-                    >
-                      <div className="grid gap-5 sm:grid-cols-[9rem_1fr] sm:gap-8">
-                        <div>
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-black/42">
-                            {milestone.chapter} / {String(MILESTONES.length).padStart(2, "0")}
-                          </p>
-                          <p className="mt-3 font-serif text-5xl font-bold leading-none text-black sm:text-6xl">
-                            {milestone.year}
-                          </p>
-                        </div>
-                        <div className="max-w-xl">
-                          <h3 className="font-serif text-2xl font-bold leading-tight text-black sm:text-3xl">
-                            {milestone.label}
-                          </h3>
-                          <p className="mt-4 text-sm leading-7 text-black/60 sm:text-[0.95rem]">
-                            {milestone.event}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="absolute bottom-0 left-0 flex items-center gap-2">
-                {MILESTONES.map((milestone, index) => (
-                  <span
-                    key={milestone.year}
-                    ref={(el) => { markerRefs.current[index] = el; }}
-                    className="h-2 rounded-full"
-                    style={{
-                      width: index === 0 ? 34 : 8,
-                      backgroundColor: index === 0 ? "#0a0a0a" : "rgba(10,10,10,0.18)",
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
+                →
+              </span>
+            </Link>
           </div>
-        </Container>
+        </div>
+      </Container>
+
+      <div ref={pinStageRef} className="journey-teaser__stage w-full">
+        <div ref={pinRef} className={PIN_VIEWPORT_CLASS}>
+          <div
+            ref={trackRef}
+            className="relative flex h-[min(480px,58vh)] items-center will-change-transform sm:h-[min(500px,60vh)]"
+            style={{
+              gap: COLUMN_GAP,
+              paddingLeft: TRACK_PAD_X,
+              paddingRight: TRACK_PAD_X,
+              width: "max-content",
+            }}
+          >
+          <svg
+            className="pointer-events-none absolute inset-0 z-10 h-full w-full overflow-visible"
+            aria-hidden
+          >
+            <defs>
+              <marker
+                id="journey-spring-arrow"
+                viewBox="0 0 10 10"
+                refX="8"
+                refY="5"
+                markerWidth="7"
+                markerHeight="7"
+                orient="auto"
+              >
+                <path d="M 0 1 L 8 5 L 0 9 Z" fill={BRAND_RED} />
+              </marker>
+            </defs>
+            <path
+              ref={pathRef}
+              fill="none"
+              stroke={BRAND_RED}
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              markerEnd="url(#journey-spring-arrow)"
+              opacity={0}
+            />
+          </svg>
+
+          {MILESTONES.map((milestone, index) => {
+            const imageTop = index % 2 === 0;
+
+            return (
+              <div
+                key={milestone.year}
+                className="relative shrink-0"
+                style={{ width: COLUMN_W }}
+              >
+                <div className={CARD_STACK_CLASS}>
+                  <div
+                    className="pointer-events-none absolute top-1/2 right-0 left-0 z-0 h-px -translate-y-1/2 bg-[#d1d5db]"
+                    aria-hidden
+                  />
+
+                  <span
+                    ref={(el) => {
+                      dotRefs.current[index] = el;
+                    }}
+                    className="absolute top-1/2 left-1/2 z-20 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[#9ca3af] shadow-sm"
+                    aria-hidden
+                  />
+
+                  {imageTop ? (
+                    <>
+                      <div className="flex min-h-0 flex-1 flex-col justify-end pb-5">
+                        <MilestoneImage src={milestone.image} alt={milestone.alt} />
+                      </div>
+                      <div className="flex min-h-0 flex-1 flex-col justify-start pt-5">
+                        <MilestoneText
+                          year={milestone.year}
+                          title={milestone.title}
+                          description={milestone.description}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex min-h-0 flex-1 flex-col justify-end pb-5">
+                        <MilestoneText
+                          year={milestone.year}
+                          title={milestone.title}
+                          description={milestone.description}
+                        />
+                      </div>
+                      <div className="flex min-h-0 flex-1 flex-col justify-start pt-5">
+                        <MilestoneImage src={milestone.image} alt={milestone.alt} />
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          </div>
+        </div>
       </div>
     </section>
   );

@@ -43,8 +43,8 @@ export default function Header() {
   }, []);
 
   const navLinkClass = (href: string) =>
-    `text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors duration-200 ${
-      pathname === href ? "text-ink" : "text-body-muted hover:text-ink"
+    `text-[13px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a] transition-colors duration-200 ${
+      pathname === href ? "text-[#322b81]" : "hover:text-[#322b81]"
     }`;
 
   return (

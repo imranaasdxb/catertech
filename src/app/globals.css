@@ -137,6 +137,16 @@ h3 {
   animation-play-state: paused;
 }
 
+/* Journey teaser: avoid GSAP pin-spacer offset when header sits above pin stage */
+.journey-teaser .pin-spacer {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.journey-teaser__stage {
+  width: 100%;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .shop-pdp-marquee-outer {
     overflow-x: auto;

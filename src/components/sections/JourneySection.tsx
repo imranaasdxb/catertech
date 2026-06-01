@@ -1,17 +1,24 @@
 "use client";
 
-import Image from "next/image";
-import { useState } from "react";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import Container from "@/components/Container";
+
+const BRAND_PURPLE = "#322b81";
+const BRAND_RED = "#c21722";
+const CARD_BG = "#eceaf8";
+const STICKY_TOP = 88;
+const STICKY_STEP = 18;
 
 export type JourneyMilestone = {
   year: string;
   step: number;
   title: string;
   description: string;
-  image: string;
-  imageAlt: string;
-  imageFallback: string;
+  tagline: string;
+  image?: string;
+  imageAlt?: string;
+  imageFallback?: string;
 };
 
 export const JOURNEY_MILESTONES: JourneyMilestone[] = [
@@ -21,10 +28,7 @@ export const JOURNEY_MILESTONES: JourneyMilestone[] = [
     title: "Where It All Began",
     description:
       "Our founders saw a gap in the UAE hospitality market: dependable, hotel-grade catering supply was still hard to source. Catertech began with a small Dubai warehouse and a standard that refused shortcuts.",
-    image: "/images/journey/2002.jpg",
-    imageAlt: "Early hospitality supply operations in Dubai",
-    imageFallback:
-      "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=82&fit=crop&crop=center",
+    tagline: "START SMALL. THINK BIG.",
   },
   {
     year: "2005",
@@ -32,10 +36,7 @@ export const JOURNEY_MILESTONES: JourneyMilestone[] = [
     title: "Founded in Dubai",
     description:
       "Catertech was formally established to supply premium catering equipment to hotels, restaurants and banqueting teams across a rapidly expanding city.",
-    image: "/images/journey/2005.jpg",
-    imageAlt: "Catertech founding year in Dubai",
-    imageFallback:
-      "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1200&q=82&fit=crop&crop=center",
+    tagline: "BUILT ON TRUST.",
   },
   {
     year: "2010",
@@ -43,10 +44,7 @@ export const JOURNEY_MILESTONES: JourneyMilestone[] = [
     title: "Events Division Launched",
     description:
       "As corporate events and weddings accelerated across the Emirates, we added event rentals: tables, chairs, linen, staging and decor delivered with disciplined timing.",
-    image: "/images/journey/2010.jpg",
-    imageAlt: "Event equipment rental and banquet setup",
-    imageFallback:
-      "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=1200&q=82&fit=crop&crop=center",
+    tagline: "LEARN BY DOING.",
   },
   {
     year: "2015",
@@ -54,10 +52,7 @@ export const JOURNEY_MILESTONES: JourneyMilestone[] = [
     title: "Kitchen Equipment",
     description:
       "Our commercial kitchen division launched for restaurants, hotel back-of-house teams and institutional kitchens needing ovens, refrigeration and food-prep lines.",
-    image: "/images/journey/2015.jpg",
-    imageAlt: "Commercial kitchen equipment division",
-    imageFallback:
-      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1200&q=82&fit=crop&crop=center",
+    tagline: "CLARITY DRIVES PROGRESS.",
   },
   {
     year: "2020",
@@ -65,10 +60,7 @@ export const JOURNEY_MILESTONES: JourneyMilestone[] = [
     title: "Northern Emirates Expansion",
     description:
       "A second warehouse and logistics hub in Ras Al Khaimah shortened delivery times, strengthened stock access and extended our operating footprint.",
-    image: "/images/journey/2020.jpg",
-    imageAlt: "Warehouse and logistics expansion in RAK",
-    imageFallback:
-      "https://images.unsplash.com/photo-1553413077-190dd305871c?w=1200&q=82&fit=crop&crop=center",
+    tagline: "SCALE WITH CONFIDENCE.",
   },
   {
     year: "2024",
@@ -76,133 +68,214 @@ export const JOURNEY_MILESTONES: JourneyMilestone[] = [
     title: "Full-Service Partner",
     description:
       "Today Catertech supports 500+ corporate clients with catering hire, kitchen supply, event management and digital quoting across Dubai, RAK and the wider UAE.",
-    image: "/images/journey/2024.jpg",
-    imageAlt: "Modern Catertech event and equipment services",
-    imageFallback:
-      "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&q=82&fit=crop&crop=center",
+    tagline: "PARTNER FOR THE LONG RUN.",
   },
 ];
 
-function JourneyImage({ milestone }: { milestone: JourneyMilestone }) {
-  const [src, setSrc] = useState(milestone.image);
+type JourneySectionProps = {
+  milestones?: JourneyMilestone[];
+  className?: string;
+  ctaHref?: string;
+  ctaLabel?: string;
+};
 
+function TimelineDot({ dimmed }: { dimmed?: boolean }) {
   return (
-    <div className="relative h-[220px] overflow-hidden border-y border-black/10 sm:h-[280px] lg:h-[320px]">
-      <Image
-        src={src}
-        alt={milestone.imageAlt}
-        fill
-        className="object-cover grayscale transition-transform duration-700 ease-out group-hover:scale-[1.025]"
-        sizes="(max-width: 1024px) 100vw, 42vw"
-        onError={() => setSrc(milestone.imageFallback)}
-      />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.22),transparent_52%,rgba(255,255,255,0.28))]" />
-    </div>
+    <span
+      className="relative z-10 mt-12 block size-4 shrink-0 rounded-full border-[2.5px] bg-white"
+      style={{ borderColor: BRAND_RED, opacity: dimmed ? 0.5 : 1 }}
+      aria-hidden
+    />
   );
 }
 
-function JourneyMoment({
+function JourneyCard({
   milestone,
-  index,
+  stickyIndex,
+  isLast,
+  staticLayout,
 }: {
   milestone: JourneyMilestone;
-  index: number;
+  stickyIndex: number;
+  isLast: boolean;
+  staticLayout?: boolean;
 }) {
-  const imageFirst = index % 2 === 1;
-
   return (
-    <article className="group relative grid gap-6 py-8 sm:py-10 lg:grid-cols-[0.92fr_1fr] lg:gap-12 lg:py-12">
-      <div className={`relative ${imageFirst ? "lg:order-1" : "lg:order-2"}`}>
-        <JourneyImage milestone={milestone} />
+    <article
+      className={[
+        "flex w-full flex-col justify-between rounded-[1.75rem] px-7 py-8 sm:min-h-[260px] sm:px-9 sm:py-10 lg:min-h-[280px] lg:px-11 lg:py-11",
+        isLast ? "bg-[#6b7280]" : "bg-[#0a0a0a]",
+        staticLayout ? "mb-5" : "sticky mb-5",
+      ].join(" ")}
+      style={
+        staticLayout
+          ? undefined
+          : {
+              top: STICKY_TOP + stickyIndex * STICKY_STEP,
+              zIndex: stickyIndex + 1,
+            }
+      }
+    >
+      <div className="flex items-start justify-between gap-6">
+        <h3
+          className="max-w-[min(100%,32rem)] text-2xl font-bold leading-[1.12] tracking-tight sm:text-3xl lg:text-[2rem]"
+          style={{ color: BRAND_RED }}
+        >
+          {milestone.title}
+        </h3>
+        <span
+          className="shrink-0 text-sm font-semibold sm:text-base"
+          style={{ color: BRAND_PURPLE }}
+        >
+          {milestone.year}
+        </span>
       </div>
 
-      <div className={`flex items-center ${imageFirst ? "lg:order-2" : "lg:order-1"}`}>
-        <div className="relative w-full">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-black/42">
-            Chapter {String(milestone.step).padStart(2, "0")}
-          </span>
-          <div className="mt-4 flex items-end gap-5">
-            <p className="font-serif text-5xl font-bold leading-none text-black sm:text-6xl">
-              {milestone.year}
-            </p>
-            <span className="mb-3 h-px flex-1 bg-black/12" />
-          </div>
-          <h3 className="mt-5 max-w-xl font-serif text-3xl font-bold leading-[1.05] text-black sm:text-4xl">
-            {milestone.title}
-          </h3>
-          <p className="mt-5 max-w-xl text-sm leading-7 text-black/60 sm:text-base">
-            {milestone.description}
-          </p>
-        </div>
+      <div className="mt-8 flex flex-col gap-6 sm:mt-10 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
+        <p className="max-w-2xl text-sm leading-relaxed text-white/78 sm:text-[15px] lg:flex-1">
+          {milestone.description}
+        </p>
+        <p className="shrink-0 text-[10px] font-bold uppercase tracking-[0.2em] text-white/90 sm:text-[11px] lg:max-w-[220px] lg:text-right">
+          {milestone.tagline}
+        </p>
       </div>
     </article>
   );
 }
 
-type JourneySectionProps = {
-  milestones?: JourneyMilestone[];
-  className?: string;
-};
+function CardRunway({
+  milestones,
+  staticLayout,
+}: {
+  milestones: JourneyMilestone[];
+  staticLayout?: boolean;
+}) {
+  return (
+    <div className={staticLayout ? "flex flex-col" : "flex flex-col pb-20 lg:pb-32"}>
+      {milestones.map((milestone, index) => (
+        <div
+          key={`${milestone.year}-${milestone.title}`}
+          className="relative w-full"
+          style={
+            staticLayout
+              ? undefined
+              : {
+                  minHeight:
+                    index < milestones.length - 1
+                      ? "clamp(420px, 52vh, 560px)"
+                      : "clamp(360px, 44vh, 480px)",
+                }
+          }
+        >
+          <JourneyCard
+            milestone={milestone}
+            stickyIndex={index}
+            isLast={index === milestones.length - 1}
+            staticLayout={staticLayout}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function JourneySection({
   milestones = JOURNEY_MILESTONES,
   className = "",
+  ctaHref = "/contact",
+  ctaLabel = "Contact Us",
 }: JourneySectionProps) {
   return (
     <section
-      className={`relative overflow-hidden bg-white py-14 text-black sm:py-16 lg:py-20 ${className}`.trim()}
+      className={`w-full overflow-clip bg-white py-14 text-[#0a0a0a] sm:py-16 lg:py-20 ${className}`.trim()}
       aria-labelledby="journey-section-heading"
     >
       <Container>
-        <div className="mb-10 grid gap-6 border-b border-black/10 pb-10 lg:mb-12 lg:grid-cols-[0.9fr_1fr] lg:items-end">
-          <div>
-            <div className="mb-5 flex items-center gap-4">
-              <span className="h-px w-12 bg-black" />
-              <p className="text-[10px] font-semibold uppercase tracking-[0.34em] text-black/48">
-                Company Journey
-              </p>
-            </div>
+        {/* Desktop: sticky left + timeline + stacking cards */}
+        <div className="hidden w-full lg:grid lg:grid-cols-[minmax(0,33%)_52px_minmax(0,1fr)] lg:gap-x-8 xl:grid-cols-[minmax(0,30%)_56px_minmax(0,1fr)] xl:gap-x-12">
+          <div className="sticky top-24 self-start">
             <h2
               id="journey-section-heading"
-              className="max-w-3xl font-serif text-4xl font-bold leading-[1.04] text-black sm:text-5xl lg:text-[3.8rem]"
+              className="text-[2.65rem] font-bold leading-[1.08] tracking-tight xl:text-[2.85rem]"
             >
-              From one warehouse to a UAE-wide partner.
+              From bold ideas to performance-driven partnerships
             </h2>
+            <p className="mt-6 max-w-md text-[17px] leading-relaxed text-[#6b7280]">
+              A scroll through the milestones that shaped Catertech — from a single Dubai
+              warehouse to trusted equipment, events and kitchen supply across the UAE.
+            </p>
+            <Link
+              href={ctaHref}
+              className="group mt-10 inline-flex items-center gap-3 rounded-xl bg-[#0a0a0a] py-3 pl-6 pr-3 text-[15px] font-semibold text-white transition-colors duration-300 hover:bg-[#1a1a1a]"
+            >
+              {ctaLabel}
+              <span className="flex size-11 items-center justify-center rounded-lg bg-[#322b81] transition-colors duration-300 group-hover:bg-[#c21722]">
+                <ArrowRight className="size-[18px] text-white" strokeWidth={2.25} />
+              </span>
+            </Link>
           </div>
 
-          <div className="max-w-xl lg:justify-self-end">
-            <p className="text-sm leading-7 text-black/60 sm:text-base">
-              A clean timeline of the moments that shaped Catertech's equipment, logistics and event capabilities.
-            </p>
-            <div className="mt-6 grid grid-cols-3 border-y border-black/10">
-              {[
-                ["22+", "Years"],
-                ["500+", "Clients"],
-                ["UAE", "Reach"],
-              ].map(([value, label]) => (
-                <div key={label} className="py-4 pr-4">
-                  <div className="font-serif text-2xl font-bold text-black sm:text-3xl">
-                    {value}
-                  </div>
-                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-black/45">
-                    {label}
-                  </p>
+          <div className="relative" aria-hidden>
+            <div className="absolute top-12 bottom-24 left-1/2 w-px -translate-x-1/2 bg-[#e5e7eb]" />
+            <div className="flex flex-col">
+              {milestones.map((m, i) => (
+                <div
+                  key={`dot-${m.year}`}
+                  className="flex justify-center"
+                  style={{
+                    minHeight:
+                      i < milestones.length - 1
+                        ? "clamp(420px, 52vh, 560px)"
+                        : "clamp(360px, 44vh, 480px)",
+                  }}
+                >
+                  <TimelineDot dimmed={i === milestones.length - 1} />
                 </div>
               ))}
             </div>
           </div>
+
+          <div className="min-w-0 w-full">
+            <CardRunway milestones={milestones} />
+          </div>
         </div>
 
-        <div className="relative">
-          <div className="absolute left-0 top-0 hidden h-full w-px bg-black/10 lg:block" />
-          <div className="divide-y divide-black/10 lg:pl-10">
+        {/* Mobile / tablet */}
+        <div className="lg:hidden">
+          <h2 className="text-[2rem] font-bold leading-[1.08] tracking-tight sm:text-4xl">
+            From bold ideas to performance-driven partnerships
+          </h2>
+          <p className="mt-5 max-w-lg text-base leading-relaxed text-[#6b7280]">
+            The milestones that shaped Catertech — from one Dubai warehouse to a UAE-wide
+            partner.
+          </p>
+          <Link
+            href={ctaHref}
+            className="group mt-8 inline-flex items-center gap-3 rounded-xl bg-[#0a0a0a] py-3 pl-5 pr-2.5 text-sm font-semibold text-white transition-colors duration-300 hover:bg-[#1a1a1a]"
+          >
+            {ctaLabel}
+            <span className="flex size-10 items-center justify-center rounded-lg bg-[#322b81] transition-colors duration-300 group-hover:bg-[#c21722]">
+              <ArrowRight className="size-4 text-white" strokeWidth={2.25} />
+            </span>
+          </Link>
+
+          <div className="mt-12 flex flex-col gap-5">
             {milestones.map((milestone, index) => (
-              <div key={`${milestone.year}-${milestone.title}`} className="relative">
-                <span
-                  aria-hidden
-                  className="absolute -left-[46px] top-16 hidden h-3 w-3 rounded-full bg-black lg:block"
-                />
-                <JourneyMoment milestone={milestone} index={index} />
+              <div key={`m-${milestone.year}`} className="flex gap-4">
+                <div className="flex w-5 shrink-0 flex-col items-center">
+                  <TimelineDot dimmed={index === milestones.length - 1} />
+                  {index < milestones.length - 1 ? (
+                    <div className="my-2 w-px flex-1 min-h-[40px] bg-[#e5e7eb]" />
+                  ) : null}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <JourneyCard
+                    milestone={milestone}
+                    stickyIndex={index}
+                    isLast={index === milestones.length - 1}
+                    staticLayout
+                  />
+                </div>
               </div>
             ))}
           </div>
