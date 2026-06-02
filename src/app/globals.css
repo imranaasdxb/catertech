@@ -52,7 +52,8 @@
 :root {
   --background: #ffffff;
   --foreground: #14131f;
-  --brand-gradient: linear-gradient(135deg, #322b81 0%, #c21722 100%);
+  --brand-gradient: linear-gradient(135deg, #322b81 40%, #c21722 100%);
+  --btn-brand-hover-fill: color-mix(in srgb, #322b81 88%, #ffffff 12%);
   --header-height: 84px;
 }
 
@@ -240,100 +241,126 @@ h3 {
   border-color: transparent;
 }
 
-.btn-outline-ghost {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border: 1px solid rgba(20, 19, 31, 0.18);
-  background: transparent;
-  color: #14131f;
-  transition:
-    background-color 0.25s ease,
-    border-color 0.25s ease,
-    color 0.25s ease,
-    transform 0.2s ease;
-}
-
-.site-header--scrolled .btn-outline-ghost {
-  border-color: rgba(20, 19, 31, 0.14);
-  color: #14131f;
-}
-
-.btn-outline-ghost.btn-hover-primary:hover {
-  background-color: #322b81;
-  border-color: #322b81;
-  color: #ffffff;
-}
-
-.btn-outline-ghost.btn-hover-accent:hover {
-  background-color: #c21722;
-  border-color: #c21722;
-  color: #ffffff;
-}
-
-.btn-outline-ghost:active {
-  transform: scale(0.98);
-}
-
-/* Solid CTAs — black fill, no gradients; hover purple or red */
-.btn-solid-dark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border: 1px solid #0a0a0a;
-  background-color: #0a0a0a;
-  color: #ffffff;
-  transition:
-    background-color 0.25s ease,
-    border-color 0.25s ease,
-    color 0.25s ease,
-    transform 0.2s ease;
-}
-
-.btn-solid-dark.btn-hover-primary:hover {
-  background-color: #322b81;
-  border-color: #322b81;
-  color: #ffffff;
-}
-
-.btn-solid-dark.btn-hover-accent:hover {
-  background-color: #c21722;
-  border-color: #c21722;
-  color: #ffffff;
-}
-
+/* Brand CTAs — black border, purple text; hover purple water-rise, red text; arrows in red circles */
+.btn-brand,
+.btn-outline-ghost,
+.btn-solid-dark,
 .btn-solid-light {
+  position: relative;
+  isolation: isolate;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border: 1px solid rgba(10, 10, 10, 0.1);
-  background-color: #f6f6f6;
-  color: #0a0a0a;
+  overflow: hidden;
+  border: 2px solid #0a0a0a;
+  background-color: transparent;
+  color: #322b81;
   transition:
-    background-color 0.25s ease,
-    border-color 0.25s ease,
-    color 0.25s ease,
+    border-color 0.35s ease,
+    color 0.4s ease 0.05s,
     transform 0.2s ease;
 }
 
+.btn-brand::before,
+.btn-outline-ghost::before,
+.btn-solid-dark::before,
+.btn-solid-light::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-color: var(--btn-brand-hover-fill);
+  transform: scaleY(0);
+  transform-origin: bottom center;
+  transition: transform 0.7s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.btn-brand:hover,
+.btn-outline-ghost:hover,
+.btn-solid-dark:hover,
+.btn-solid-light:hover,
+.btn-outline-ghost.btn-hover-primary:hover,
+.btn-outline-ghost.btn-hover-accent:hover,
+.btn-solid-dark.btn-hover-primary:hover,
+.btn-solid-dark.btn-hover-accent:hover,
+.btn-solid-light.btn-hover-primary:hover,
 .btn-solid-light.btn-hover-accent:hover {
+  border-color: transparent;
+  color: #ffffff;
+}
+
+.btn-brand:hover .btn-brand__content {
+  color: #ffffff;
+}
+
+.btn-brand:hover::before,
+.btn-outline-ghost:hover::before,
+.btn-solid-dark:hover::before,
+.btn-solid-light:hover::before {
+  transform: scaleY(1);
+}
+
+.btn-brand__content {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: inherit;
+}
+
+.btn-brand__arrow {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
   background-color: #c21722;
-  border-color: #c21722;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-brand__arrow svg {
+  color: #ffffff;
+  transition: color 0.3s ease;
+}
+
+.btn-brand:hover .btn-brand__arrow {
+  background-color: #c21722;
+}
+
+.btn-brand:hover .btn-brand__arrow svg {
   color: #ffffff;
 }
 
-.btn-solid-light.btn-hover-primary:hover {
-  background-color: #322b81;
-  border-color: #322b81;
-  color: #ffffff;
-}
-
+.btn-brand:active,
+.btn-outline-ghost:active,
 .btn-solid-dark:active,
 .btn-solid-light:active {
   transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-brand::before,
+  .btn-outline-ghost::before,
+  .btn-solid-dark::before,
+  .btn-solid-light::before {
+    transition: none;
+  }
+
+  .btn-brand:hover::before,
+  .btn-outline-ghost:hover::before,
+  .btn-solid-dark:hover::before,
+  .btn-solid-light:hover::before {
+    transform: scaleY(1);
+  }
+}
+
+.site-header--scrolled .btn-outline-ghost,
+.site-header--scrolled .btn-brand {
+  border-color: #0a0a0a;
+  color: #322b81;
 }
 
 .site-header {
@@ -400,11 +427,20 @@ h3 {
 }
 
 .arc-fade-in-up {
+  opacity: 0;
   animation: arc-fade-in-up 0.8s ease-out forwards;
 }
 
 .arc-fade-in {
   animation: arc-fade-in 0.8s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arc-fade-in-up {
+    animation: none;
+    opacity: 1;
+    transform: translate(-50%, 50%);
+  }
 }
 
 .logo-cloud-edge {

@@ -20,7 +20,7 @@ const NAV_LINKS = [
 ];
 
 const headerBtnBase =
-  "btn-outline-ghost shrink-0 rounded-xl px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.12em]";
+  "btn-brand shrink-0 rounded-xl px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.12em]";
 
 export default function Header() {
   const pathname = usePathname();
@@ -81,13 +81,13 @@ export default function Header() {
           <div className="hidden items-center gap-2.5 lg:flex">
             <Link
               href="/auth?tab=login"
-              className={`${headerBtnBase} btn-hover-primary`}
+              className={headerBtnBase}
             >
               Log in
             </Link>
             <Link
               href="/auth?tab=signup"
-              className={`${headerBtnBase} btn-hover-accent`}
+              className={headerBtnBase}
             >
               Sign up
             </Link>
@@ -195,14 +195,14 @@ export default function Header() {
               <Link
                 href="/auth?tab=login"
                 onClick={() => setMenuOpen(false)}
-                className="btn-outline-ghost btn-hover-primary flex-1 rounded-xl py-4 text-center text-sm font-semibold uppercase tracking-widest"
+                className="btn-brand flex-1 rounded-xl py-4 text-center text-sm font-semibold uppercase tracking-widest"
               >
                 Log in
               </Link>
               <Link
                 href="/auth?tab=signup"
                 onClick={() => setMenuOpen(false)}
-                className="btn-outline-ghost btn-hover-accent flex-1 rounded-xl py-4 text-center text-sm font-semibold uppercase tracking-widest"
+                className="btn-brand flex-1 rounded-xl py-4 text-center text-sm font-semibold uppercase tracking-widest"
               >
                 Sign up
               </Link>

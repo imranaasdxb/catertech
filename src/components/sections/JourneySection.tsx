@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import Container from "@/components/Container";
+import { BrandCtaWithIcon } from "@/components/ui/WaterRiseCta";
 
 const BRAND_PURPLE = "#322b81";
 const BRAND_RED = "#c21722";
@@ -204,15 +203,13 @@ export default function JourneySection({
               A scroll through the milestones that shaped Catertech — from a single Dubai
               warehouse to trusted equipment, events and kitchen supply across the UAE.
             </p>
-            <Link
+            <BrandCtaWithIcon
               href={ctaHref}
-              className="group mt-10 inline-flex items-center gap-3 rounded-xl bg-[#0a0a0a] py-3 pl-6 pr-3 text-[15px] font-semibold text-white transition-colors duration-300 hover:bg-[#1a1a1a]"
+              className="mt-10 text-[15px]"
+              iconClassName="size-11"
             >
               {ctaLabel}
-              <span className="flex size-11 items-center justify-center rounded-lg bg-[#322b81] transition-colors duration-300 group-hover:bg-[#c21722]">
-                <ArrowRight className="size-[18px] text-white" strokeWidth={2.25} />
-              </span>
-            </Link>
+            </BrandCtaWithIcon>
           </div>
 
           <div className="relative" aria-hidden>
@@ -249,15 +246,9 @@ export default function JourneySection({
             The milestones that shaped Catertech — from one Dubai warehouse to a UAE-wide
             partner.
           </p>
-          <Link
-            href={ctaHref}
-            className="group mt-8 inline-flex items-center gap-3 rounded-xl bg-[#0a0a0a] py-3 pl-5 pr-2.5 text-sm font-semibold text-white transition-colors duration-300 hover:bg-[#1a1a1a]"
-          >
+          <BrandCtaWithIcon href={ctaHref} className="mt-8">
             {ctaLabel}
-            <span className="flex size-10 items-center justify-center rounded-lg bg-[#322b81] transition-colors duration-300 group-hover:bg-[#c21722]">
-              <ArrowRight className="size-4 text-white" strokeWidth={2.25} />
-            </span>
-          </Link>
+          </BrandCtaWithIcon>
 
           <div className="mt-12 flex flex-col gap-5">
             {milestones.map((milestone, index) => (

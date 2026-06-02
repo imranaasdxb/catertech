@@ -26,7 +26,7 @@ export default function FooterNewsletter() {
               />
               <button
                 type="submit"
-                className="btn-solid-light btn-hover-primary shrink-0 rounded-lg border-white/30 bg-white px-6 py-3 text-xs font-semibold uppercase tracking-widest text-[#0a0a0a]"
+                className="btn-brand shrink-0 rounded-lg px-6 py-3 text-xs font-semibold uppercase tracking-widest"
               >
                 Subscribe
               </button>

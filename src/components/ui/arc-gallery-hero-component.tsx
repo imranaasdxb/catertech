@@ -1,8 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import WaterRiseCta from "@/components/ui/WaterRiseCta";
 import { useEffect, useState, type ReactNode } from "react";
 
 export type ArcGalleryHeroProps = {
@@ -67,12 +66,6 @@ export function ArcGalleryHero({
   const count = Math.max(images.length, 2);
   const step = (endAngle - startAngle) / (count - 1);
 
-  const heroBtnPrimaryClass =
-    "btn-solid-dark btn-hover-primary min-h-10 rounded-xl px-5 py-2.5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] sm:min-h-11 sm:px-6 sm:text-[0.72rem] [&_svg]:size-3.5 sm:[&_svg]:size-4";
-
-  const heroBtnAccentClass =
-    "btn-solid-dark btn-hover-accent min-h-10 rounded-xl px-5 py-2.5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] sm:min-h-11 sm:px-6 sm:text-[0.72rem] [&_svg]:size-3.5 sm:[&_svg]:size-4";
-
   return (
     <section
       className={`relative flex min-h-[calc(100dvh-var(--header-height))] flex-col overflow-hidden bg-white text-ink ${className}`}
@@ -94,7 +87,7 @@ export function ArcGalleryHero({
             return (
               <div
                 key={`${src}-${i}`}
-                className="absolute opacity-0 arc-fade-in-up"
+                className="absolute arc-fade-in-up"
                 style={{
                   width: cardPx,
                   height: cardPx,
@@ -118,6 +111,7 @@ export function ArcGalleryHero({
                     width={400}
                     height={400}
                     className="block h-full w-full object-cover"
+                    style={{ width: "auto", height: "auto" }}
                     draggable={false}
                     priority={i < 3}
                     sizes="120px"
@@ -131,8 +125,7 @@ export function ArcGalleryHero({
 
       <div className="relative z-10 -mt-40 flex flex-1 items-center justify-center px-6 md:-mt-52 lg:-mt-64">
         <div
-          className="max-w-2xl px-6 text-center opacity-0 arc-fade-in"
-          style={{ animationDelay: "800ms", animationFillMode: "forwards" }}
+          className="max-w-2xl px-6 text-center"
         >
           {title ?? (
             <h1 className="font-display text-3xl font-bold tracking-tight text-ink sm:text-5xl lg:text-6xl">
@@ -147,16 +140,14 @@ export function ArcGalleryHero({
           {(primaryCta || secondaryCta) && (
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
               {primaryCta ? (
-                <Link href={primaryCta.href} className={heroBtnPrimaryClass}>
+                <WaterRiseCta href={primaryCta.href} size="md">
                   {primaryCta.label}
-                  <ArrowRight aria-hidden />
-                </Link>
+                </WaterRiseCta>
               ) : null}
               {secondaryCta ? (
-                <Link href={secondaryCta.href} className={heroBtnAccentClass}>
+                <WaterRiseCta href={secondaryCta.href} size="md">
                   {secondaryCta.label}
-                  <ArrowRight aria-hidden />
-                </Link>
+                </WaterRiseCta>
               ) : null}
             </div>
           )}

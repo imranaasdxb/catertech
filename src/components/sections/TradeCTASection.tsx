@@ -1,6 +1,5 @@
 import tradeBgImage from "@/assets/tradebg.png";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { BrandCtaWithIcon } from "@/components/ui/WaterRiseCta";
 import Container from "@/components/Container";
 import Image from "next/image";
 
@@ -68,40 +67,20 @@ export default function TradeCTASection() {
             </p>
 
             <div className="mt-8 flex flex-wrap gap-4">
-              <Link
-                href="/trade/enquiry"
-                className="btn-solid-dark btn-hover-primary group gap-3 rounded-xl py-3 pl-6 pr-3 text-sm font-semibold"
-              >
-                Submit an enquiry
-                <span className="flex size-10 items-center justify-center rounded-lg bg-[#322b81] transition-colors duration-300 group-hover:bg-white/15">
-                  <ArrowRight className="size-4 text-white" strokeWidth={2.25} />
-                </span>
-              </Link>
-              <Link
-                href="/trade/rfq"
-                className="btn-solid-light btn-hover-accent group gap-3 rounded-xl py-3 pl-6 pr-3 text-sm font-semibold"
-              >
-                Request full quote
-                <span className="flex size-10 items-center justify-center rounded-lg bg-[#0a0a0a]/10 transition-colors duration-300 group-hover:bg-white/15">
-                  <ArrowRight
-                    className="size-4 text-[#0a0a0a] transition-colors duration-300 group-hover:text-white"
-                    strokeWidth={2.25}
-                  />
-                </span>
-              </Link>
+              <BrandCtaWithIcon href="/trade/enquiry">Submit an enquiry</BrandCtaWithIcon>
+              <BrandCtaWithIcon href="/trade/rfq">Request full quote</BrandCtaWithIcon>
             </div>
 
             <div className="mt-12">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#9ca3af]">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#c21722]">
                 Sectors we serve
               </p>
-              <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-2">
+              <ul className="mt-4 flex flex-wrap gap-2" role="list">
                 {INDUSTRIES.map((ind) => (
-                  <li
-                    key={ind}
-                    className="text-sm text-[#4b5563] transition-colors duration-200 hover:text-[#322b81]"
-                  >
-                    {ind}
+                  <li key={ind}>
+                    <span className="inline-block rounded-full border border-[#322b81]/25 bg-white/95 px-3.5 py-1.5 text-sm font-semibold text-[#0a0a0a] shadow-sm transition-colors duration-200 hover:border-[#322b81] hover:bg-[#322b81] hover:text-white">
+                      {ind}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -124,16 +103,15 @@ export default function TradeCTASection() {
             </div>
 
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#9ca3af]">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#c21722]">
                 Delivery coverage
               </p>
-              <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
+              <ul className="mt-4 flex flex-wrap gap-2" role="list">
                 {EMIRATES.map((em) => (
-                  <li
-                    key={em}
-                    className="text-sm font-medium text-[#4b5563] transition-colors duration-200 hover:text-[#c21722]"
-                  >
-                    {em}
+                  <li key={em}>
+                    <span className="inline-block rounded-full border border-[#c21722]/30 bg-white/95 px-3.5 py-1.5 text-sm font-semibold text-[#322b81] shadow-sm transition-colors duration-200 hover:border-[#c21722] hover:bg-[#c21722] hover:text-white">
+                      {em}
+                    </span>
                   </li>
                 ))}
               </ul>

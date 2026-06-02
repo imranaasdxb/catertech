@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Container from "@/components/Container";
 import SectionHeader from "@/components/ui/SectionHeader";
+import WaterRiseCta from "@/components/ui/WaterRiseCta";
 import {
   SHOP_PRODUCT_CARDS,
   getFeaturedSidebarEquipmentFilters,
@@ -67,12 +68,9 @@ function FeaturedProductCard({ product }: { product: ProductCard }) {
             </p>
           ) : null}
 
-          <span className="on-card-hover-solid mt-auto inline-flex w-fit items-center gap-1 rounded-md border border-border bg-[#f6f6f6] px-2.5 py-1.5 pt-3 text-[9px] font-semibold uppercase tracking-wide text-ink transition-all duration-200">
-            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
+          <WaterRiseCta as="span" size="sm" className="mt-auto w-fit pt-3">
             View &amp; quote
-          </span>
+          </WaterRiseCta>
         </div>
       </Link>
     </div>
@@ -435,15 +433,9 @@ export default function FeaturedProducts() {
         </div>
 
         <div className="text-center mt-12">
-          <Link
-            href="/shop"
-            className="btn-solid-dark btn-hover-primary rounded-xl px-8 py-3.5 text-sm font-semibold tracking-widest uppercase"
-          >
+          <WaterRiseCta href="/shop" size="lg">
             Browse Full Catalogue
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-          </Link>
+          </WaterRiseCta>
         </div>
         </div>
       </Container>
