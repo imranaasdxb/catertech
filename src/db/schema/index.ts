@@ -6,6 +6,7 @@ import {
   jsonb,
   uuid,
   integer,
+  index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
@@ -85,6 +86,41 @@ export const categoryProductTemplates = pgTable(
   },
   (t) => [
     uniqueIndex("category_product_templates_cat_sub_uidx").on(t.categoryId, t.subCategoryId),
+  ]
+);
+
+/** Suggested product titles and editable attribute defaults imported from the catalogue. */
+export const productTitlePresets = pgTable(
+  "product_title_presets",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    categoryId: uuid("category_id")
+      .notNull()
+      .references(() => productCategories.id, { onDelete: "cascade" }),
+    subCategoryId: uuid("sub_category_id").references(() => productSubcategories.id, {
+      onDelete: "set null",
+    }),
+    title: text("title").notNull(),
+    sourceLabel: text("source_label").notNull(),
+    attributes: jsonb("attributes")
+      .$type<Record<string, ProductAttributeValue>>()
+      .notNull()
+      .default({}),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    index("product_title_presets_category_idx").on(t.categoryId),
+    index("product_title_presets_sub_category_idx").on(t.subCategoryId),
+    uniqueIndex("product_title_presets_category_source_uidx").on(
+      t.categoryId,
+      t.sourceLabel
+    ),
   ]
 );
 

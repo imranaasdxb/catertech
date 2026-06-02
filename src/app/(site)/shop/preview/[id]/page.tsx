@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getDb } from "@/db";
-import { products } from "@/db/schema";
+import { products, type ProductAttributeValue } from "@/db/schema";
 import { isAdminGuestAuthed } from "@/lib/admin-guest-auth";
 
 type Props = { params: Promise<{ id: string }> };
@@ -12,6 +12,11 @@ export const metadata: Metadata = {
   title: "Product preview | CaterTech",
   robots: { index: false, follow: false },
 };
+
+function formatAttributeValue(attribute: ProductAttributeValue) {
+  if (typeof attribute === "string") return attribute;
+  return `${attribute.value}${attribute.unit ? ` ${attribute.unit}` : ""}`;
+}
 
 /** Catalogue preview for logged-in admin only (guest cookie). */
 export default async function AdminProductPreviewPage({ params }: Props) {
@@ -25,6 +30,7 @@ export default async function AdminProductPreviewPage({ params }: Props) {
   if (!p) notFound();
 
   const imgs = p.images?.length ? p.images : [];
+  const attributes = Object.entries(p.attributes ?? {});
 
   return (
     <div className="bg-offwhite min-h-[50vh] pb-20">
@@ -69,6 +75,18 @@ export default async function AdminProductPreviewPage({ params }: Props) {
           ) : (
             <p className="text-muted text-sm">No description.</p>
           )}
+          {attributes.length ? (
+            <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-border pt-6">
+              {attributes.map(([key, value]) => (
+                <div key={key}>
+                  <dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
+                    {key.replace(/_/g, " ")}
+                  </dt>
+                  <dd className="mt-1 text-sm text-charcoal">{formatAttributeValue(value)}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
         </div>
       </div>
     </div>

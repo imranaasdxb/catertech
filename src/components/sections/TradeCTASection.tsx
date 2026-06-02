@@ -1,6 +1,8 @@
+import tradeBgImage from "@/assets/tradebg.png";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import Container from "@/components/Container";
+import Image from "next/image";
 
 const BRAND_PURPLE = "#322b81";
 const BRAND_RED = "#c21722";
@@ -26,10 +28,18 @@ const EMIRATES = ["Dubai", "Abu Dhabi", "Sharjah", "RAK", "Fujairah", "Ajman", "
 export default function TradeCTASection() {
   return (
     <section
-      className="relative w-full overflow-hidden bg-[#f9f4ec] py-16 sm:py-20 lg:py-24"
+      className="relative isolate w-full overflow-hidden bg-[#f9f4ec] py-16 sm:py-20 lg:py-24"
       aria-labelledby="trade-cta-heading"
     >
-      <Container>
+      <Image
+        src={tradeBgImage}
+        alt=""
+        fill
+        className="-z-10 object-contain object-center sm:object-cover sm:object-center"
+        sizes="100vw"
+      />
+
+      <Container className="relative z-10">
         <div className="max-w-3xl">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#9ca3af]">
             For business
@@ -60,7 +70,7 @@ export default function TradeCTASection() {
             <div className="mt-8 flex flex-wrap gap-4">
               <Link
                 href="/trade/enquiry"
-                className="group inline-flex items-center gap-3 rounded-xl bg-[#0a0a0a] py-3 pl-6 pr-3 text-sm font-semibold text-white transition-colors duration-300 hover:bg-[#322b81]"
+                className="btn-solid-dark btn-hover-primary group gap-3 rounded-xl py-3 pl-6 pr-3 text-sm font-semibold"
               >
                 Submit an enquiry
                 <span className="flex size-10 items-center justify-center rounded-lg bg-[#322b81] transition-colors duration-300 group-hover:bg-white/15">
@@ -69,7 +79,7 @@ export default function TradeCTASection() {
               </Link>
               <Link
                 href="/trade/rfq"
-                className="group inline-flex items-center gap-3 rounded-xl bg-[#0a0a0a]/[0.06] py-3 pl-6 pr-3 text-sm font-semibold text-[#0a0a0a] transition-colors duration-300 hover:bg-[#c21722] hover:text-white"
+                className="btn-solid-light btn-hover-accent group gap-3 rounded-xl py-3 pl-6 pr-3 text-sm font-semibold"
               >
                 Request full quote
                 <span className="flex size-10 items-center justify-center rounded-lg bg-[#0a0a0a]/10 transition-colors duration-300 group-hover:bg-white/15">

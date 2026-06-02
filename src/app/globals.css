@@ -203,10 +203,11 @@ h3 {
   pointer-events: none;
 }
 
-.group:hover .on-card-hover-gradient {
-  background: var(--brand-gradient);
-  border-color: transparent;
-  color: white;
+.group:hover .on-card-hover-gradient,
+.group:hover .on-card-hover-solid {
+  background-color: #322b81;
+  border-color: #322b81;
+  color: #ffffff;
 }
 
 .card-hover-glow:hover::after {
@@ -272,6 +273,66 @@ h3 {
 }
 
 .btn-outline-ghost:active {
+  transform: scale(0.98);
+}
+
+/* Solid CTAs — black fill, no gradients; hover purple or red */
+.btn-solid-dark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid #0a0a0a;
+  background-color: #0a0a0a;
+  color: #ffffff;
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    transform 0.2s ease;
+}
+
+.btn-solid-dark.btn-hover-primary:hover {
+  background-color: #322b81;
+  border-color: #322b81;
+  color: #ffffff;
+}
+
+.btn-solid-dark.btn-hover-accent:hover {
+  background-color: #c21722;
+  border-color: #c21722;
+  color: #ffffff;
+}
+
+.btn-solid-light {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(10, 10, 10, 0.1);
+  background-color: #f6f6f6;
+  color: #0a0a0a;
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    transform 0.2s ease;
+}
+
+.btn-solid-light.btn-hover-accent:hover {
+  background-color: #c21722;
+  border-color: #c21722;
+  color: #ffffff;
+}
+
+.btn-solid-light.btn-hover-primary:hover {
+  background-color: #322b81;
+  border-color: #322b81;
+  color: #ffffff;
+}
+
+.btn-solid-dark:active,
+.btn-solid-light:active {
   transform: scale(0.98);
 }
 
@@ -396,6 +457,72 @@ h3 {
 
 .logo-cloud-edge-right .logo-cloud-edge-blur {
   background: linear-gradient(to left, #ffffff 0%, rgba(255, 255, 255, 0.75) 55%, transparent 100%);
+}
+
+/* Partner strip — edge fades: #F6F6F6 blended with white */
+.client-logos-map .logo-cloud-edge-left .logo-cloud-edge-fade {
+  background: linear-gradient(
+    to right,
+    #ffffff 0%,
+    #f6f6f6 22%,
+    rgba(246, 246, 246, 0.92) 48%,
+    transparent 100%
+  );
+}
+
+.client-logos-map .logo-cloud-edge-right .logo-cloud-edge-fade {
+  background: linear-gradient(
+    to left,
+    #ffffff 0%,
+    #f6f6f6 22%,
+    rgba(246, 246, 246, 0.92) 48%,
+    transparent 100%
+  );
+}
+
+.client-logos-map .logo-cloud-edge-left .logo-cloud-edge-blur {
+  background: linear-gradient(
+    to right,
+    #ffffff 0%,
+    rgba(246, 246, 246, 0.88) 40%,
+    rgba(246, 246, 246, 0.55) 62%,
+    transparent 100%
+  );
+}
+
+.client-logos-map .logo-cloud-edge-right .logo-cloud-edge-blur {
+  background: linear-gradient(
+    to left,
+    #ffffff 0%,
+    rgba(246, 246, 246, 0.88) 40%,
+    rgba(246, 246, 246, 0.55) 62%,
+    transparent 100%
+  );
+}
+
+.client-logos-map .logo-cloud-edge-left .logo-cloud-edge-shadow {
+  background: linear-gradient(
+    to right,
+    #f6f6f6 0%,
+    rgba(255, 255, 255, 0.65) 35%,
+    transparent 100%
+  );
+}
+
+.client-logos-map .logo-cloud-edge-right .logo-cloud-edge-shadow {
+  background: linear-gradient(
+    to left,
+    #f6f6f6 0%,
+    rgba(255, 255, 255, 0.65) 35%,
+    transparent 100%
+  );
+}
+
+.client-logos-map .logo-cloud-edge span.inline-flex.rounded-xl {
+  border-color: rgb(255 255 255 / 0.5);
+  background: rgb(255 255 255 / 0.35);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 .logo-cloud-edge-left .logo-cloud-edge-shadow {

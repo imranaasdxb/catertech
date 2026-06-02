@@ -22,6 +22,11 @@ export type ArcGalleryHeroProps = {
   className?: string;
 };
 
+/** Stable px strings so SSR and client hydration match. */
+function px(value: number) {
+  return `${Number(value.toFixed(2))}px`;
+}
+
 export function ArcGalleryHero({
   images,
   title,
@@ -42,7 +47,6 @@ export function ArcGalleryHero({
     radius: radiusLg,
     cardSize: cardSizeLg,
   });
-
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
@@ -64,10 +68,10 @@ export function ArcGalleryHero({
   const step = (endAngle - startAngle) / (count - 1);
 
   const heroBtnPrimaryClass =
-    "btn-outline-ghost btn-hover-primary inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] sm:min-h-11 sm:px-6 sm:text-[0.72rem] [&_svg]:size-3.5 sm:[&_svg]:size-4";
+    "btn-solid-dark btn-hover-primary min-h-10 rounded-xl px-5 py-2.5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] sm:min-h-11 sm:px-6 sm:text-[0.72rem] [&_svg]:size-3.5 sm:[&_svg]:size-4";
 
   const heroBtnAccentClass =
-    "btn-outline-ghost btn-hover-accent inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] sm:min-h-11 sm:px-6 sm:text-[0.72rem] [&_svg]:size-3.5 sm:[&_svg]:size-4";
+    "btn-solid-dark btn-hover-accent min-h-10 rounded-xl px-5 py-2.5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] sm:min-h-11 sm:px-6 sm:text-[0.72rem] [&_svg]:size-3.5 sm:[&_svg]:size-4";
 
   return (
     <section
@@ -76,7 +80,7 @@ export function ArcGalleryHero({
       <div
         className="relative mx-auto w-full"
         style={{
-          height: dimensions.radius * 1.2,
+          height: px(dimensions.radius * 1.2),
         }}
       >
         <div className="absolute bottom-0 left-1/2 -translate-x-1/2">
@@ -85,16 +89,17 @@ export function ArcGalleryHero({
             const angleRad = (angle * Math.PI) / 180;
             const x = Math.cos(angleRad) * dimensions.radius;
             const y = Math.sin(angleRad) * dimensions.radius;
+            const cardPx = px(dimensions.cardSize);
 
             return (
               <div
                 key={`${src}-${i}`}
                 className="absolute opacity-0 arc-fade-in-up"
                 style={{
-                  width: dimensions.cardSize,
-                  height: dimensions.cardSize,
-                  left: `calc(50% + ${x}px)`,
-                  bottom: `${y}px`,
+                  width: cardPx,
+                  height: cardPx,
+                  left: `calc(50% + ${Number(x.toFixed(2))}px)`,
+                  bottom: px(y),
                   transform: "translate(-50%, 50%)",
                   animationDelay: `${i * 100}ms`,
                   animationFillMode: "forwards",
@@ -103,7 +108,9 @@ export function ArcGalleryHero({
               >
                 <div
                   className="h-full w-full overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-border transition-transform hover:scale-105"
-                  style={{ transform: `rotate(${angle / 4}deg)` }}
+                  style={{
+                    transform: `rotate(${Number((angle / 4).toFixed(2))}deg)`,
+                  }}
                 >
                   <Image
                     src={src}

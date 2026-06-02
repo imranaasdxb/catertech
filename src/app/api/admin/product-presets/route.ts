@@ -1,0 +1,140 @@
+import { and, asc, count, eq, ilike, or } from "drizzle-orm";
+import { NextResponse } from "next/server";
+import { getDb } from "@/db";
+import {
+  productCategories,
+  productSubcategories,
+  productTitlePresets,
+} from "@/db/schema";
+import { z } from "zod";
+
+const querySchema = z.object({
+  categoryId: z.string().uuid(),
+  subCategoryId: z.string().uuid().optional(),
+});
+
+const manageQuerySchema = z.object({
+  categoryId: z.string().uuid().optional(),
+  subCategoryId: z.string().uuid().optional(),
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().min(1).max(50).default(20),
+  search: z.string().trim().max(160).default(""),
+});
+
+export async function GET(request: Request) {
+  const db = getDb();
+  if (!db) {
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
+
+  const url = new URL(request.url);
+  if (url.searchParams.get("mode") === "manage") {
+    const parsed = manageQuerySchema.safeParse({
+      categoryId: url.searchParams.get("categoryId") || undefined,
+      subCategoryId: url.searchParams.get("subCategoryId") || undefined,
+      page: url.searchParams.get("page") || undefined,
+      pageSize: url.searchParams.get("pageSize") || undefined,
+      search: url.searchParams.get("search") || undefined,
+    });
+
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    }
+
+    const { categoryId, subCategoryId, page, pageSize, search } = parsed.data;
+    const searchFilter = search
+      ? or(
+          ilike(productTitlePresets.title, `%${search}%`),
+          ilike(productTitlePresets.sourceLabel, `%${search}%`)
+        )
+      : undefined;
+    const where = and(
+      categoryId ? eq(productTitlePresets.categoryId, categoryId) : undefined,
+      subCategoryId ? eq(productTitlePresets.subCategoryId, subCategoryId) : undefined,
+      searchFilter
+    );
+
+    const [rows, [{ total }], categoryCounts] = await Promise.all([
+      db
+        .select({
+          id: productTitlePresets.id,
+          categoryId: productTitlePresets.categoryId,
+          subCategoryId: productTitlePresets.subCategoryId,
+          title: productTitlePresets.title,
+          sourceLabel: productTitlePresets.sourceLabel,
+          attributes: productTitlePresets.attributes,
+          categoryName: productCategories.name,
+          subCategoryName: productSubcategories.name,
+        })
+        .from(productTitlePresets)
+        .innerJoin(productCategories, eq(productTitlePresets.categoryId, productCategories.id))
+        .leftJoin(
+          productSubcategories,
+          eq(productTitlePresets.subCategoryId, productSubcategories.id)
+        )
+        .where(where)
+        .orderBy(asc(productCategories.sortOrder), asc(productTitlePresets.sortOrder))
+        .limit(pageSize)
+        .offset((page - 1) * pageSize),
+      db.select({ total: count() }).from(productTitlePresets).where(where),
+      db
+        .select({
+          categoryId: productCategories.id,
+          categoryName: productCategories.name,
+          count: count(productTitlePresets.id),
+        })
+        .from(productCategories)
+        .leftJoin(
+          productTitlePresets,
+          eq(productCategories.id, productTitlePresets.categoryId)
+        )
+        .groupBy(
+          productCategories.id,
+          productCategories.name,
+          productCategories.sortOrder
+        )
+        .orderBy(asc(productCategories.sortOrder), asc(productCategories.name)),
+    ]);
+
+    return NextResponse.json({
+      presets: rows,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / pageSize)),
+      },
+      categoryCounts,
+    });
+  }
+
+  const parsed = querySchema.safeParse({
+    categoryId: url.searchParams.get("categoryId"),
+    subCategoryId: url.searchParams.get("subCategoryId") || undefined,
+  });
+
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const { categoryId, subCategoryId } = parsed.data;
+  const rows = await db
+    .select({
+      id: productTitlePresets.id,
+      title: productTitlePresets.title,
+      sourceLabel: productTitlePresets.sourceLabel,
+      attributes: productTitlePresets.attributes,
+    })
+    .from(productTitlePresets)
+    .where(
+      subCategoryId
+        ? and(
+            eq(productTitlePresets.categoryId, categoryId),
+            eq(productTitlePresets.subCategoryId, subCategoryId)
+          )
+        : eq(productTitlePresets.categoryId, categoryId)
+    )
+    .orderBy(asc(productTitlePresets.sortOrder), asc(productTitlePresets.sourceLabel));
+
+  return NextResponse.json({ presets: rows });
+}

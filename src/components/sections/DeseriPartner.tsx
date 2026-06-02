@@ -27,7 +27,7 @@ export default function DeseriPartner() {
             href="#"
             target="_blank"
             rel="noopener noreferrer"
-            className="brand-gradient-bg flex shrink-0 items-center gap-2 px-6 py-3 text-xs font-semibold uppercase tracking-widest text-white transition-opacity hover:opacity-95"
+            className="btn-solid-dark btn-hover-primary shrink-0 rounded-xl px-6 py-3 text-xs font-semibold uppercase tracking-widest"
           >
             Visit Website
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

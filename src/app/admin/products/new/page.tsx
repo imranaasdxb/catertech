@@ -10,8 +10,12 @@ import {
   ProductTemplateFields,
 } from "@/components/admin/ProductTemplateFields";
 import { ProductCategorySelects } from "@/components/admin/ProductCategorySelects";
+import { ProductTitlePresetInput } from "@/components/admin/ProductTitlePresetInput";
 import { ADMIN_PURPLE, admin } from "@/components/admin/adminTheme";
-import type { TemplateFieldDef } from "@/lib/category-template";
+import type {
+  ProductAttributeValue,
+  TemplateFieldDef,
+} from "@/lib/category-template";
 import { ArrowLeft, ImagePlus, Save, Tag, Upload } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -49,6 +53,13 @@ export default function NewProductPage() {
     emptyTaxonomySelection
   );
   const [templateFields, setTemplateFields] = useState<TemplateFieldDef[]>([]);
+  const [presetAttributes, setPresetAttributes] = useState<
+    Record<string, ProductAttributeValue>
+  >({});
+  const [presetFieldKeys, setPresetFieldKeys] = useState<string[] | undefined>(
+    undefined
+  );
+  const [presetRevision, setPresetRevision] = useState(0);
   const [publishIntent, setPublishIntent] = useState<"draft" | "live">("draft");
 
   const canShowProductFields = Boolean(selectedTaxonomy.categoryId);
@@ -58,7 +69,17 @@ export default function NewProductPage() {
     setError("");
     setSelectedTaxonomy(emptyTaxonomySelection);
     setTemplateFields([]);
+    setPresetAttributes({});
+    setPresetFieldKeys(undefined);
+    setPresetRevision(0);
     setPublishIntent("draft");
+  }, []);
+
+  const handleTaxonomySelection = useCallback((selection: TaxonomySelection) => {
+    setSelectedTaxonomy(selection);
+    setPresetAttributes({});
+    setPresetFieldKeys(undefined);
+    setPresetRevision((revision) => revision + 1);
   }, []);
 
   const dismissSuccessModal = useCallback(() => {
@@ -160,7 +181,7 @@ export default function NewProductPage() {
             className="overflow-hidden rounded-[28px] border border-black/6 bg-white shadow-[0px_24px_80px_rgba(0,0,0,0.06)]"
           >
             <div className="border-b border-black/6 bg-[#F5F5F7]/60 px-5 py-4 md:px-7">
-              <ProductCategorySelects layout="row" onSelectionChange={setSelectedTaxonomy} />
+              <ProductCategorySelects layout="row" onSelectionChange={handleTaxonomySelection} />
             </div>
 
             <div className="p-5 md:p-7 lg:p-8">
@@ -190,16 +211,15 @@ export default function NewProductPage() {
                         ) : null}
                       </div>
                     </div>
-                    <label htmlFor="product-title" className={admin.labelModern}>
-                      Title *
-                    </label>
-                    <input
-                      id="product-title"
-                      name="title"
-                      required
-                      autoComplete="off"
-                      placeholder="Enter product name"
-                      className={admin.fieldModern}
+                    <ProductTitlePresetInput
+                      key={`${selectedTaxonomy.categoryId}-${selectedTaxonomy.subCategoryId}`}
+                      categoryId={selectedTaxonomy.categoryId}
+                      subCategoryId={selectedTaxonomy.subCategoryId}
+                      onPresetSelected={(attributes) => {
+                        setPresetAttributes(attributes);
+                        setPresetFieldKeys(Object.keys(attributes));
+                        setPresetRevision((revision) => revision + 1);
+                      }}
                     />
                   </section>
 
@@ -214,9 +234,11 @@ export default function NewProductPage() {
                   </section>
 
                   <ProductTemplateFields
-                    key={`${selectedTaxonomy.categoryId}-${selectedTaxonomy.subCategoryId}`}
+                    key={`${selectedTaxonomy.categoryId}-${selectedTaxonomy.subCategoryId}-${presetRevision}`}
                     categoryId={selectedTaxonomy.categoryId}
                     subCategoryId={selectedTaxonomy.subCategoryId}
+                    initialAttributes={presetAttributes}
+                    initialFieldKeys={presetFieldKeys}
                     onFieldsLoaded={setTemplateFields}
                   />
 

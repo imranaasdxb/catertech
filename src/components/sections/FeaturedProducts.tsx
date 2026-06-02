@@ -67,7 +67,7 @@ function FeaturedProductCard({ product }: { product: ProductCard }) {
             </p>
           ) : null}
 
-          <span className="on-card-hover-gradient mt-auto inline-flex w-fit items-center gap-1 rounded-md border border-border bg-surface-container px-2.5 py-1.5 pt-3 text-[9px] font-semibold uppercase tracking-wide text-ink transition-all duration-200">
+          <span className="on-card-hover-solid mt-auto inline-flex w-fit items-center gap-1 rounded-md border border-border bg-[#f6f6f6] px-2.5 py-1.5 pt-3 text-[9px] font-semibold uppercase tracking-wide text-ink transition-all duration-200">
             <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
@@ -222,7 +222,7 @@ export default function FeaturedProducts() {
   return (
     <section className="bg-white py-24">
       <Container>
-        <div className="rounded-[2rem] border border-border/50 bg-surface-container p-5 md:p-8 lg:p-10">
+        <div className=" p-5 md:p-8 lg:p-10">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <SectionHeader
             eyebrow="Shop Our Range"
@@ -249,7 +249,7 @@ export default function FeaturedProducts() {
             >
               {tab}
               {activeTab === tab && (
-                <span className="brand-gradient-bg absolute bottom-0 left-0 right-0 h-0.5" />
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#322b81]" />
               )}
             </button>
           ))}
@@ -342,8 +342,8 @@ export default function FeaturedProducts() {
                       onClick={() => setHighlight(val)}
                       className={`rounded-full px-3 py-1.5 text-[11px] font-semibold tracking-wide border transition-colors ${
                         highlight === val
-                          ? "brand-gradient-bg border-transparent text-white"
-                          : "border-border bg-surface-container text-muted hover:border-border hover:text-charcoal"
+                          ? "border-[#322b81] bg-[#322b81] text-white"
+                          : "border-border bg-[#f6f6f6] text-muted hover:border-border hover:text-charcoal"
                       }`}
                     >
                       {label}
@@ -437,7 +437,7 @@ export default function FeaturedProducts() {
         <div className="text-center mt-12">
           <Link
             href="/shop"
-            className="brand-gradient-bg inline-flex items-center gap-2 px-8 py-3.5 text-sm font-semibold tracking-widest uppercase text-white transition-opacity duration-200 hover:opacity-95"
+            className="btn-solid-dark btn-hover-primary rounded-xl px-8 py-3.5 text-sm font-semibold tracking-widest uppercase"
           >
             Browse Full Catalogue
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

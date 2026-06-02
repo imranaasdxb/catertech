@@ -7,13 +7,14 @@ import {
   type ProductAttributeValue,
   type TemplateFieldDef,
 } from "@/lib/category-template";
-import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Loader2, Plus, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Props = {
   categoryId: string;
   subCategoryId: string;
   initialAttributes?: Record<string, ProductAttributeValue>;
+  initialFieldKeys?: string[];
   onFieldsLoaded?: (fields: TemplateFieldDef[]) => void;
 };
 
@@ -31,22 +32,18 @@ export function ProductTemplateFields({
   categoryId,
   subCategoryId,
   initialAttributes,
+  initialFieldKeys,
   onFieldsLoaded,
 }: Props) {
   const [fields, setFields] = useState<TemplateFieldDef[]>([]);
+  const [availableFields, setAvailableFields] = useState<TemplateFieldDef[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
   useEffect(() => {
-    if (!categoryId) {
-      setFields([]);
-      setLoading(false);
-      return;
-    }
+    if (!categoryId) return;
 
     let cancelled = false;
-    setLoading(true);
-    setErr("");
 
     const params = new URLSearchParams({ categoryId });
     if (subCategoryId) params.set("subCategoryId", subCategoryId);
@@ -57,8 +54,13 @@ export function ProductTemplateFields({
         const data = (await res.json()) as { fields?: TemplateFieldDef[] };
         const loaded = data.fields ?? [];
         if (!cancelled) {
-          setFields(loaded);
-          onFieldsLoaded?.(loaded);
+          const visible =
+            initialFieldKeys === undefined
+              ? loaded
+              : loaded.filter((field) => initialFieldKeys.includes(field.key));
+          setAvailableFields(loaded);
+          setFields(visible);
+          onFieldsLoaded?.(visible);
         }
       })
       .catch(() => {
@@ -71,7 +73,32 @@ export function ProductTemplateFields({
     return () => {
       cancelled = true;
     };
-  }, [categoryId, subCategoryId, onFieldsLoaded]);
+  }, [categoryId, initialFieldKeys, subCategoryId, onFieldsLoaded]);
+
+  const remainingFields = useMemo(() => {
+    const activeKeys = new Set(fields.map((field) => field.key));
+    return availableFields.filter((field) => !activeKeys.has(field.key));
+  }, [availableFields, fields]);
+
+  const updateFields = useCallback(
+    (next: TemplateFieldDef[]) => {
+      setFields(next);
+      onFieldsLoaded?.(next);
+    },
+    [onFieldsLoaded]
+  );
+
+  function removeField(key: string) {
+    updateFields(fields.filter((field) => field.key !== key));
+  }
+
+  function addField(key: string) {
+    const selected = availableFields.find((field) => field.key === key);
+    if (!selected) return;
+    updateFields(
+      [...fields, selected].sort((a, b) => a.sortOrder - b.sortOrder)
+    );
+  }
 
   if (loading) {
     return (
@@ -86,25 +113,64 @@ export function ProductTemplateFields({
     return <p className={`${admin.error} text-sm`}>{err}</p>;
   }
 
-  if (!fields.length) return null;
-
   return (
     <section className="space-y-3">
-      <p className={`${admin.formSectionTitle} mb-0`}>Category fields</p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className={`${admin.formSectionTitle} mb-0`}>Category fields</p>
+          <p className="mt-1 text-xs text-[#1a1a1a]/45">
+            Preset values stay editable. Remove fields you do not need or add another field.
+          </p>
+        </div>
+        {remainingFields.length ? (
+          <label className="relative inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-semibold text-[#1a1a1a] shadow-sm transition hover:border-black/20">
+            <Plus size={14} aria-hidden="true" />
+            Add field
+            <select
+              value=""
+              onChange={(event) => addField(event.target.value)}
+              className="absolute inset-0 cursor-pointer opacity-0"
+              aria-label="Add category field"
+            >
+              <option value="">Choose a field</option>
+              {remainingFields.map((field) => (
+                <option key={field.key} value={field.key}>
+                  {field.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+      </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {fields.length ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {fields.map((field) => {
           const id = `attr-${field.key}`;
+          const fieldLabel = (
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <label htmlFor={id} className={`${admin.labelModern} mb-0`}>
+                {field.label}
+                {field.required ? " *" : ""}
+              </label>
+              <button
+                type="button"
+                onClick={() => removeField(field.key)}
+                className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-[#1a1a1a]/35 transition hover:bg-black/5 hover:text-[#1a1a1a]"
+                aria-label={`Remove ${field.label}`}
+                title={`Remove ${field.label}`}
+              >
+                <X size={14} aria-hidden="true" />
+              </button>
+            </div>
+          );
 
           if (field.type === "dimension") {
             const { value, unit } = readAttr(initialAttributes, field.key);
             const units = field.unitOptions?.length ? field.unitOptions : [...DIMENSION_UNITS];
             return (
               <div key={field.key} className="sm:col-span-2">
-                <label htmlFor={id} className={admin.labelModern}>
-                  {field.label}
-                  {field.required ? " *" : ""}
-                </label>
+                {fieldLabel}
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <input
                     id={id}
@@ -116,10 +182,11 @@ export function ProductTemplateFields({
                   />
                   <select
                     name={`attr_${field.key}_unit`}
-                    defaultValue={units.includes(unit) ? unit : units[0]}
+                    defaultValue={unit === "" || units.includes(unit) ? unit : units[0]}
                     className={`${admin.fieldModern} w-full sm:w-32`}
                     aria-label={`${field.label} unit`}
                   >
+                    <option value="">Choose unit</option>
                     {units.map((u) => (
                       <option key={u} value={u}>
                         {u}
@@ -135,10 +202,7 @@ export function ProductTemplateFields({
             const { value } = readAttr(initialAttributes, field.key);
             return (
               <div key={field.key}>
-                <label htmlFor={id} className={admin.labelModern}>
-                  {field.label}
-                  {field.required ? " *" : ""}
-                </label>
+                {fieldLabel}
                 <select
                   id={id}
                   name={`attr_${field.key}`}
@@ -161,10 +225,7 @@ export function ProductTemplateFields({
             const { value } = readAttr(initialAttributes, field.key);
             return (
               <div key={field.key} className="sm:col-span-2">
-                <label htmlFor={id} className={admin.labelModern}>
-                  {field.label}
-                  {field.required ? " *" : ""}
-                </label>
+                {fieldLabel}
                 <textarea
                   id={id}
                   name={`attr_${field.key}`}
@@ -180,10 +241,7 @@ export function ProductTemplateFields({
           const { value } = readAttr(initialAttributes, field.key);
           return (
             <div key={field.key}>
-              <label htmlFor={id} className={admin.labelModern}>
-                {field.label}
-                {field.required ? " *" : ""}
-              </label>
+              {fieldLabel}
               <input
                 id={id}
                 name={`attr_${field.key}`}
@@ -194,7 +252,12 @@ export function ProductTemplateFields({
             </div>
           );
         })}
-      </div>
+        </div>
+      ) : (
+        <p className="rounded-xl border border-dashed border-black/10 bg-[#F5F5F7]/45 px-4 py-5 text-sm text-[#1a1a1a]/45">
+          This preset has no saved specification fields. Add only the fields needed for this product.
+        </p>
+      )}
     </section>
   );
 }

@@ -6,9 +6,9 @@ import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import AdminProductViewPanel from "@/components/admin/AdminProductViewPanel";
 import { AdminPanelModal } from "@/components/admin/AdminPanelModal";
 import { AdminTypedDeleteDialog } from "@/components/admin/AdminTypedDeleteDialog";
-import { products } from "@/db/schema";
+import { products, type ProductAttributeValue } from "@/db/schema";
 import type { InferSelectModel } from "drizzle-orm";
-import { Check, Eye, Globe, Home, Loader2, Pencil, Search, Trash2 } from "lucide-react";
+import { Check, Eye, Loader2, Pencil, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -22,6 +22,8 @@ export type AdminProductListRow = {
   published: boolean;
   isFeatured: boolean;
   isAvailable: boolean;
+  attributes: Record<string, ProductAttributeValue>;
+  updatedAt: Date | string;
   thumbUrl: string | null;
 };
 
@@ -50,6 +52,66 @@ function Thumb({ url }: { url: string | null }) {
   );
 }
 
+function formatAttribute(value: ProductAttributeValue) {
+  if (typeof value === "string") return value || "Not set";
+  return `${value.value || "Not set"}${value.unit ? ` ${value.unit}` : ""}`;
+}
+
+function formatUpdatedAt(value: Date | string) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function Specifications({
+  attributes,
+}: {
+  attributes: Record<string, ProductAttributeValue>;
+}) {
+  const priority = [
+    "dimensions",
+    "size",
+    "length",
+    "width",
+    "height",
+    "diameter",
+    "material",
+    "capacity",
+    "voltage",
+    "power",
+    "brand",
+    "weight",
+  ];
+  const priorityIndex = new Map(priority.map((key, index) => [key, index]));
+  const entries = Object.entries(attributes)
+    .filter(([key]) => key !== "additional_details")
+    .sort(([left], [right]) => {
+      const leftIndex = priorityIndex.get(left) ?? priority.length;
+      const rightIndex = priorityIndex.get(right) ?? priority.length;
+      return leftIndex - rightIndex;
+    })
+    .slice(0, 4);
+
+  if (!entries.length) {
+    return <span className="text-xs text-gray-400">No saved specifications</span>;
+  }
+
+  return (
+    <div className="grid gap-x-4 gap-y-1 sm:grid-cols-2">
+      {entries.map(([key, value]) => (
+        <p key={key} className="min-w-0 truncate text-xs leading-5 text-gray-600">
+          <span className="font-semibold capitalize text-gray-400">{key.replace(/_/g, " ")}:</span>{" "}
+          <span>{formatAttribute(value)}</span>
+        </p>
+      ))}
+    </div>
+  );
+}
+
 function VisibilityToggle({
   active,
   label,
@@ -71,7 +133,7 @@ function VisibilityToggle({
       aria-pressed={active}
       disabled={disabled}
       onClick={onClick}
-      className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors disabled:opacity-40 ${
+      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
         active
           ? "border-purple-200 bg-purple-50 text-purple-700"
           : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50"
@@ -118,10 +180,14 @@ export default function AdminProductsTable({
   const [viewLoading, setViewLoading] = useState(false);
 
   useEffect(() => {
+    // Refresh the optimistic table copy after a server navigation.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalRows(rows);
   }, [rows]);
 
   useEffect(() => {
+    // Keep the submitted server search term in sync after navigation.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearchInput(initialSearch);
   }, [initialSearch]);
 
@@ -135,16 +201,8 @@ export default function AdminProductsTable({
   }, [localRows, filter]);
 
   useEffect(() => {
-    if (!editId) {
-      setEditProduct(null);
-      setEditLoadErr("");
-      setEditLoading(false);
-      return;
-    }
+    if (!editId) return;
     let cancelled = false;
-    setEditLoading(true);
-    setEditProduct(null);
-    setEditLoadErr("");
     fetch(`/api/admin/products/${editId}`)
       .then((r) => {
         if (!r.ok) throw new Error();
@@ -165,16 +223,8 @@ export default function AdminProductsTable({
   }, [editId]);
 
   useEffect(() => {
-    if (!viewId) {
-      setViewProduct(null);
-      setViewLoadErr("");
-      setViewLoading(false);
-      return;
-    }
+    if (!viewId) return;
     let cancelled = false;
-    setViewLoading(true);
-    setViewProduct(null);
-    setViewLoadErr("");
     fetch(`/api/admin/products/${viewId}`)
       .then((r) => {
         if (!r.ok) throw new Error();
@@ -195,6 +245,34 @@ export default function AdminProductsTable({
   }, [viewId]);
 
   const viewRowMeta = localRows.find((r) => r.id === viewId);
+
+  function openEdit(id: string) {
+    setEditProduct(null);
+    setEditLoadErr("");
+    setEditLoading(true);
+    setEditId(id);
+  }
+
+  function closeEdit() {
+    setEditId(null);
+    setEditProduct(null);
+    setEditLoadErr("");
+    setEditLoading(false);
+  }
+
+  function openView(id: string) {
+    setViewProduct(null);
+    setViewLoadErr("");
+    setViewLoading(true);
+    setViewId(id);
+  }
+
+  function closeView() {
+    setViewId(null);
+    setViewProduct(null);
+    setViewLoadErr("");
+    setViewLoading(false);
+  }
 
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -255,7 +333,7 @@ export default function AdminProductsTable({
   const confirmCopy = toggleAction ? toggleCopy(toggleAction) : null;
 
   return (
-    <div className="mx-auto w-full max-w-6xl lg:max-w-7xl">
+    <div className="mx-auto w-full max-w-[1560px] px-1 sm:px-2 lg:px-4">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
           <form onSubmit={handleSearchSubmit} className="relative min-w-0 flex-1 sm:max-w-xs">
@@ -268,14 +346,14 @@ export default function AdminProductsTable({
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search products…"
-              className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 outline-none ring-purple-500/30 placeholder:text-gray-400 focus:border-purple-300 focus:ring-2"
+            className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 outline-none ring-purple-500/30 placeholder:text-gray-400 focus:border-purple-300 focus:ring-2"
             />
           </form>
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value as FilterKey)}
             aria-label="Filter products"
-            className="rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-purple-300 focus:ring-2 focus:ring-purple-500/30"
+            className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-purple-300 focus:ring-2 focus:ring-purple-500/30"
           >
             <option value="all">All products</option>
             <option value="live">Live only</option>
@@ -291,13 +369,13 @@ export default function AdminProductsTable({
         <div className="flex shrink-0 items-center justify-end gap-2">
           <Link
             href="/admin/products/categories"
-            className={`${admin.secondaryBtn} border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium`}
+            className={`${admin.secondaryBtn} cursor-pointer border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium`}
           >
             Category master
           </Link>
           <Link
             href="/admin/products/new"
-            className={`${admin.primaryBtn} px-4 py-2.5 text-sm font-medium`}
+            className={`${admin.primaryBtn} cursor-pointer px-4 py-2.5 text-sm font-medium`}
             style={{ backgroundColor: ADMIN_PURPLE }}
           >
             + New product
@@ -324,7 +402,7 @@ export default function AdminProductsTable({
         title="Edit product"
         subtitle="Gallery uploads when you save."
         widthClass="max-w-[min(100%-1rem,46rem)]"
-        onClose={() => setEditId(null)}
+        onClose={closeEdit}
       >
         {editLoading ? (
           <div className="flex flex-col items-center gap-3 py-20 text-[#1a1a1a]/50">
@@ -338,7 +416,7 @@ export default function AdminProductsTable({
             variant="modal"
             product={editProduct}
             onDeleted={() => {
-              setEditId(null);
+              closeEdit();
               void router.refresh();
             }}
           />
@@ -350,7 +428,7 @@ export default function AdminProductsTable({
         title={viewProduct?.title ?? viewRowMeta?.title ?? "View product"}
         subtitle="Full product record"
         widthClass="max-w-[min(100%-1rem,52rem)]"
-        onClose={() => setViewId(null)}
+        onClose={closeView}
       >
         {viewLoading ? (
           <div className="flex flex-col items-center gap-3 py-16">
@@ -385,42 +463,56 @@ export default function AdminProductsTable({
       />
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] border-collapse">
+        <div className="overflow-x-auto [scrollbar-color:rgba(26,26,26,0.22)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-black/20 [&::-webkit-scrollbar-track]:bg-transparent">
+          <table className="w-full min-w-[1380px] border-collapse">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/80">
-                <th className="px-4 py-3 text-left">
+                <th className="w-[56px] px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  S.N
+                </th>
+                <th className="w-[68px] px-4 py-3 text-left">
                   <span className="sr-only">Image</span>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <th className="w-[250px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                   Product
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <th className="w-[390px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Specifications
+                </th>
+                <th className="w-[290px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                   Visibility
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <th className="w-[72px] px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
                   Photos
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  Status
+                <th className="w-[112px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                  Updated
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <th className="w-[132px] px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filteredRows.map((r) => (
-                <tr key={r.id} className="transition-colors hover:bg-gray-50/60">
+              {filteredRows.map((r, index) => (
+                <tr key={r.id} className="h-[88px] align-top transition-colors hover:bg-gray-50/70">
+                  <td className="px-4 py-4 text-center text-xs font-semibold tabular-nums text-gray-400">
+                    {index + 1}
+                  </td>
                   <td className="px-4 py-3">
                     <Thumb url={r.thumbUrl} />
                   </td>
                   <td className="px-4 py-3">
-                    <p className="max-w-[220px] truncate font-medium text-gray-900">{r.title}</p>
+                    <p className="max-w-[250px] truncate font-semibold text-gray-900">{r.title}</p>
                     <p className="mt-0.5 text-xs text-gray-400">/{r.slug}</p>
                     {r.category ? (
-                      <p className="mt-1 max-w-[220px] truncate text-xs text-gray-500">{r.category}</p>
+                      <p className="mt-1 max-w-[250px] truncate text-xs font-medium text-gray-500">
+                        {r.category}
+                      </p>
                     ) : null}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Specifications attributes={r.attributes} />
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1.5">
@@ -473,50 +565,33 @@ export default function AdminProductsTable({
                       {r.galleryCount}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-center">
-                    <div className="flex flex-col items-center gap-1">
-                      {r.published ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
-                          <Globe className="h-3 w-3" aria-hidden />
-                          Live
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500">
-                          Draft
-                        </span>
-                      )}
-                      {r.isFeatured ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
-                          <Home className="h-2.5 w-2.5" aria-hidden />
-                          Featured
-                        </span>
-                      ) : null}
-                    </div>
+                  <td className="px-4 py-3 text-xs font-medium text-gray-500">
+                    {formatUpdatedAt(r.updatedAt)}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-5 py-3">
                     <div className="flex items-center justify-end gap-1">
                       <button
                         type="button"
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-purple-100 hover:text-purple-700"
+                        className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-purple-100 hover:text-purple-700"
                         title="Edit"
                         aria-label={`Edit ${r.title}`}
-                        onClick={() => setEditId(r.id)}
+                        onClick={() => openEdit(r.id)}
                       >
                         <Pencil className="h-3.5 w-3.5" aria-hidden />
                       </button>
                       <button
                         type="button"
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100"
+                        className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100"
                         title="View"
                         aria-label={`View ${r.title}`}
-                        onClick={() => setViewId(r.id)}
+                        onClick={() => openView(r.id)}
                       >
                         <Eye className="h-3.5 w-3.5" aria-hidden />
                       </button>
                       <button
                         type="button"
                         disabled={deletingId === r.id}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
+                        className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
                         title="Delete"
                         aria-label={`Delete ${r.title}`}
                         onClick={() => setDeleteTarget(r)}
@@ -529,7 +604,7 @@ export default function AdminProductsTable({
               ))}
               {filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-16 text-center text-sm text-gray-400">
+                  <td colSpan={8} className="px-4 py-16 text-center text-sm text-gray-400">
                     {emptyMessage}
                   </td>
                 </tr>

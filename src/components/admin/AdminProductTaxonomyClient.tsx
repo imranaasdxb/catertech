@@ -2,6 +2,7 @@
 
 import { admin, ADMIN_PURPLE } from "@/components/admin/adminTheme";
 import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
+import { AdminProductPresetsPanel } from "@/components/admin/AdminProductPresetsPanel";
 import { CategoryTemplateEditor } from "@/components/admin/CategoryTemplateEditor";
 import { notifyProductTaxonomyChanged, type TaxonomyRow } from "@/components/admin/ProductCategorySelects";
 import {
@@ -9,7 +10,9 @@ import {
   ChevronLeft,
   ChevronRight,
   LayoutTemplate,
+  ListTree,
   Loader2,
+  PackageSearch,
   Pencil,
   Plus,
   Search,
@@ -22,6 +25,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 const PAGE_SIZE = 4;
 
 type SubFilter = "all" | "with-subs" | "without-subs";
+type MasterView = "presets" | "taxonomy";
 
 type SubRow = { id: string; name: string };
 
@@ -68,6 +72,7 @@ export default function AdminProductTaxonomyClient() {
     categoryName: string;
     subCategoryName?: string;
   } | null>(null);
+  const [activeView, setActiveView] = useState<MasterView>("presets");
 
   const filteredCategories = useMemo(() => {
     const q = search.trim();
@@ -99,16 +104,10 @@ export default function AdminProductTaxonomyClient() {
   }, []);
 
   useEffect(() => {
+    // Initial synchronization with the Neon-backed taxonomy API.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
-
-  useEffect(() => {
-    setPage(0);
-  }, [search, subFilter]);
-
-  useEffect(() => {
-    if (page > totalPages - 1) setPage(Math.max(0, totalPages - 1));
-  }, [page, totalPages]);
 
   function upsertCategory(categoryId: string, patch: (c: TaxonomyRow) => TaxonomyRow) {
     setCategories((prev) => prev.map((c) => (c.id === categoryId ? patch(c) : c)));
@@ -314,9 +313,40 @@ export default function AdminProductTaxonomyClient() {
               <ArrowLeft size={14} aria-hidden />
               Products
             </Link>
-            <h1 className={`${admin.h1} mt-3`}>Category master</h1>
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h1 className={admin.h1}>Category master</h1>
+              <div className="flex flex-wrap items-center gap-1 border border-black/8 bg-white p-1">
+                <button
+                  type="button"
+                  onClick={() => setActiveView("presets")}
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition ${
+                    activeView === "presets"
+                      ? "bg-[#1a1a1a] text-white"
+                      : "text-[#1a1a1a]/60 hover:bg-[#F5F5F7] hover:text-[#1a1a1a]"
+                  }`}
+                >
+                  <PackageSearch className="h-3.5 w-3.5" />
+                  Product presets
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveView("taxonomy")}
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition ${
+                    activeView === "taxonomy"
+                      ? "bg-[#1a1a1a] text-white"
+                      : "text-[#1a1a1a]/60 hover:bg-[#F5F5F7] hover:text-[#1a1a1a]"
+                  }`}
+                >
+                  <ListTree className="h-3.5 w-3.5" />
+                  Categories & sub-categories
+                </button>
+              </div>
+            </div>
           </div>
 
+          {activeView === "presets" ? (
+            <AdminProductPresetsPanel categories={categories} />
+          ) : (
           <div className="overflow-hidden rounded-[24px] border border-black/6 bg-white shadow-[0px_20px_64px_rgba(0,0,0,0.06)]">
             <div className="space-y-3 border-b border-black/6 bg-[#F5F5F7]/60 px-4 py-4 sm:px-6">
               <form
@@ -391,7 +421,10 @@ export default function AdminProductTaxonomyClient() {
                   <input
                     type="search"
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    onChange={(e) => {
+                      setSearch(e.target.value);
+                      setPage(0);
+                    }}
                     placeholder="Search categories or sub-categories…"
                     className={`${admin.fieldModern} w-full py-2.5 pl-9 text-sm`}
                     aria-label="Search categories"
@@ -404,7 +437,10 @@ export default function AdminProductTaxonomyClient() {
                   <select
                     id="taxonomy-filter"
                     value={subFilter}
-                    onChange={(e) => setSubFilter(e.target.value as SubFilter)}
+                    onChange={(e) => {
+                      setSubFilter(e.target.value as SubFilter);
+                      setPage(0);
+                    }}
                     className={`${admin.fieldModern} w-full py-2.5 text-sm`}
                   >
                     <option value="all">All categories</option>
@@ -645,6 +681,7 @@ export default function AdminProductTaxonomyClient() {
               )}
             </div>
           </div>
+          )}
         </div>
       </div>
     </>

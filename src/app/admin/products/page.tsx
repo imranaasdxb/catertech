@@ -29,6 +29,7 @@ export default async function AdminProductsPage({ searchParams }: SearchProps) {
     published: products.published,
     isFeatured: products.isFeatured,
     isAvailable: products.isAvailable,
+    attributes: products.attributes,
     updatedAt: products.updatedAt,
     images: products.images,
   };
@@ -56,6 +57,8 @@ export default async function AdminProductsPage({ searchParams }: SearchProps) {
     published: r.published,
     isFeatured: r.isFeatured,
     isAvailable: r.isAvailable,
+    attributes: r.attributes,
+    updatedAt: r.updatedAt,
     thumbUrl: r.images?.[0] ?? null,
   }));
 
