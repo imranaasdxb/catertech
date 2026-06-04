@@ -57,7 +57,7 @@ export default function Header() {
         <Container className="flex h-[var(--header-height)] min-h-[84px] items-center justify-between gap-4">
           <Link
             href="/"
-            className="flex shrink-0 items-center rounded-lg bg-white px-2 py-1.5 ring-1 ring-border/60"
+            className="flex shrink-0 items-center"
             aria-label="Catertech home"
           >
             <Image
@@ -66,7 +66,7 @@ export default function Header() {
               width={300}
               height={130}
               priority
-              className="h-9 w-auto max-h-[36px] object-contain"
+              className="h-10 w-auto max-h-[42px] object-contain"
             />
           </Link>
 

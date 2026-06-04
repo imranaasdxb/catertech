@@ -1,71 +1,118 @@
 "use client";
 
-import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import Container from "@/components/Container";
+import { STATIC_BLOG_POSTS } from "@/lib/blog-posts";
 
-const CATEGORIES = ["All", "Hotel", "Corporate", "Wedding", "Government", "F&B"];
-
-const POSTS = [
-  { slug: "top-catering-equipment-trends-2025", category: "F&B", date: "12 Apr 2025", title: "Top Catering Equipment Trends Shaping UAE Events in 2025", excerpt: "From sustainable serving ware to smart kitchen appliances, what's changing in UAE's catering space." },
-  { slug: "how-to-plan-a-corporate-event-dubai", category: "Corporate", date: "02 Mar 2025", title: "How to Plan a Flawless Corporate Event in Dubai", excerpt: "A practical guide to venue selection, equipment rental, and coordination for corporate events." },
-  { slug: "wedding-equipment-rental-guide-uae", category: "Wedding", date: "18 Jan 2025", title: "The Complete Wedding Equipment Rental Guide for UAE Couples", excerpt: "Tables, chairs, linen, chafing dishes — everything you need for wedding equipment rental." },
-  { slug: "hotel-kitchen-equipment-guide", category: "Hotel", date: "10 Dec 2024", title: "Commercial Kitchen Equipment Guide for UAE Hotels", excerpt: "Selecting the right commercial kitchen equipment for hotel operations in the UAE market." },
-  { slug: "government-event-equipment-procurement", category: "Government", date: "22 Nov 2024", title: "Equipment Procurement for Government Events in UAE", excerpt: "Best practices for procuring event equipment for government and municipality functions." },
-  { slug: "ramadan-iftar-catering-setup", category: "F&B", date: "15 Oct 2024", title: "Setting Up an Iftar Catering Operation in Dubai", excerpt: "Essential equipment and setup tips for Ramadan iftar catering services in UAE." },
+const CATEGORIES = [
+  "All",
+  ...Array.from(new Set(STATIC_BLOG_POSTS.map((p) => p.category))),
 ];
 
 export default function BlogPage() {
   const [active, setActive] = useState("All");
-  const filtered = active === "All" ? POSTS : POSTS.filter((p) => p.category === active);
+
+  const filtered = useMemo(
+    () =>
+      active === "All"
+        ? STATIC_BLOG_POSTS
+        : STATIC_BLOG_POSTS.filter((p) => p.category === active),
+    [active],
+  );
 
   return (
-    <>
-      <section className="pt-40 pb-24 bg-navy">
-        <Container>
-          <span className="text-xs font-semibold tracking-[0.2em] uppercase text-sand block mb-4">Our Blog</span>
-          <div className="w-10 h-0.5 bg-sand mb-6" />
-          <h1 className="font-serif text-5xl md:text-6xl text-white leading-tight max-w-2xl">
-            Stories, Guides &amp; Industry Insights
+    <section className="relative overflow-hidden bg-white pt-32 pb-20 md:pt-40 md:pb-28">
+      <div
+        className="pointer-events-none absolute -right-24 -top-24 h-[420px] w-[420px] rounded-full opacity-70 md:h-[520px] md:w-[520px]"
+        style={{
+          background:
+            "radial-gradient(circle at center, rgba(255, 183, 140, 0.45) 0%, rgba(255, 220, 190, 0.2) 45%, transparent 70%)",
+        }}
+        aria-hidden
+      />
+
+      <Container className="relative z-10">
+        <header className="mb-10 max-w-2xl md:mb-12">
+          <h1 className="text-[2.35rem] font-bold leading-[1.08] tracking-[-0.03em] text-ink sm:text-[2.75rem] lg:text-[3.1rem]">
+            <span className="block font-sans">Stories, guides &amp;</span>
+            <span
+              className="mt-1 block font-normal italic text-ink"
+              style={{ fontFamily: 'Georgia, "Times New Roman", Times, serif' }}
+            >
+              industry insights
+            </span>
           </h1>
-        </Container>
-      </section>
+          <p className="mt-5 text-base leading-relaxed text-body-muted md:text-lg">
+            Industry news, event guides, and CaterTech insights for hotels,
+            caterers, and event teams across the UAE.
+          </p>
+        </header>
 
-      <section className="bg-offwhite py-16">
-        <Container>
-          <div className="flex gap-1 mb-12 border-b border-border overflow-x-auto">
-            {CATEGORIES.map((cat) => (
-              <button key={cat} onClick={() => setActive(cat)}
-                className={`px-5 py-3 text-xs font-semibold tracking-wider uppercase whitespace-nowrap transition-all relative ${active === cat ? "text-charcoal" : "text-muted hover:text-charcoal"}`}>
+        <div className="mb-10 flex gap-2 overflow-x-auto border-b border-[#e8e4df] pb-px md:mb-12">
+          {CATEGORIES.map((cat) => {
+            const isActive = active === cat;
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setActive(cat)}
+                className={`relative shrink-0 px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] transition-colors whitespace-nowrap ${
+                  isActive
+                    ? "text-primary"
+                    : "text-muted hover:text-primary"
+                }`}
+              >
                 {cat}
-                {active === cat && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-sand" />}
+                {isActive ? (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                ) : null}
               </button>
-            ))}
-          </div>
+            );
+          })}
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((post, i) => (
-              <Link key={i} href={`/blog/${post.slug}`} className="group bg-white border border-border hover:border-sand/30 hover:shadow-md transition-all block">
-                <div className="aspect-[16/9] bg-cream relative">
-                  <span className="absolute top-3 left-3 bg-sand/10 text-sand text-[10px] font-bold tracking-wider uppercase px-2.5 py-1">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+          {filtered.map((post) => (
+            <article key={post.slug}>
+              <Link href={`/blog/${post.slug}`} className="group block">
+                <div className="relative mb-4 aspect-16/10 overflow-hidden rounded-2xl bg-[#f3f4f6]">
+                  <Image
+                    src={post.coverImage}
+                    alt={post.coverImageAlt}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                  />
+                  <span className="absolute left-4 top-4 rounded-sm bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-ink">
                     {post.category}
                   </span>
                 </div>
-                <div className="p-6">
-                  <p className="text-[10px] text-muted tracking-widest uppercase mb-3">{post.date}</p>
-                  <h3 className="font-serif text-lg text-charcoal leading-snug mb-3 group-hover:text-sand transition-colors line-clamp-2">
-                    {post.title}
-                  </h3>
-                  <p className="text-muted text-sm leading-relaxed line-clamp-2 mb-4">{post.excerpt}</p>
-                  <span className="text-sand text-xs font-semibold tracking-wider uppercase flex items-center gap-1.5">
-                    Read Story →
+
+                <time className="mb-3 block text-sm text-[#9ca3af]">
+                  {post.dateLabel}
+                </time>
+
+                <h2 className="mb-3 line-clamp-2 text-xl font-bold leading-snug text-ink transition-colors group-hover:text-primary">
+                  {post.title}
+                </h2>
+
+                <p className="mb-5 line-clamp-2 text-sm leading-relaxed text-body-muted">
+                  {post.excerpt}
+                </p>
+
+                <span className="inline-flex items-center gap-1 border-b-2 border-ink pb-1 text-[11px] font-bold uppercase tracking-wide text-ink transition-colors group-hover:border-primary group-hover:text-primary">
+                  Continue Reading
+                  <span aria-hidden className="text-sm leading-none">
+                    →
                   </span>
-                </div>
+                </span>
               </Link>
-            ))}
-          </div>
-        </Container>
-      </section>
-    </>
+            </article>
+          ))}
+        </div>
+      </Container>
+    </section>
   );
 }

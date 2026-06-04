@@ -1,6 +1,8 @@
 "use client";
 
+import { ArrowRight } from "lucide-react";
 import { FormEvent, useState } from "react";
+import { cn } from "@/lib/utils";
 
 export function ContactForm() {
   const [status, setStatus] = useState<"idle" | "sending" | "ok" | "err">("idle");
@@ -17,7 +19,7 @@ export function ContactForm() {
       body: JSON.stringify({
         fullName: fd.get("fullName"),
         email: fd.get("email"),
-        phone: fd.get("phone") || "",
+        phone: "",
         message: fd.get("message"),
       }),
     });
@@ -31,69 +33,87 @@ export function ContactForm() {
     e.currentTarget.reset();
   }
 
+  const inputClass =
+    "w-full rounded-lg border border-[#e5e7eb] bg-white px-4 py-3 text-sm text-ink outline-none transition-colors placeholder:text-[#9ca3af] hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/20";
+
   return (
-    <form onSubmit={onSubmit} className="space-y-5">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <div>
+      <h2 className="text-2xl font-bold tracking-tight text-ink md:text-[1.75rem]">
+        Drop us a line
+      </h2>
+
+      <form onSubmit={onSubmit} className="mt-8 space-y-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div>
+            <label htmlFor="fullName" className="mb-2 block text-sm text-body-muted">
+              Full Name <span className="text-accent">*</span>
+            </label>
+            <input
+              id="fullName"
+              name="fullName"
+              required
+              type="text"
+              className={inputClass}
+              placeholder="Your full name"
+            />
+          </div>
+          <div>
+            <label htmlFor="email" className="mb-2 block text-sm text-body-muted">
+              Email <span className="text-accent">*</span>
+            </label>
+            <input
+              id="email"
+              name="email"
+              required
+              type="email"
+              className={inputClass}
+              placeholder="Type your email"
+            />
+          </div>
+        </div>
+
         <div>
-          <label className="text-[10px] font-semibold tracking-widest uppercase text-muted block mb-2">
-            Full Name
+          <label htmlFor="message" className="mb-2 block text-sm text-body-muted">
+            Message <span className="text-accent">*</span>
           </label>
-          <input
-            name="fullName"
+          <textarea
+            id="message"
+            name="message"
             required
-            type="text"
-            className="w-full border border-border bg-white px-4 py-3 text-sm text-charcoal outline-none focus:border-sand transition-colors"
-            placeholder="Your name"
+            rows={6}
+            className={`${inputClass} resize-none`}
+            placeholder="Tell us about your catering or event equipment needs..."
           />
         </div>
-        <div>
-          <label className="text-[10px] font-semibold tracking-widest uppercase text-muted block mb-2">
-            Email
-          </label>
-          <input
-            name="email"
-            required
-            type="email"
-            className="w-full border border-border bg-white px-4 py-3 text-sm text-charcoal outline-none focus:border-sand transition-colors"
-            placeholder="your@email.com"
-          />
-        </div>
-      </div>
-      <div>
-        <label className="text-[10px] font-semibold tracking-widest uppercase text-muted block mb-2">
-          Phone
-        </label>
-        <input
-          name="phone"
-          type="tel"
-          className="w-full border border-border bg-white px-4 py-3 text-sm text-charcoal outline-none focus:border-sand transition-colors"
-          placeholder="+971 XX XXX XXXX"
-        />
-      </div>
-      <div>
-        <label className="text-[10px] font-semibold tracking-widest uppercase text-muted block mb-2">
-          Message
-        </label>
-        <textarea
-          name="message"
-          required
-          rows={5}
-          className="w-full border border-border bg-white px-4 py-3 text-sm text-charcoal outline-none focus:border-sand transition-colors resize-none"
-          placeholder="Tell us about your requirements..."
-        />
-      </div>
-      {status === "ok" || status === "err" ? (
-        <p className={status === "ok" ? "text-sm text-green-700" : "text-sm text-red-600"}>
-          {msg}
-        </p>
-      ) : null}
-      <button
-        type="submit"
-        disabled={status === "sending"}
-        className="w-full bg-sand hover:bg-sand-dark disabled:opacity-60 text-white text-xs font-semibold tracking-widest uppercase py-4 transition-colors duration-200"
-      >
-        {status === "sending" ? "Sending…" : "Send Message"}
-      </button>
-    </form>
+
+        {status === "ok" || status === "err" ? (
+          <p
+            role="status"
+            className={status === "ok" ? "text-sm text-green-700" : "text-sm text-accent"}
+          >
+            {msg}
+          </p>
+        ) : null}
+
+        <button
+          type="submit"
+          disabled={status === "sending"}
+          className={cn(
+            "btn-brand min-h-10 rounded-xl px-5 py-2.5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] sm:min-h-11 sm:px-6 sm:text-[0.72rem]",
+            "disabled:cursor-not-allowed disabled:opacity-60",
+          )}
+        >
+          <span className="btn-brand__content gap-2">
+            {status === "sending" ? "Sending…" : "Submit"}
+            <span
+              className="btn-brand__arrow h-7 w-7 sm:h-8 sm:w-8"
+              aria-hidden
+            >
+              <ArrowRight className="size-3.5 sm:size-4" strokeWidth={2} />
+            </span>
+          </span>
+        </button>
+      </form>
+    </div>
   );
 }

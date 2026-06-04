@@ -4,6 +4,13 @@ import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const SIZE = {
+  xs: {
+    root: "rounded-md px-2.5 py-1",
+    label: "gap-1 text-[8px] tracking-wide",
+    arrowCircle: "h-[18px] w-[18px]",
+    arrow: "size-2.5",
+    svg: 9,
+  },
   sm: {
     root: "rounded-md px-2.5 py-1.5",
     label: "gap-1.5 text-[9px] tracking-wide",
@@ -50,7 +57,7 @@ function WaterRiseCtaArrow({ size }: { size: keyof typeof SIZE }) {
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          strokeWidth={size === "sm" ? 2.5 : 2}
+          strokeWidth={2.5}
           className={s.arrow}
         >
           <path d="M5 12h14M12 5l7 7-7 7" />

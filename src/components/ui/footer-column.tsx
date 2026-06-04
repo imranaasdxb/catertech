@@ -87,15 +87,15 @@ export default function Footer4Col() {
             <div className="flex justify-center gap-3 sm:justify-start">
               <Link
                 href="/"
-                className="inline-flex items-center rounded-lg bg-white px-2 py-1.5 ring-1 ring-white/20"
+                className="inline-flex items-center"
                 aria-label="Catertech home"
               >
                 <Image
                   src={logo}
                   alt="Catertech"
-                  width={300}
-                  height={130}
-                  className="h-9 w-auto max-h-9 object-contain"
+                  width={350}
+                  height={150}
+                  className="h-10 w-auto max-h-[42px] object-contain"
                 />
               </Link>
             </div>

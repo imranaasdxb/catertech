@@ -1,65 +1,85 @@
 import Container from "@/components/Container";
+import { Mail, Phone } from "lucide-react";
 import { ContactForm } from "./ContactForm";
+import { ContactLottie } from "./ContactLottie";
+
+const CONTACT = {
+  email: "info@catertech.ae",
+  phone: "+971 4 XXX XXXX",
+  phoneHref: "tel:+97142000000",
+};
 
 export default function ContactPage() {
   return (
-    <>
-      <section className="pt-40 pb-24 bg-navy">
-        <Container>
-          <span className="text-xs font-semibold tracking-[0.2em] uppercase text-sand block mb-4">Contact</span>
-          <div className="w-10 h-0.5 bg-sand mb-6" />
-          <h1 className="font-serif text-5xl md:text-6xl text-white leading-tight max-w-2xl">
-            Let&apos;s Talk About Your Requirements
-          </h1>
-        </Container>
-      </section>
+    <section className="relative overflow-hidden bg-white pt-32 pb-20 md:pt-40 md:pb-28">
+      <div
+        className="pointer-events-none absolute -right-24 -top-24 h-[420px] w-[420px] rounded-full opacity-70 md:h-[520px] md:w-[520px]"
+        style={{
+          background:
+            "radial-gradient(circle at center, rgba(255, 183, 140, 0.45) 0%, rgba(255, 220, 190, 0.2) 45%, transparent 70%)",
+        }}
+        aria-hidden
+      />
 
-      <section className="bg-offwhite py-24">
-        <Container>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-            <div>
-              <span className="text-xs font-semibold tracking-[0.2em] uppercase text-sand block mb-4">Get In Touch</span>
-              <div className="w-10 h-0.5 bg-sand mb-6" />
-              <h2 className="font-serif text-3xl text-charcoal mb-8">We&apos;re Here to Help</h2>
+      <Container className="relative z-10">
+        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-2 lg:gap-8 xl:gap-10">
+          <div className="max-w-xl">
+            <h1 className="text-[2.35rem] font-bold leading-[1.08] tracking-[-0.03em] text-ink sm:text-[2.75rem] lg:text-[3.1rem]">
+              <span className="block font-sans">Don&apos;t hesitate to talk</span>
+              <span
+                className="mt-1 block font-normal italic text-ink"
+                style={{ fontFamily: 'Georgia, "Times New Roman", Times, serif' }}
+              >
+                with us
+              </span>
+            </h1>
 
-              <div className="space-y-6">
-                {[
-                  { label: "Phone", value: "+971 4 XXX XXXX", href: "tel:+97142000000" },
-                  { label: "Email", value: "info@catertech.ae", href: "mailto:info@catertech.ae" },
-                  { label: "WhatsApp", value: "+971 4X XXX XXXX", href: "https://wa.me/971400000000" },
-                  { label: "Address", value: "Dubai, United Arab Emirates", href: null },
-                ].map((item) => (
-                  <div key={item.label} className="flex gap-5 p-5 bg-white border border-border hover:border-sand/30 transition-colors">
-                    <div className="w-1 bg-sand shrink-0" />
-                    <div>
-                      <p className="text-[10px] text-muted tracking-widest uppercase mb-1">{item.label}</p>
-                      {item.href ? (
-                        <a href={item.href} className="text-charcoal font-medium text-sm hover:text-sand transition-colors">
-                          {item.value}
-                        </a>
-                      ) : (
-                        <p className="text-charcoal font-medium text-sm">{item.value}</p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <p className="mt-5 max-w-md text-base leading-relaxed text-body-muted md:text-lg">
+              Relax, we are ready to support hotels, caterers, and event teams across
+              the UAE.
+            </p>
 
-              <div className="mt-8 aspect-video bg-cream border border-border flex items-center justify-center">
-                <p className="text-muted text-sm tracking-wider">Map Embed Placeholder</p>
-              </div>
-            </div>
-
-            <div>
-              <span className="text-xs font-semibold tracking-[0.2em] uppercase text-sand block mb-4">Send a Message</span>
-              <div className="w-10 h-0.5 bg-sand mb-6" />
-              <h2 className="font-serif text-3xl text-charcoal mb-8">Contact Form</h2>
-
-              <ContactForm />
+            <div className="mt-8 flex justify-center lg:justify-start">
+              <ContactLottie />
             </div>
           </div>
-        </Container>
-      </section>
-    </>
+
+          <div className="lg:pt-2">
+            <ul className="mb-10 space-y-6">
+              <li className="flex items-center gap-4">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#fef9c3]">
+                  <Mail className="h-5 w-5 text-ink" strokeWidth={1.75} aria-hidden />
+                </span>
+                <div>
+                  <p className="text-sm text-body-muted">Email</p>
+                  <a
+                    href={`mailto:${CONTACT.email}`}
+                    className="text-base font-bold text-ink transition-colors hover:text-primary"
+                  >
+                    {CONTACT.email}
+                  </a>
+                </div>
+              </li>
+              <li className="flex items-center gap-4">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#dbeafe]">
+                  <Phone className="h-5 w-5 text-ink" strokeWidth={1.75} aria-hidden />
+                </span>
+                <div>
+                  <p className="text-sm text-body-muted">Phone</p>
+                  <a
+                    href={CONTACT.phoneHref}
+                    className="text-base font-bold text-ink transition-colors hover:text-primary"
+                  >
+                    {CONTACT.phone}
+                  </a>
+                </div>
+              </li>
+            </ul>
+
+            <ContactForm />
+          </div>
+        </div>
+      </Container>
+    </section>
   );
 }

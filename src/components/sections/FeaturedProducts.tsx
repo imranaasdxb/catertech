@@ -31,49 +31,50 @@ function FeaturedProductCard({ product }: { product: ProductCard }) {
   const detail = getShopProductDetail(String(product.id));
   const description =
     detail?.shortDescription ?? product.cardSubtitle ?? "";
+  const productHref = `/shop/${product.id}`;
 
   return (
-    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-surface-card transition-all duration-300 hover:-translate-y-0.5 hover:border-border hover:bg-white hover:shadow-[0_12px_40px_-24px_rgba(20,19,31,0.18)]">
-      <Link href={`/shop/${product.id}`} className="flex min-h-0 flex-1 flex-col">
-        <div className="relative aspect-4/5 shrink-0 overflow-hidden bg-surface-container">
+    <article className="group flex h-full flex-col overflow-hidden rounded-2xl bg-[#f5f2ee] transition-transform duration-300 hover:-translate-y-1">
+      <div className="relative aspect-square w-full shrink-0 bg-[#f5f2ee]">
+        <Link href={productHref} className="block h-full w-full">
           <Image
             src={product.image}
             alt={product.name}
             fill
-            className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            className="object-contain object-center p-4 transition-transform duration-500 group-hover:scale-[1.02]"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 22vw"
           />
-          {product.tag ? (
-            <span className="absolute left-3 top-3 z-10 rounded-full bg-ink px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
-              {product.tag}
-            </span>
-          ) : null}
-        </div>
+        </Link>
 
-        <div className="flex flex-1 flex-col px-4 pb-4 pt-4">
-          <p className="mb-1.5 truncate text-[10px] uppercase tracking-widest text-muted">
-            {product.category}
-          </p>
-          <h4 className="line-clamp-2 text-[15px] font-semibold leading-snug text-ink lg:text-base">
+        {product.tag ? (
+          <span className="absolute left-3 top-3 z-10 rounded-full bg-[#1a1a1a] px-2.5 py-1 text-[11px] font-semibold leading-none text-white">
+            {product.tag}
+          </span>
+        ) : null}
+      </div>
+
+      <div className="flex flex-1 flex-col gap-1.5 px-5 pb-4 pt-2">
+        <p className="text-[11px] font-medium uppercase tracking-widest text-[#888888]">
+          {product.category}
+        </p>
+
+        <Link href={productHref} className="block">
+          <h3 className="line-clamp-2 text-lg font-bold leading-tight text-[#1a1a1a] sm:text-xl">
             {product.name}
-          </h4>
-          {product.cardSubtitle ? (
-            <p className="mt-1.5 text-[11px] font-medium text-body-muted">
-              {product.cardSubtitle}
-            </p>
-          ) : null}
-          {description ? (
-            <p className="mt-2 line-clamp-3 text-[12px] leading-relaxed text-body-muted">
-              {description}
-            </p>
-          ) : null}
+          </h3>
+        </Link>
 
-          <WaterRiseCta as="span" size="sm" className="mt-auto w-fit pt-3">
+        <p className="line-clamp-2 text-[13px] leading-[1.6] text-[#666666]">
+          {description || "\u00A0"}
+        </p>
+
+        <div className="mt-auto flex justify-end pt-2">
+          <WaterRiseCta href={productHref} size="xs" className="w-fit">
             View &amp; quote
           </WaterRiseCta>
         </div>
-      </Link>
-    </div>
+      </div>
+    </article>
   );
 }
 
@@ -221,36 +222,38 @@ export default function FeaturedProducts() {
     <section className="bg-white py-24">
       <Container>
         <div className=" p-5 md:p-8 lg:p-10">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+        <div className="mb-6 md:mb-8">
           <SectionHeader
             eyebrow="Shop Our Range"
             title="Featured Equipment"
             subtitle="Open any item to choose size, finish and quantity — then add it to your quote basket."
           />
+        </div>
+
+        <div className="mb-8 flex items-end justify-between gap-4 border-b border-border md:mb-10">
+          <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto [scrollbar-width:thin]">
+            {TABS.map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`relative shrink-0 px-5 py-2.5 text-xs font-semibold tracking-wider uppercase transition-all duration-200 ${
+                  activeTab === tab ? "text-charcoal" : "text-muted hover:text-charcoal"
+                }`}
+              >
+                {tab}
+                {activeTab === tab && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#322b81]" />
+                )}
+              </button>
+            ))}
+          </div>
           <Link
             href="/shop"
-            className="flex shrink-0 items-center gap-2 text-sm font-medium tracking-wider text-ink/70 transition-colors hover:text-ink"
+            className="mb-2.5 flex shrink-0 items-center gap-2 text-sm font-medium tracking-wider text-ink/70 transition-colors hover:text-ink"
           >
             View All →
           </Link>
-        </div>
-
-        <div className="flex gap-1 mb-8 md:mb-10 border-b border-border overflow-x-auto [scrollbar-width:thin]">
-          {TABS.map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setActiveTab(tab)}
-              className={`shrink-0 px-5 py-2.5 text-xs font-semibold tracking-wider uppercase transition-all duration-200 relative ${
-                activeTab === tab ? "text-charcoal" : "text-muted hover:text-charcoal"
-              }`}
-            >
-              {tab}
-              {activeTab === tab && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#322b81]" />
-              )}
-            </button>
-          ))}
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
@@ -376,56 +379,53 @@ export default function FeaturedProducts() {
                 </button>
               </div>
             ) : (
-              <div className="space-y-5">
-                <div className="flex items-stretch gap-3 sm:gap-4 lg:gap-5">
-                  <div className="min-w-0 flex-1 space-y-5">
-                    {[rowOne, rowTwo].map((rowProducts, rowIndex) => {
-                      const slots = Array.from(
-                        { length: CARDS_PER_ROW },
-                        (_, i) => rowProducts[i] ?? null
-                      );
-                      return (
-                        <div
-                          key={rowIndex}
-                          className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5"
-                        >
-                          {slots.map((product, slotIndex) =>
-                            product ? (
-                              <FeaturedProductCard key={product.id} product={product} />
-                            ) : (
-                              <div
-                                key={`empty-${rowIndex}-${slotIndex}`}
-                                className="hidden rounded-xl border border-dashed border-border/60 bg-offwhite/50 lg:block"
-                                aria-hidden
-                              />
-                            )
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="flex shrink-0 flex-col items-center justify-center gap-2 self-center">
-                    <CarouselNavButton
-                      direction="prev"
-                      onClick={goPrevRow}
-                      disabled={!canGoPrev}
-                      label="Previous products"
-                    />
-                    <CarouselNavButton
-                      direction="next"
-                      onClick={goNextRow}
-                      disabled={!canGoNext}
-                      label="Next products"
-                    />
-                  </div>
-                </div>
+              <div className="space-y-4">
+                {[rowOne, rowTwo].map((rowProducts, rowIndex) => {
+                  const slots = Array.from(
+                    { length: CARDS_PER_ROW },
+                    (_, i) => rowProducts[i] ?? null
+                  );
+                  return (
+                    <div
+                      key={rowIndex}
+                      className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6"
+                    >
+                      {slots.map((product, slotIndex) =>
+                        product ? (
+                          <FeaturedProductCard key={product.id} product={product} />
+                        ) : (
+                          <div
+                            key={`empty-${rowIndex}-${slotIndex}`}
+                            className="hidden rounded-xl border border-dashed border-border/60 bg-offwhite/50 lg:block"
+                            aria-hidden
+                          />
+                        )
+                      )}
+                    </div>
+                  );
+                })}
 
                 {displayed.length > PAGE_SIZE ? (
-                  <p className="pr-14 text-right text-[11px] text-muted">
-                    Showing {carouselStart + 1}–
-                    {Math.min(carouselStart + PAGE_SIZE, displayed.length)} of {displayed.length}
-                  </p>
+                  <div className="flex items-center justify-end gap-2.5">
+                    <p className="text-[11px] text-muted">
+                      Showing {carouselStart + 1}–
+                      {Math.min(carouselStart + PAGE_SIZE, displayed.length)} of {displayed.length}
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <CarouselNavButton
+                        direction="prev"
+                        onClick={goPrevRow}
+                        disabled={!canGoPrev}
+                        label="Previous products"
+                      />
+                      <CarouselNavButton
+                        direction="next"
+                        onClick={goNextRow}
+                        disabled={!canGoNext}
+                        label="Next products"
+                      />
+                    </div>
+                  </div>
                 ) : null}
               </div>
             )}
