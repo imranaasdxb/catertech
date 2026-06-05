@@ -28,7 +28,7 @@ export default function BlogPage() {
         className="pointer-events-none absolute -right-24 -top-24 h-[420px] w-[420px] rounded-full opacity-70 md:h-[520px] md:w-[520px]"
         style={{
           background:
-            "radial-gradient(circle at center, rgba(255, 183, 140, 0.45) 0%, rgba(255, 220, 190, 0.2) 45%, transparent 70%)",
+            "radial-gradient(circle, rgba(180, 120, 220, 0.40) 0%, rgba(240, 225, 255, 0.18) 45%, transparent 70%)",
         }}
         aria-hidden
       />
@@ -105,7 +105,7 @@ export default function BlogPage() {
                 <span className="inline-flex items-center gap-1 border-b-2 border-ink pb-1 text-[11px] font-bold uppercase tracking-wide text-ink transition-colors group-hover:border-primary group-hover:text-primary">
                   Continue Reading
                   <span aria-hidden className="text-sm leading-none">
-                    →
+                    -&gt;
                   </span>
                 </span>
               </Link>

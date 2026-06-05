@@ -11,7 +11,7 @@ import {
   useState,
 } from "react";
 import "@/app/admin/ui/Richtext.css";
-import { uploadMediaToR2PublicUrl } from "@/lib/upload-to-r2-client";
+import { uploadMediaPublicUrl } from "@/lib/upload-media-client";
 import {
   FaAlignCenter,
   FaAlignLeft,
@@ -270,7 +270,7 @@ export default function RichText({
       }
 
       focusEditor();
-      const up = await uploadMediaToR2PublicUrl(file);
+      const up = await uploadMediaPublicUrl(file);
       if (!up.ok) {
         alert(up.message);
         return;

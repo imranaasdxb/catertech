@@ -1,7 +1,7 @@
 "use client";
 
 import { admin } from "@/components/admin/adminTheme";
-import { uploadMediaToR2PublicUrl } from "@/lib/upload-to-r2-client";
+import { uploadMediaPublicUrl } from "@/lib/upload-media-client";
 import { ImagePlus, Loader2, X } from "lucide-react";
 import {
   forwardRef,
@@ -138,7 +138,7 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
           for (const row of order) {
             if (row.kind === "remote") out.push(row.url);
             else {
-              const up = await uploadMediaToR2PublicUrl(row.file);
+              const up = await uploadMediaPublicUrl(row.file);
               if (!up.ok) {
                 setLastError(up.message);
                 setCommitting(false);

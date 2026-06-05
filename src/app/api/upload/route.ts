@@ -1,6 +1,10 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
-import { createPresignedPutUrl, putPublicObjectToR2 } from "@/lib/r2";
+import {
+  createPresignedMediaPutUrl,
+  mediaStorageConfigMessage,
+  putPublicMediaObject,
+} from "@/lib/media-storage";
 import { isAdminSession } from "@/lib/auth-user";
 
 export const maxDuration = 120;
@@ -45,7 +49,7 @@ async function unauthorized() {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
 
-/** Multipart: body field `file` — stored from the server on R2 (no browser→R2 CORS). */
+/** Multipart: body field `file` — stored from the server on the configured media provider. */
 export async function POST(request: Request) {
   if (!(await isAdminSession())) {
     return unauthorized();
@@ -94,15 +98,15 @@ export async function POST(request: Request) {
     const safeName = (filename || "file").replace(/[^\w.\-]/g, "_");
     const key = `uploads/${new Date().toISOString().slice(0, 10)}/${randomUUID()}-${safeName}`;
 
-    const result = await putPublicObjectToR2({ key, body: buf, contentType: mime });
+    let result: Awaited<ReturnType<typeof putPublicMediaObject>>;
+    try {
+      result = await putPublicMediaObject({ key, body: buf, contentType: mime });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Upload failed";
+      return NextResponse.json({ error: message }, { status: 502 });
+    }
     if (!result?.publicUrl) {
-      return NextResponse.json(
-        {
-          error:
-            "Upload not configured — set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_URL",
-        },
-        { status: 503 }
-      );
+      return NextResponse.json({ error: mediaStorageConfigMessage() }, { status: 503 });
     }
 
     return NextResponse.json({ publicUrl: result.publicUrl, key });
@@ -119,15 +123,9 @@ export async function POST(request: Request) {
   const contentType = body.contentType || "application/octet-stream";
   const key = `uploads/${new Date().toISOString().slice(0, 10)}/${randomUUID()}-${filename}`;
 
-  const result = await createPresignedPutUrl(key, contentType);
+  const result = await createPresignedMediaPutUrl(key, contentType);
   if (!result?.publicUrl) {
-    return NextResponse.json(
-      {
-        error:
-          "Upload not configured — set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_URL",
-      },
-      { status: 503 }
-    );
+    return NextResponse.json({ error: mediaStorageConfigMessage() }, { status: 503 });
   }
 
   return NextResponse.json({

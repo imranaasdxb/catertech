@@ -3,7 +3,6 @@ import { eq, and, desc } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import {
-  OTP_MAX_ATTEMPTS,
   OTP_RESEND_COOLDOWN_SEC,
   OTP_TTL_MIN,
   SIGNUP_OTP_PURPOSE,
@@ -12,7 +11,11 @@ import {
 } from "@/lib/auth-otp";
 import { getDb } from "@/db";
 import { authOtpChallenges, users } from "@/db/schema";
-import { putPublicObjectToR2 } from "@/lib/r2";
+import {
+  getActiveMediaProvider,
+  mediaStorageConfigMessage,
+  putPublicMediaObject,
+} from "@/lib/media-storage";
 import { sendSignupOtpEmail } from "@/lib/smtp-mail";
 
 export const runtime = "nodejs";
@@ -103,15 +106,17 @@ export async function POST(request: Request) {
             : "image/gif";
     const buf = Buffer.from(await blob.arrayBuffer());
     const key = `profiles/signup-pending/${pendingId}/avatar.${ext}`;
-    const put = await putPublicObjectToR2({ key, body: buf, contentType: mime });
+    let put: Awaited<ReturnType<typeof putPublicMediaObject>>;
+    try {
+      put = await putPublicMediaObject({ key, body: buf, contentType: mime });
+    } catch (error) {
+      return bad(error instanceof Error ? error.message : "Image upload failed", 502);
+    }
     if (!put?.publicUrl) {
-      return bad(
-        "Image storage not configured — set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_URL",
-        503
-      );
+      return bad(mediaStorageConfigMessage(), 503);
     }
     profileImageUrl = put.publicUrl;
-    profilePendingKey = key;
+    profilePendingKey = put.key;
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
@@ -146,7 +151,7 @@ export async function POST(request: Request) {
   const mailed = await sendSignupOtpEmail(email, otp);
   if (!mailed.ok) {
     await db.delete(authOtpChallenges).where(eq(authOtpChallenges.id, pendingId));
-    if (profilePendingKey) {
+    if (profilePendingKey && getActiveMediaProvider() === "r2") {
       const { deleteObjectFromR2 } = await import("@/lib/r2");
       await deleteObjectFromR2(profilePendingKey);
     }

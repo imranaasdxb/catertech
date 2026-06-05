@@ -419,6 +419,21 @@ h3 {
   color: #ffffff;
 }
 
+/* Footer CTAs on black — white border/text, purple hover fill, red arrow */
+.site-footer .btn-brand {
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+.site-footer .btn-brand .btn-brand__content {
+  color: #ffffff;
+}
+
+.site-footer .btn-brand:hover,
+.site-footer .btn-brand:hover .btn-brand__content {
+  color: #ffffff;
+}
+
 @keyframes arc-fade-in-up {
   from {
     opacity: 0;

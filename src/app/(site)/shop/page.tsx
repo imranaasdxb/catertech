@@ -4,17 +4,29 @@ import ShopCatalogueClient from "@/components/shop/ShopCatalogueClient";
 export default function ShopPage() {
   return (
     <>
-      <section className="pt-40 pb-24 bg-navy">
-        <Container>
-          <span className="text-xs font-semibold tracking-[0.2em] uppercase text-sand block mb-4">
-            Browse & Rent
-          </span>
-          <div className="w-10 h-0.5 bg-sand mb-6" />
-          <h1 className="font-serif text-5xl md:text-6xl text-white leading-tight max-w-2xl">
-            Equipment Catalogue
+      <section className="relative overflow-hidden bg-white pt-32 pb-20 md:pt-40 md:pb-24">
+        <div
+          className="pointer-events-none absolute -right-24 -top-24 h-[420px] w-[420px] rounded-full opacity-70 md:h-[520px] md:w-[520px]"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(180, 120, 220, 0.40) 0%, rgba(240, 225, 255, 0.18) 45%, transparent 70%)",
+          }}
+          aria-hidden
+        />
+
+        <Container className="relative z-10">
+          <h1 className="max-w-3xl text-[2.35rem] font-bold leading-[1.08] tracking-[-0.03em] text-ink sm:text-[2.75rem] lg:text-[3.1rem]">
+            <span className="block font-sans">Equipment catalogue</span>
+            <span
+              className="mt-1 block font-normal italic text-ink"
+              style={{ fontFamily: 'Georgia, "Times New Roman", Times, serif' }}
+            >
+              ready to browse
+            </span>
           </h1>
-          <p className="text-white/50 text-lg mt-4 max-w-xl leading-relaxed">
-            Explore catering, kitchen and events inventory with live search and tab-aware filters — open any tile for variants, finishes and RFQ-ready quoting.
+          <p className="mt-5 max-w-xl text-base leading-relaxed text-body-muted md:text-lg">
+            Explore catering, kitchen and events inventory with live search and tab-aware
+            filters. Open any tile for variants, finishes and RFQ-ready quoting.
           </p>
         </Container>
       </section>

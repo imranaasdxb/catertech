@@ -1,74 +1,189 @@
+import Container from "@/components/Container";
+import { ArrowRight, Building2, ClipboardList, MessageSquareText, ShieldCheck, Truck } from "lucide-react";
 import Link from "next/link";
+
+const industries = [
+  "Hotels & Resorts",
+  "Event Companies",
+  "Restaurants & Cafes",
+  "Government & Municipality",
+  "Hospitals & Healthcare",
+  "Catering Companies",
+  "Wedding Planners",
+  "Corporate Offices",
+];
+
+const tradeBenefits = [
+  { icon: ShieldCheck, label: "Verified trade support" },
+  { icon: Truck, label: "UAE-wide fulfilment" },
+  { icon: ClipboardList, label: "Structured quotations" },
+];
+
+function TradeGraphic() {
+  return (
+    <div className="relative mx-auto w-full max-w-[430px]" aria-hidden>
+      <div className="absolute -left-6 top-8 h-20 w-20 rounded-full bg-accent-soft/80 blur-2xl" />
+      <div className="absolute -right-8 bottom-4 h-28 w-28 rounded-full bg-primary-soft blur-2xl" />
+      <svg
+        viewBox="0 0 420 340"
+        className="relative h-auto w-full"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <rect x="54" y="78" width="270" height="184" rx="30" fill="#F8F7F7" stroke="#E5E1DA" />
+        <rect x="86" y="111" width="138" height="18" rx="9" fill="#322B81" opacity=".14" />
+        <rect x="86" y="146" width="200" height="12" rx="6" fill="#D8D4CC" />
+        <rect x="86" y="172" width="170" height="12" rx="6" fill="#D8D4CC" />
+        <rect x="86" y="198" width="190" height="12" rx="6" fill="#D8D4CC" />
+        <rect x="86" y="226" width="96" height="28" rx="14" fill="#322B81" />
+        <path d="M108 240h42" stroke="white" strokeWidth="4" strokeLinecap="round" />
+
+        <g>
+          <animateTransform
+            attributeName="transform"
+            type="translate"
+            values="0 0; 0 -9; 0 0"
+            dur="4.8s"
+            repeatCount="indefinite"
+          />
+          <rect x="250" y="42" width="96" height="82" rx="22" fill="#FFFFFF" stroke="#E5E1DA" />
+          <path d="M277 83h42M277 101h30" stroke="#C21722" strokeWidth="8" strokeLinecap="round" />
+          <circle cx="273" cy="63" r="9" fill="#FDE8E9" />
+          <path d="m269 63 3 3 6-7" stroke="#C21722" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        </g>
+
+        <g>
+          <animateTransform
+            attributeName="transform"
+            type="translate"
+            values="0 0; 8 0; 0 0"
+            dur="5.5s"
+            repeatCount="indefinite"
+          />
+          <rect x="222" y="210" width="132" height="86" rx="24" fill="#FFFFFF" stroke="#E5E1DA" />
+          <path d="M253 254h88" stroke="#322B81" strokeWidth="10" strokeLinecap="round" opacity=".16" />
+          <path d="M253 274h62" stroke="#322B81" strokeWidth="10" strokeLinecap="round" opacity=".16" />
+          <path d="M250 236h24l8 12h42l8-12h24" stroke="#C21722" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+        </g>
+
+        <g opacity=".9">
+          <circle cx="68" cy="62" r="7" fill="#C21722">
+            <animate attributeName="opacity" values=".25;1;.25" dur="3s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="370" cy="166" r="6" fill="#322B81">
+            <animate attributeName="opacity" values="1;.25;1" dur="3.8s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="46" cy="280" r="5" fill="#322B81" opacity=".3" />
+        </g>
+      </svg>
+    </div>
+  );
+}
 
 export default function TradePage() {
   return (
-    <>
-      <section className="pt-40 pb-24 bg-navy">
-        <div className="max-w-7xl mx-auto px-5 md:px-8">
-          <span className="text-xs font-semibold tracking-[0.2em] uppercase text-sand block mb-4">Trade & Corporate</span>
-          <div className="w-10 h-0.5 bg-sand mb-6" />
-          <h1 className="font-serif text-5xl md:text-6xl text-white leading-tight max-w-2xl">
-            Corporate & Trade Accounts
-          </h1>
-          <p className="text-white/50 text-lg mt-4 max-w-lg">
-            Volume pricing, dedicated account management and flexible payment terms for trade clients.
-          </p>
-        </div>
-      </section>
+    <section className="relative overflow-hidden bg-white pt-32 pb-20 md:pt-40 md:pb-28">
+      <div
+        className="pointer-events-none absolute -right-24 -top-24 h-[420px] w-[420px] rounded-full opacity-70 md:h-[540px] md:w-[540px]"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(180, 120, 220, 0.40) 0%, rgba(240, 225, 255, 0.18) 45%, transparent 70%)",
+        }}
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -left-28 top-[34rem] h-[360px] w-[360px] rounded-full opacity-60"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(180, 120, 220, 0.40) 0%, rgba(240, 225, 255, 0.18) 45%, transparent 70%)",
+        }}
+        aria-hidden
+      />
 
-      <section className="bg-offwhite py-24">
-        <div className="max-w-7xl mx-auto px-5 md:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-            {/* Quick Enquiry */}
-            <Link href="/trade/enquiry" className="group bg-white border border-border hover:border-sand/40 hover:shadow-md transition-all p-10 block text-center">
-              <div className="w-14 h-14 border border-sand/30 mx-auto mb-6 flex items-center justify-center group-hover:bg-sand group-hover:border-sand transition-all duration-200">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-sand group-hover:text-white transition-colors">
-                  <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-                </svg>
-              </div>
-              <h2 className="font-serif text-xl text-charcoal mb-3 group-hover:text-sand transition-colors">Quick Enquiry</h2>
-              <p className="text-muted text-sm leading-relaxed mb-6">
-                Send us a quick message about your requirements. We'll reply within 4 hours.
-              </p>
-              <span className="text-sand text-xs font-semibold tracking-widest uppercase flex items-center justify-center gap-2">
-                Submit Enquiry →
+      <Container className="relative z-10">
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8 xl:gap-12">
+          <div className="max-w-2xl">
+            <h1 className="text-[2.35rem] font-bold leading-[1.08] tracking-[-0.03em] text-ink sm:text-[2.75rem] lg:text-[3.1rem]">
+              <span className="block font-sans">Corporate & trade accounts</span>
+              <span
+                className="mt-1 block font-normal italic text-ink"
+                style={{ fontFamily: 'Georgia, "Times New Roman", Times, serif' }}
+              >
+                made simple
               </span>
-            </Link>
+            </h1>
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-body-muted md:text-lg">
+              Volume pricing, dedicated account handling, and clear quotation workflows
+              for UAE hotels, caterers, venues, and event teams.
+            </p>
 
-            {/* Request a Quote */}
-            <Link href="/trade/rfq" className="group bg-navy border border-navy hover:border-sand/40 hover:shadow-md transition-all p-10 block text-center">
-              <div className="w-14 h-14 border border-sand/30 mx-auto mb-6 flex items-center justify-center group-hover:bg-sand group-hover:border-sand transition-all duration-200">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-sand">
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                  <polyline points="10 9 9 9 8 9" />
-                </svg>
-              </div>
-              <h2 className="font-serif text-xl text-white mb-3">Request a Quote</h2>
-              <p className="text-white/50 text-sm leading-relaxed mb-6">
-                Submit a formal RFQ with line items, quantities and specifications.
-              </p>
-              <span className="text-sand text-xs font-semibold tracking-widest uppercase flex items-center justify-center gap-2">
-                Start RFQ →
-              </span>
-            </Link>
-          </div>
-
-          {/* Industries */}
-          <div className="mt-20 text-center">
-            <p className="text-xs tracking-[0.2em] uppercase text-muted mb-6">Industries We Serve</p>
-            <div className="flex flex-wrap justify-center gap-3">
-              {["Hotels & Resorts", "Event Companies", "Restaurants & Cafés", "Government & Municipality", "Hospitals & Healthcare", "Catering Companies", "Wedding Planners", "Corporate Offices"].map((ind) => (
-                <span key={ind} className="text-xs tracking-wider text-charcoal border border-border px-4 py-2 hover:border-sand/40 transition-colors cursor-default">
-                  {ind}
-                </span>
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+              {tradeBenefits.map(({ icon: Icon, label }) => (
+                <div key={label} className="flex items-center gap-3 rounded-xl border border-border/70 bg-white/80 px-4 py-3 shadow-sm">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-soft">
+                    <Icon className="h-4 w-4 text-primary" strokeWidth={1.9} aria-hidden />
+                  </span>
+                  <span className="text-sm font-semibold leading-snug text-ink">{label}</span>
+                </div>
               ))}
             </div>
           </div>
+
+          <TradeGraphic />
         </div>
-      </section>
-    </>
+
+        <div className="mt-16 grid grid-cols-1 gap-5 md:grid-cols-2 lg:mt-20">
+          <Link
+            href="/trade/enquiry"
+            className="group rounded-2xl border border-[#e5e7eb] bg-white p-7 shadow-[0_18px_60px_rgba(20,19,31,0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_24px_70px_rgba(20,19,31,0.1)] sm:p-8"
+          >
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#fef9c3]">
+              <MessageSquareText className="h-6 w-6 text-ink" strokeWidth={1.75} aria-hidden />
+            </span>
+            <h2 className="mt-6 text-2xl font-bold tracking-tight text-ink">Quick Enquiry</h2>
+            <p className="mt-3 max-w-lg text-sm leading-relaxed text-body-muted">
+              Send a short message about your requirement and our team will reply within
+              four business hours.
+            </p>
+            <span className="mt-6 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-primary">
+              Submit enquiry
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" strokeWidth={2} />
+            </span>
+          </Link>
+
+          <Link
+            href="/trade/rfq"
+            className="group rounded-2xl border border-[#e5e7eb] bg-white p-7 shadow-[0_18px_60px_rgba(20,19,31,0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_24px_70px_rgba(20,19,31,0.1)] sm:p-8"
+          >
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#dbeafe]">
+              <Building2 className="h-6 w-6 text-ink" strokeWidth={1.75} aria-hidden />
+            </span>
+            <h2 className="mt-6 text-2xl font-bold tracking-tight text-ink">Request a Quote</h2>
+            <p className="mt-3 max-w-lg text-sm leading-relaxed text-body-muted">
+              Submit a formal RFQ with line items, quantities, timeline, and trade
+              details for a structured response.
+            </p>
+            <span className="mt-6 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-primary">
+              Start RFQ
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" strokeWidth={2} />
+            </span>
+          </Link>
+        </div>
+
+        <div className="mt-16 text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Industries We Serve</p>
+          <div className="mx-auto mt-6 flex max-w-5xl flex-wrap justify-center gap-3">
+            {industries.map((industry) => (
+              <span
+                key={industry}
+                className="rounded-full border border-[#e8e4df] bg-white px-4 py-2 text-xs font-semibold tracking-wide text-body-muted shadow-sm"
+              >
+                {industry}
+              </span>
+            ))}
+          </div>
+        </div>
+      </Container>
+    </section>
   );
 }

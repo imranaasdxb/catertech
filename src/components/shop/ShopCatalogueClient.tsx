@@ -2,12 +2,11 @@
 
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import Container from "@/components/Container";
+import ShopProductCard from "@/components/shop/ShopProductCard";
 import {
   SHOP_PRODUCT_CARDS,
   getFeaturedSidebarEquipmentFilters,
-  type ShopProductCard,
 } from "@/lib/shop-products";
 
 const TABS = ["All", "Catering", "Events", "Kitchen"] as const;
@@ -191,47 +190,6 @@ function CatalogueFilterPanel(props: {
   );
 }
 
-function ProductTile({ product }: { product: ShopProductCard }) {
-  return (
-    <article className="group relative bg-white border border-border hover:border-sand/40 transition-all duration-300 hover:shadow-md rounded-xl overflow-hidden flex flex-col">
-      <Link href={`/shop/${product.id}`} className="flex flex-col flex-1 min-h-0">
-        <div className="relative aspect-5/6 overflow-hidden bg-cream shrink-0">
-          <Image
-            src={product.image}
-            alt={product.name}
-            fill
-            className="object-cover group-hover:scale-[1.03] transition-transform duration-500"
-            sizes="(max-width: 640px) 45vw, (max-width: 1024px) 28vw, 18vw"
-          />
-          {product.tag ? (
-            <span className="absolute top-2 left-2 bg-sand text-white text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 z-10 rounded-full">
-              {product.tag}
-            </span>
-          ) : null}
-        </div>
-
-        <div className="px-3 pt-3 pb-11 flex flex-col flex-1">
-          <p className="text-[9px] text-muted tracking-widest uppercase mb-1 truncate">{product.category}</p>
-          <h3 className="text-[14px] font-medium text-charcoal leading-snug group-hover:text-sand transition-colors line-clamp-2">
-            {product.name}
-          </h3>
-          {product.cardSubtitle ? (
-            <p className="text-[11px] text-muted mt-1 leading-snug line-clamp-2">{product.cardSubtitle}</p>
-          ) : null}
-          <p className="text-[11px] font-semibold text-charcoal/80 mt-2">{product.price}</p>
-        </div>
-      </Link>
-
-      <Link
-        href={`/shop/${product.id}`}
-        className="absolute bottom-2.5 right-2.5 z-10 inline-flex items-center gap-1 text-[9px] font-bold tracking-wide uppercase px-2.5 py-1 rounded-full transition-all duration-200 shadow-sm bg-white border border-navy/20 text-navy hover:bg-navy hover:text-white"
-      >
-        View & quote
-      </Link>
-    </article>
-  );
-}
-
 export default function ShopCatalogueClient() {
   const [activeTab, setActiveTab] = useState<CatalogueTab>("All");
   const [search, setSearch] = useState("");
@@ -345,7 +303,7 @@ export default function ShopCatalogueClient() {
   };
 
   return (
-    <section className="bg-offwhite py-12 md:py-16">
+    <section className="bg-white py-12 md:py-16">
       <Container>
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-8 lg:mb-10">
           <div className="max-w-2xl">
@@ -423,9 +381,9 @@ export default function ShopCatalogueClient() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-3.5 lg:gap-4">
+              <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4 lg:gap-6">
                 {sortedProducts.map((product) => (
-                  <ProductTile key={product.id} product={product} />
+                  <ShopProductCard key={product.id} product={product} />
                 ))}
               </div>
             )}

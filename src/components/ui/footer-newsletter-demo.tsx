@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import WaterRiseCta from "@/components/ui/WaterRiseCta";
 
 const FOOTER_IMAGE =
   "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=640&h=480&q=80";
@@ -24,12 +25,14 @@ export default function FooterNewsletter() {
                 placeholder="Enter your email"
                 className="w-full rounded-lg border border-white/40 bg-transparent px-4 py-3 text-sm text-white outline-none placeholder:text-white/80 focus:border-white focus:ring-2 focus:ring-white/30"
               />
-              <button
+              <WaterRiseCta
+                as="button"
                 type="submit"
-                className="btn-brand shrink-0 rounded-lg px-6 py-3 text-xs font-semibold uppercase tracking-widest"
+                size="md"
+                className="shrink-0"
               >
                 Subscribe
-              </button>
+              </WaterRiseCta>
             </form>
           </div>
 

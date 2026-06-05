@@ -15,7 +15,7 @@ export default function ServicesPage() {
           className="pointer-events-none absolute -right-24 -top-24 h-[420px] w-[420px] rounded-full opacity-70 md:h-[520px] md:w-[520px]"
           style={{
             background:
-              "radial-gradient(circle at center, rgba(255, 183, 140, 0.45) 0%, rgba(255, 220, 190, 0.2) 45%, transparent 70%)",
+              "radial-gradient(circle, rgba(180, 120, 220, 0.40) 0%, rgba(240, 225, 255, 0.18) 45%, transparent 70%)",
           }}
           aria-hidden
         />
@@ -38,7 +38,7 @@ export default function ServicesPage() {
             </span>
           </h1>
           <p className="mt-5 max-w-xl text-base leading-relaxed text-body-muted md:text-lg">
-            From a single chafing dish to full event production — Catertech has
+            From a single chafing dish to full event production, Catertech has
             supplied hotels, venues and event companies across the UAE since
             2005.
           </p>

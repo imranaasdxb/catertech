@@ -16,6 +16,7 @@ import {
   getAuthSigningSecret,
   USER_AUTH_COOKIE,
 } from "@/lib/user-auth-session";
+import { getActiveMediaProvider } from "@/lib/media-storage";
 
 export const runtime = "nodejs";
 
@@ -104,7 +105,11 @@ export async function POST(request: Request) {
 
   await db.delete(authOtpChallenges).where(eq(authOtpChallenges.id, ch.id));
 
-  if (payload.profilePendingKey && payload.profileImageUrl) {
+  if (
+    payload.profilePendingKey &&
+    payload.profileImageUrl &&
+    getActiveMediaProvider() === "r2"
+  ) {
     const extMatch = /\.([^.]+)$/.exec(payload.profilePendingKey);
     const ext = extMatch?.[1]?.toLowerCase() || "jpg";
     const destKey = `profiles/${createdId}/avatar.${ext}`;

@@ -36,7 +36,8 @@ const SIZE = {
 
 type WaterRiseCtaProps = {
   href?: string;
-  as?: "link" | "span";
+  as?: "link" | "span" | "button";
+  type?: "button" | "submit";
   size?: keyof typeof SIZE;
   className?: string;
   children: ReactNode;
@@ -70,6 +71,7 @@ function WaterRiseCtaArrow({ size }: { size: keyof typeof SIZE }) {
 export default function WaterRiseCta({
   href,
   as = "link",
+  type = "button",
   size = "md",
   className,
   children,
@@ -91,6 +93,14 @@ export default function WaterRiseCta({
 
   if (as === "span") {
     return <span className={rootClass}>{inner}</span>;
+  }
+
+  if (as === "button") {
+    return (
+      <button type={type} className={rootClass}>
+        {inner}
+      </button>
+    );
   }
 
   return (
