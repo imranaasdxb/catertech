@@ -3,14 +3,12 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 const PURPLE = "#5B2D9B";
-const GREEN = "#22C55E";
 const ORANGE = "#F97316";
 
-type SeriesKey = "products" | "blog" | "leads";
+type SeriesKey = "products" | "leads";
 
 type Props = {
   products: number[];
-  blog: number[];
   leads: number[];
   labels: string[];
 };
@@ -35,10 +33,9 @@ function smoothPath(points: [number, number][]): string {
   return d;
 }
 
-export function AdminLeadStatsChart({ products, blog, leads, labels }: Props) {
+export function AdminLeadStatsChart({ products, leads, labels }: Props) {
   const [visible, setVisible] = useState<Record<SeriesKey, boolean>>({
     products: true,
-    blog: true,
     leads: true,
   });
 
@@ -53,15 +50,15 @@ export function AdminLeadStatsChart({ products, blog, leads, labels }: Props) {
 
   const maxVal = useMemo(() => {
     let m = 1;
-    (Object.keys({ products, blog, leads }) as SeriesKey[]).forEach((key) => {
+    (Object.keys({ products, leads }) as SeriesKey[]).forEach((key) => {
       if (!visible[key]) return;
-      const arr = key === "products" ? products : key === "blog" ? blog : leads;
+      const arr = key === "products" ? products : leads;
       arr.forEach((v) => {
         m = Math.max(m, v);
       });
     });
     return m * 1.08;
-  }, [blog, leads, products, visible]);
+  }, [leads, products, visible]);
 
   const toPoints = useCallback(
     (data: number[]): [number, number][] =>
@@ -76,10 +73,9 @@ export function AdminLeadStatsChart({ products, blog, leads, labels }: Props) {
   const paths = useMemo(() => {
     return {
       products: visible.products ? smoothPath(toPoints(products)) : "",
-      blog: visible.blog ? smoothPath(toPoints(blog)) : "",
       leads: visible.leads ? smoothPath(toPoints(leads)) : "",
     };
-  }, [blog, leads, products, toPoints, visible.blog, visible.leads, visible.products]);
+  }, [leads, products, toPoints, visible.leads, visible.products]);
 
   const fillPath = useMemo(() => {
     if (!visible.products || products.length < 2 || !paths.products) return "";
@@ -134,12 +130,6 @@ export function AdminLeadStatsChart({ products, blog, leads, labels }: Props) {
           active={visible.products}
         />
         <ToggleRow
-          label="Blog posts"
-          color={GREEN}
-          on={() => setVisible((v) => ({ ...v, blog: !v.blog }))}
-          active={visible.blog}
-        />
-        <ToggleRow
           label="Lead pipeline"
           color={ORANGE}
           on={() => setVisible((v) => ({ ...v, leads: !v.leads }))}
@@ -185,9 +175,6 @@ export function AdminLeadStatsChart({ products, blog, leads, labels }: Props) {
           {visible.products && paths.products ? (
             <path d={paths.products} fill="none" stroke={PURPLE} strokeWidth={3} strokeLinecap="round" />
           ) : null}
-          {visible.blog && paths.blog ? (
-            <path d={paths.blog} fill="none" stroke={GREEN} strokeWidth={3} strokeLinecap="round" />
-          ) : null}
           {visible.leads && paths.leads ? (
             <path d={paths.leads} fill="none" stroke={ORANGE} strokeWidth={3} strokeLinecap="round" />
           ) : null}
@@ -220,11 +207,6 @@ export function AdminLeadStatsChart({ products, blog, leads, labels }: Props) {
             {visible.products ? (
               <p className="text-[#1a1a1a]/70">
                 Products: <span className="font-semibold" style={{ color: PURPLE }}>{products[tooltipIdx]}</span>
-              </p>
-            ) : null}
-            {visible.blog ? (
-              <p className="text-[#1a1a1a]/70">
-                Blog: <span className="font-semibold" style={{ color: GREEN }}>{blog[tooltipIdx]}</span>
               </p>
             ) : null}
             {visible.leads ? (

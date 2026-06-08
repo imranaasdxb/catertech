@@ -2,7 +2,6 @@
 
 import {
   ClipboardList,
-  FileText,
   LayoutDashboard,
   LayoutGrid,
   Mail,
@@ -17,7 +16,6 @@ import { AdminTopBar } from "./AdminTopBar";
 const links: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/products", label: "Products", icon: Package },
-  { href: "/admin/blogs", label: "Blog", icon: FileText },
   { href: "/admin/quotations", label: "Quotations", icon: ClipboardList },
   { href: "/admin/enquiries", label: "Quick enquiries", icon: UsersRound },
   { href: "/admin/rfq", label: "Trade enquiries", icon: LayoutGrid },

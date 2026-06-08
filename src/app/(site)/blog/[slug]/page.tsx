@@ -30,7 +30,7 @@ export default async function PublicBlogPostPage({ params }: Props) {
 
   if (!post) notFound();
 
-  const related = getRelatedPosts(slug, 3);
+  const related = await getRelatedPosts(slug, 3);
 
   return <BlogPostArticle post={post} related={related} />;
 }

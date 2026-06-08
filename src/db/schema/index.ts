@@ -154,24 +154,6 @@ export const products = pgTable("products", {
     .notNull(),
 });
 
-export const blogPosts = pgTable("blog_posts", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  title: text("title").notNull(),
-  slug: text("slug").notNull().unique(),
-  excerpt: text("excerpt"),
-  content: text("content").notNull(),
-  coverImage: text("cover_image"),
-  /** Gallery image URLs; first is used as cover when saving from admin. */
-  images: text("images").array().notNull().default([]),
-  published: boolean("published").notNull().default(false),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
-
 export const contactMessages = pgTable("contact_messages", {
   id: uuid("id").defaultRandom().primaryKey(),
   fullName: text("full_name").notNull(),

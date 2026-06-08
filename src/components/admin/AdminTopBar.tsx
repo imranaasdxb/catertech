@@ -16,7 +16,6 @@ type Stats = {
 function titleForPath(pathname: string): string {
   if (pathname === "/admin" || pathname === "/admin/") return "Dashboard";
   if (pathname.startsWith("/admin/products")) return "Products";
-  if (pathname.startsWith("/admin/blogs")) return "Blog";
   if (pathname.startsWith("/admin/quotations")) return "Quotations";
   if (pathname.startsWith("/admin/enquiries")) return "Quick enquiries";
   if (pathname.startsWith("/admin/rfq")) return "Trade enquiries";

@@ -3,7 +3,6 @@ import { AdminLeadStatsChart } from "./AdminLeadStatsChart";
 
 export type DashboardMetrics = {
   productCount: number;
-  blogCount: number;
   messageCount: number;
   enquiryCount: number;
   rfqCount: number;
@@ -42,7 +41,6 @@ function pct(part: number, whole: number) {
 export function AdminDashboardView(m: DashboardMetrics) {
   const {
     productCount,
-    blogCount,
     messageCount,
     enquiryCount,
     rfqCount,
@@ -53,7 +51,6 @@ export function AdminDashboardView(m: DashboardMetrics) {
 
   const cards = [
     { label: "Products", value: productCount, href: "/admin/products" },
-    { label: "Blog posts", value: blogCount, href: "/admin/blogs" },
     { label: "Contact messages", value: messageCount, href: "/admin/contacts" },
     { label: "New contacts", value: newContacts, href: "/admin/contacts" },
     { label: "Quick enquiries", value: enquiryCount, href: "/admin/enquiries" },
@@ -63,12 +60,11 @@ export function AdminDashboardView(m: DashboardMetrics) {
   ];
 
   const leadTotal = enquiryCount + rfqCount + quoteCount + newContacts + newQuotes;
-  const catalogScore = pct(productCount, productCount + blogCount + Math.max(1, leadTotal));
-  const contentScore = pct(blogCount, productCount + blogCount + Math.max(1, leadTotal));
+  const catalogScore = pct(productCount, productCount + Math.max(1, leadTotal));
+  const contactsScore = pct(messageCount, messageCount + Math.max(1, leadTotal));
   const pipelineScore = pct(enquiryCount + rfqCount, Math.max(1, leadTotal));
 
   const productsSeries = buildTrend(productCount);
-  const blogSeries = buildTrend(blogCount);
   const leadsSeries = buildTrend(enquiryCount + rfqCount + messageCount);
 
   const activities = [
@@ -91,11 +87,6 @@ export function AdminDashboardView(m: DashboardMetrics) {
       sub: "Products",
       href: "/admin/products",
     },
-    {
-      title: `${formatNum(blogCount)} blog post${blogCount === 1 ? "" : "s"} published`,
-      sub: "Blog",
-      href: "/admin/blogs",
-    },
   ].filter(Boolean) as { title: string; sub: string; href: string }[];
 
   const quickLinks = [
@@ -108,16 +99,6 @@ export function AdminDashboardView(m: DashboardMetrics) {
       tag2: "ADMIN",
       swatch: "#EDE8F7",
       letter: "P",
-    },
-    {
-      title: "Blog",
-      meta: `${formatNum(blogCount)} posts`,
-      excerpt: "Publish updates, guides, and company news.",
-      href: "/admin/blogs",
-      tag: "CONTENT",
-      tag2: "EDITORIAL",
-      swatch: "#E8F1FF",
-      letter: "B",
     },
     {
       title: "Quotations",
@@ -133,7 +114,6 @@ export function AdminDashboardView(m: DashboardMetrics) {
 
   const modules = [
     { name: "Products", meta: `${formatNum(productCount)} SKUs`, href: "/admin/products", color: "#6366F1" },
-    { name: "Blog", meta: `${formatNum(blogCount)} articles`, href: "/admin/blogs", color: "#22C55E" },
     { name: "Contacts", meta: `${formatNum(messageCount)} threads`, href: "/admin/contacts", color: "#F97316" },
     {
       name: "Trade enquiries",
@@ -213,7 +193,7 @@ export function AdminDashboardView(m: DashboardMetrics) {
 
           <div className="mt-8 w-full flex flex-wrap justify-center gap-6">
             <SkillRing label="Catalogue" value={catalogScore} color="#F97316" />
-            <SkillRing label="Content" value={contentScore} color="#22C55E" />
+            <SkillRing label="Contacts" value={contactsScore} color="#22C55E" />
             <SkillRing label="Pipeline" value={pipelineScore} color="#0D9488" />
           </div>
         </section>
@@ -221,7 +201,6 @@ export function AdminDashboardView(m: DashboardMetrics) {
         <div className="lg:col-span-8 min-h-0">
           <AdminLeadStatsChart
             products={productsSeries}
-            blog={blogSeries}
             leads={leadsSeries}
             labels={WEEK_LABELS}
           />
