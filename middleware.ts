@@ -7,15 +7,18 @@ import {
 } from "@/lib/user-auth-session";
 import { isStaffRole, isSuperadminRole } from "@/lib/admin-roles";
 
-/** While signed in as staff, only these URL prefixes may load (cookie is site-wide `path: /`). */
+/** Staff cookies are site-wide, but staff should still be able to open the public website. */
 function isStaffBrowseAllowed(pathname: string): boolean {
   if (pathname.startsWith("/admin")) return true;
   if (pathname.startsWith("/api")) return true;
   if (pathname.startsWith("/_next")) return true;
+  if (pathname.startsWith("/auth")) return false;
+  if (pathname.startsWith("/studio")) return false;
   if (pathname === "/favicon.ico") return true;
-  return /\.(?:ico|png|jpg|jpeg|gif|svg|webp|woff2?|ttf|eot|pdf|txt)$/i.test(
-    pathname
-  );
+  if (/\.(?:ico|png|jpg|jpeg|gif|svg|webp|woff2?|ttf|eot|pdf|txt)$/i.test(pathname)) {
+    return true;
+  }
+  return true;
 }
 
 export async function middleware(request: NextRequest) {

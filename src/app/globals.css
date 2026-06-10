@@ -4,40 +4,43 @@
 
 @theme {
   /* Warm neutral surfaces — homepage & public UI */
-  --color-bg-neutral: #efefef;
-  --color-bg-warm: #f9f4ec;
-  --color-surface-container: #f5f3f3;
-  --color-surface-card: #f4f6f8;
+  --color-bg-neutral: #f0ece3;
+  --color-bg-warm: #f5f0e8;
+  --color-surface-container: #f5f1ea;
+  --color-surface-card: #f3eee4;
 
-  /* Structure and Pulse — brand palette (buttons & hover only) */
+  /* Catertech brand palette — Navy + Gold */
   --color-surface: #ffffff;
   --color-background: #ffffff;
-  --color-foreground: #14131f;
-  --color-ink: #14131f;
+  --color-foreground: #1b2b4b;
+  --color-ink: #1b2b4b;
 
-  --color-primary: #322b81;
-  --color-primary-dark: #1b106c;
-  --color-primary-soft: #eceaf8;
-  --color-primary-soft-text: #231f5c;
+  --color-primary: #1b2b4b;
+  --color-primary-dark: #122036;
+  --color-primary-soft: #e7ebf1;
+  --color-primary-soft-text: #1b2b4b;
 
-  --color-accent: #c21722;
-  --color-accent-soft: #fde8e9;
-  --color-accent-soft-text: #8f1019;
-  --color-accent-dark: #930012;
+  --color-accent: #c9a84c;
+  --color-accent-soft: #f7efda;
+  --color-accent-soft-text: #8a6d22;
+  --color-accent-dark: #a8862f;
 
-  --color-footer: #2e2c3d;
-  --color-body-muted: #5c5a52;
-  --color-muted: #6b6860;
-  --color-border: #d8d4cc;
+  /* Secondary lighter gold */
+  --color-gold-soft: #e8c97a;
+
+  --color-footer: #1b2b4b;
+  --color-body-muted: #5a6070;
+  --color-muted: #5a6070;
+  --color-border: #e3ddd0;
 
   /* Legacy aliases — keeps existing class names working site-wide */
-  --color-sand: #c21722;
-  --color-sand-light: #fde8e9;
-  --color-sand-dark: #930012;
-  --color-offwhite: #efefef;
-  --color-cream: #f9f4ec;
-  --color-navy: #322b81;
-  --color-charcoal: #14131f;
+  --color-sand: #c9a84c;
+  --color-sand-light: #f7efda;
+  --color-sand-dark: #a8862f;
+  --color-offwhite: #f5f0e8;
+  --color-cream: #f5f0e8;
+  --color-navy: #1b2b4b;
+  --color-charcoal: #1b2b4b;
 
   --font-display: var(--font-syne);
   --font-serif: var(--font-syne);
@@ -51,9 +54,9 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #14131f;
-  --brand-gradient: linear-gradient(135deg, #322b81 40%, #c21722 100%);
-  --btn-brand-hover-fill: color-mix(in srgb, #322b81 88%, #ffffff 12%);
+  --foreground: #1b2b4b;
+  --brand-gradient: linear-gradient(135deg, #1b2b4b 40%, #c9a84c 100%);
+  --btn-brand-hover-fill: color-mix(in srgb, #1b2b4b 90%, #ffffff 10%);
   --header-height: 84px;
 }
 
@@ -109,6 +112,41 @@ h3 {
 
 .marquee-track:hover {
   animation-play-state: paused;
+}
+
+.marquee-track-slow {
+  animation: marquee 40s linear infinite;
+}
+
+.marquee-track-slow:hover {
+  animation-play-state: paused;
+}
+
+/* Hero partner strip — separate keyframes (avoids @theme inline marquee override) */
+@keyframes hero-partner-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.hero-partner-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: hero-partner-marquee 45s linear infinite;
+  will-change: transform;
+}
+
+.hero-partner-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-partner-marquee-track {
+    animation: none;
+  }
 }
 
 @keyframes process-progress-fill {
@@ -220,8 +258,8 @@ h3 {
 
 .group:hover .on-card-hover-gradient,
 .group:hover .on-card-hover-solid {
-  background-color: #322b81;
-  border-color: #322b81;
+  background-color: #1b2b4b;
+  border-color: #1b2b4b;
   color: #ffffff;
 }
 
@@ -233,9 +271,9 @@ h3 {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  border: 1px solid rgba(20, 19, 31, 0.12);
-  background: #f4f6f8;
-  color: #14131f;
+  border: 1px solid rgba(27, 43, 75, 0.14);
+  background: #f3eee4;
+  color: #1b2b4b;
   transition: color 0.3s ease, border-color 0.3s ease;
 }
 
@@ -255,7 +293,7 @@ h3 {
   border-color: transparent;
 }
 
-/* Brand CTAs — black border, purple text; hover purple water-rise, red text; arrows in red circles */
+/* Brand CTAs — navy border, navy text; hover navy water-rise, white text; arrows in gold circles */
 .btn-brand,
 .btn-outline-ghost,
 .btn-solid-dark,
@@ -267,9 +305,9 @@ h3 {
   justify-content: center;
   gap: 0.5rem;
   overflow: hidden;
-  border: 2px solid #0a0a0a;
+  border: 2px solid #1b2b4b;
   background-color: transparent;
-  color: #322b81;
+  color: #1b2b4b;
   transition:
     border-color 0.35s ease,
     color 0.4s ease 0.05s,
@@ -331,17 +369,17 @@ h3 {
   justify-content: center;
   flex-shrink: 0;
   border-radius: 50%;
-  background-color: #c21722;
+  background-color: #c9a84c;
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .btn-brand__arrow svg {
-  color: #ffffff;
+  color: #1b2b4b;
   transition: color 0.3s ease;
 }
 
 .btn-brand:hover .btn-brand__arrow {
-  background-color: #c21722;
+  background-color: #c9a84c;
 }
 
 .btn-brand:hover .btn-brand__arrow svg {
@@ -377,8 +415,19 @@ h3 {
   box-shadow: none;
   isolation: isolate;
   transition:
+    background-color 0.35s ease,
     box-shadow 0.35s ease,
-    border-color 0.35s ease;
+    border-color 0.35s ease,
+    backdrop-filter 0.35s ease;
+}
+
+/* Homepage hero — header floats over hero as one unified block */
+.site-header.site-header--on-hero {
+  border-bottom-color: transparent;
+  background-color: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .site-header > * {
@@ -397,8 +446,8 @@ h3 {
 
 .site-header.site-header--scrolled .btn-outline-ghost,
 .site-header.site-header--scrolled .btn-brand {
-  border-color: #0a0a0a;
-  color: #322b81;
+  border-color: #1b2b4b;
+  color: #1b2b4b;
 }
 
 .glass-effect {
@@ -694,7 +743,7 @@ h3 {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #322b81;
+  background: #1b2b4b;
   border-radius: 3px;
 }
 

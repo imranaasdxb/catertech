@@ -42,9 +42,11 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const isHome = pathname === "/";
+
   const navLinkClass = (href: string) =>
-    `text-[13px] font-semibold uppercase tracking-[0.12em] text-[#0a0a0a] transition-colors duration-200 ${
-      pathname === href ? "text-[#322b81]" : "hover:text-[#322b81]"
+    `text-[13px] font-semibold uppercase tracking-[0.12em] text-primary transition-colors duration-200 ${
+      pathname === href ? "text-accent-dark" : "hover:text-accent-dark"
     }`;
 
   return (
@@ -52,7 +54,7 @@ export default function Header() {
       <header
         className={`site-header fixed top-0 left-0 right-0 z-50 ${
           scrolled ? "site-header--scrolled" : ""
-        }`}
+        } ${isHome && !scrolled ? "site-header--on-hero" : ""}`}
       >
         <Container className="flex h-[var(--header-height)] min-h-[84px] items-center justify-between gap-4">
           <Link

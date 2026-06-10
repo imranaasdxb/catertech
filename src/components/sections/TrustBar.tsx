@@ -1,12 +1,9 @@
 "use client";
 
-import uaeMapImage from "@/assets/uaemap.png";
+import uaeMapImage from "@/assets/finaluaemap.png";
 import Container from "@/components/Container";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-
-const BRAND_PURPLE = "#322b81";
-const BRAND_RED = "#c21722";
 
 type StatItem = {
   value: number;
@@ -24,7 +21,7 @@ const STATS: StatItem[] = [
 ];
 
 const GLASS_CARD =
-  "flex min-h-[152px] w-full max-w-none flex-col items-center justify-center rounded-md border border-white/50 bg-white/30 px-4 py-6 text-center shadow-[0_8px_32px_rgba(15,15,15,0.07)] backdrop-blur-md sm:min-h-[168px] sm:px-5 sm:py-7 md:min-h-[176px] md:px-6 md:py-7 lg:min-h-[188px] lg:w-[280px] lg:shrink-0 lg:px-7 lg:py-8 xl:w-[300px] 2xl:w-[312px]";
+  "relative flex min-h-[152px] w-full max-w-none flex-col items-center justify-center overflow-hidden rounded-xl border border-white/60 bg-white/28 px-4 py-6 text-center shadow-[0_10px_40px_rgba(27,43,75,0.1),inset_0_1px_1px_rgba(255,255,255,0.72)] backdrop-blur-[1px] backdrop-saturate-[1.25] sm:min-h-[168px] sm:px-5 sm:py-7 md:min-h-[176px] md:px-6 md:py-7 lg:min-h-[188px] lg:w-[280px] lg:shrink-0 lg:px-7 lg:py-8 xl:w-[300px] 2xl:w-[312px]";
 
 function useCountUp(target: number, isVisible: boolean, duration = 1400) {
   const [count, setCount] = useState(0);
@@ -83,14 +80,13 @@ function StatBlock({
       style={{ transitionDelay: `${index * 80}ms` }}
     >
       <p
-        className="text-[1.65rem] font-bold tabular-nums leading-none tracking-tight sm:text-[2.25rem] md:text-[2.75rem] lg:text-[3.25rem] xl:text-[3.5rem]"
-        style={{ color: highlight ? BRAND_PURPLE : "#0a0a0a" }}
+        className={`text-[1.65rem] font-bold tabular-nums leading-none tracking-tight sm:text-[2.25rem] md:text-[2.75rem] lg:text-[3.25rem] xl:text-[3.5rem] ${highlight ? "text-primary" : "text-ink"}`}
       >
         {display}
       </p>
-      <p className="mt-1 text-xs font-medium leading-snug text-[#0a0a0a] sm:text-sm">{label}</p>
+      <p className="mt-1 text-xs font-medium leading-snug text-ink sm:text-sm">{label}</p>
       <p
-        className={`text-xs leading-snug text-[#6b7280] ${sub ? "mt-0.5" : "invisible mt-0.5 min-h-4"}`}
+        className={`text-xs leading-snug text-body-muted ${sub ? "mt-0.5" : "invisible mt-0.5 min-h-4"}`}
       >
         {sub ?? "\u00a0"}
       </p>
@@ -101,33 +97,36 @@ function StatBlock({
 export default function TrustBar() {
   return (
     <section
-      className="relative isolate min-h-[520px] w-full overflow-hidden bg-[#eceae6] py-14 sm:min-h-[560px] sm:py-20 md:min-h-[580px] md:py-24 lg:min-h-[600px] lg:py-32"
+      className="relative isolate min-h-[500px] w-full overflow-hidden bg-[#FBEEE5] py-12 sm:min-h-[520px] sm:py-14 md:min-h-[540px] md:py-16 lg:min-h-[660px]"
       aria-label="Company highlights"
     >
       <Image
         src={uaeMapImage}
         alt=""
         fill
-        className="-z-10 object-contain object-center lg:object-cover lg:object-center"
+        className="-z-10   object-cover object-fill"
         sizes="100vw"
         priority={false}
       />
 
       <Container className="relative z-10 w-full">
-        <p
-          className="w-full text-left text-[11px] font-semibold uppercase tracking-[0.24em]"
-          style={{ color: BRAND_RED }}
-        >
+        <p className="w-full text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-accent-dark">
           Trusted across the Emirates
         </p>
-        <h2 className="mt-3 w-full text-left text-lg font-bold leading-snug tracking-tight text-[#0a0a0a] sm:text-xl sm:leading-tight md:text-2xl lg:text-[1.85rem] lg:whitespace-nowrap xl:text-3xl">
+        <h2 className="mt-3 w-full text-left font-display text-lg font-medium leading-snug tracking-tight text-ink sm:text-xl sm:leading-tight md:text-2xl lg:text-[1.85rem] lg:whitespace-nowrap xl:text-3xl">
           Numbers that reflect how long venues rely on us.
         </h2>
 
-        <div className="mt-8 grid w-full grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:mt-10 sm:gap-5 md:gap-6 lg:mt-12 lg:flex lg:flex-nowrap lg:items-stretch lg:justify-between lg:gap-8">
+        <div className="mt-8 grid w-full grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:mt-10 sm:gap-5 md:gap-6 lg:mt-20 lg:flex lg:flex-nowrap lg:items-stretch lg:justify-between lg:gap-8">
           {STATS.map((stat, index) => (
             <div key={stat.label} className={GLASS_CARD}>
-              <StatBlock {...stat} index={index} />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 bg-linear-to-br from-white/45 via-white/12 to-transparent"
+              />
+              <div className="relative z-10 w-full">
+                <StatBlock {...stat} index={index} />
+              </div>
             </div>
           ))}
         </div>

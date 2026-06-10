@@ -194,8 +194,10 @@ export function AdminSessionNavBar({
 
               <div className="flex flex-col gap-1 p-2">
                 <Separator className="mb-1 w-full" />
-                <Link
+                <a
                   href="/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   onClick={onMobileClose}
                   className={cn(
                     "flex h-9 w-full flex-row items-center rounded-md px-2 py-1.5 transition hover:bg-surface-container hover:text-ink",
@@ -209,7 +211,7 @@ export function AdminSessionNavBar({
                       <span className="ml-2 text-sm font-medium text-ink">Visit site</span>
                     )}
                   </motion.span>
-                </Link>
+                </a>
                 <Link
                   href="/admin"
                   onClick={onMobileClose}

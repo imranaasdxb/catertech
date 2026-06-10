@@ -340,13 +340,15 @@ export function AdminTopBar() {
                   </p>
                 </div>
               </div>
-              <Link
+              <a
                 href="/"
+                target="_blank"
+                rel="noopener noreferrer"
                 onClick={() => setProfileOpen(false)}
                 className="block px-4 py-2.5 text-sm text-[#1a1a1a] hover:bg-[#F5F5F7]"
               >
                 View public site
-              </Link>
+              </a>
               <button
                 type="button"
                 className="w-full text-left px-4 py-2.5 text-sm text-[#1a1a1a] hover:bg-[#F5F5F7]"
