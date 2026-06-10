@@ -22,7 +22,7 @@ export default function ShopProductCard({ product, className }: ShopProductCardP
       )}
     >
       <div className="relative aspect-square w-full shrink-0 bg-[#f5f2ee]">
-        <Link href={productHref} className="block h-full w-full">
+        <Link href={productHref} className="relative block h-full w-full">
           <Image
             src={product.image}
             alt={product.name}

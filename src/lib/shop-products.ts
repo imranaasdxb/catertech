@@ -257,7 +257,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
     cardSubtitle: "Rinse-aid pump · heat recovery hood",
     price: "Quote",
     tag: "Popular",
-    image: U("photo-1589939705384-5185137a814f"),
+    image: U("photo-1584568694244-14fbdf83bd30"),
     equipmentFilters: ["Dishwasher", "Cooking equipment"],
   },
   {
@@ -301,7 +301,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
     cardSubtitle: "Undershelf · backsplash · leveling feet",
     price: "AED 780",
     tag: "Popular",
-    image: U("photo-1585517326978-619194dc6909"),
+    image: U("photo-1524758631624-e2822e304c36"),
     equipmentFilters: ["Stainless bench", "Food prep equipment"],
   },
   {

@@ -21,7 +21,7 @@ const CATEGORIES = [
   {
     name: "Warewashing Solutions",
     image:
-      "https://images.unsplash.com/photo-1589939705384-5185137a814f?auto=format&fit=crop&w=800&q=85",
+      "https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?auto=format&fit=crop&w=800&q=85",
   },
   {
     name: "Tabletop & Service",
@@ -31,7 +31,7 @@ const CATEGORIES = [
   {
     name: "Kitchen Tools",
     image:
-      "https://images.unsplash.com/photo-1585517326978-619194dc6909?auto=format&fit=crop&w=800&q=85",
+      "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=85",
   },
   {
     name: "Bar & Cafe Equipment",

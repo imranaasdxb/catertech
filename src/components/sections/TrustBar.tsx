@@ -1,6 +1,6 @@
 "use client";
 
-import uaeMapImage from "@/assets/finaluaemap.png";
+import uaeMapImage from "@/assets/uaemapcenter.png";
 import Container from "@/components/Container";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
@@ -97,14 +97,14 @@ function StatBlock({
 export default function TrustBar() {
   return (
     <section
-      className="relative isolate min-h-[500px] w-full overflow-hidden bg-[#FBEEE5] py-12 sm:min-h-[520px] sm:py-14 md:min-h-[540px] md:py-16 lg:min-h-[660px]"
+      className="relative isolate min-h-[500px] w-full overflow-hidden bg-[#FDF6ED] py-12 sm:min-h-[520px] sm:py-14 md:min-h-[540px] md:py-16 lg:min-h-[660px]"
       aria-label="Company highlights"
     >
       <Image
         src={uaeMapImage}
         alt=""
         fill
-        className="-z-10   object-cover object-fill"
+        className="-z-10   object-cover object-center"
         sizes="100vw"
         priority={false}
       />

@@ -2,10 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Layers, Package, Sparkles, Truck } from "lucide-react";
+import { Handshake, Layers, Package, Sparkles, Truck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Marquee } from "@/components/ui/marquee";
-import servicesBg from "@/assets/servicesbg.png";
+import servicesBg from "@/assets/servicesfinal.png";
 
 const marqueeData = [
   "What chafing dish capacity do I need for a 300-guest buffet?",
@@ -58,6 +58,15 @@ const features = [
       "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=800&q=85",
     title: "Events managed end-to-end",
     href: "/services/event-management",
+  },
+  {
+    description:
+      "Volume pricing, formal quotations and dedicated account support for hotels, venues and F&B teams.",
+    icon: Handshake,
+    image:
+      "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=85",
+    title: "Trade & corporate",
+    href: "/trade",
   },
 ];
 
@@ -146,35 +155,35 @@ export default function VercepFeaturesDemo() {
         </div>
 
         <div className="mt-10 lg:px-8 xl:px-10">
-          <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-px-5 px-5 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] lg:grid lg:grid-cols-4 lg:gap-6 lg:overflow-visible lg:px-0 lg:pb-0 [&::-webkit-scrollbar]:hidden">
+          <div className="grid grid-cols-5 gap-2.5 px-5 pb-1 min-[420px]:gap-3 sm:gap-3.5 md:gap-4 lg:px-0 lg:gap-5">
           {features.map((feature) => {
             const Icon = feature.icon;
             return (
               <Link
-                className="service-feature-card group flex w-[82vw] max-w-[360px] shrink-0 snap-start cursor-pointer flex-col overflow-hidden rounded-xl border-2 border-dashed border-accent/75 bg-white/55 backdrop-blur-[2px] transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:bg-white/80 hover:shadow-[0_14px_40px_rgba(27,43,75,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 sm:w-[76vw] sm:max-w-[380px] lg:w-auto lg:max-w-none lg:shrink"
+                className="service-feature-card group flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-xl border-2 border-dashed border-accent/75 bg-white/55 backdrop-blur-[2px] transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:bg-white/80 hover:shadow-[0_14px_40px_rgba(27,43,75,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                 href={feature.href}
                 key={feature.title}
               >
-                <div className="flex flex-1 flex-col items-center gap-2.5 px-5 py-6 text-center lg:px-6 lg:py-7">
-                  <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-accent/30 bg-[#FBF5EC]/90 shadow-[0_6px_18px_rgba(201,168,76,0.14)] lg:size-14">
-                    <Icon className="size-5 text-accent-dark transition-colors duration-300 group-hover:text-primary lg:size-6" />
+                <div className="flex min-h-[208px] flex-1 flex-col items-center gap-3 px-2.5 py-6 text-center min-[420px]:min-h-[224px] min-[420px]:gap-3.5 min-[420px]:px-3 min-[420px]:py-7 sm:min-h-[236px] sm:px-3.5 sm:py-7 md:min-h-[252px] md:px-4 md:py-8 lg:min-h-[268px] lg:py-9">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-accent/30 bg-[#FBF5EC]/90 shadow-[0_6px_18px_rgba(201,168,76,0.14)] min-[420px]:size-10 sm:size-11 lg:size-12">
+                    <Icon className="size-4 text-accent-dark transition-colors duration-300 group-hover:text-primary min-[420px]:size-4 sm:size-[18px] lg:size-5" />
                   </div>
 
-                  <h3 className="font-display text-xl font-medium tracking-tight text-ink transition-colors duration-300 group-hover:text-primary lg:text-2xl">
+                  <h3 className="font-display text-[11px] font-medium leading-tight tracking-tight text-ink transition-colors duration-300 group-hover:text-primary min-[420px]:text-xs sm:text-sm md:text-base lg:text-lg">
                     {feature.title}
                   </h3>
-                  <p className="line-clamp-3 text-sm leading-relaxed text-body-muted lg:text-[15px]">
+                  <p className="line-clamp-3 text-[10px] leading-snug text-body-muted min-[420px]:text-[11px] sm:text-xs md:text-sm lg:leading-relaxed">
                     {feature.description}
                   </p>
                 </div>
 
-                <div className="relative h-28 w-full shrink-0 lg:h-32">
+                <div className="relative h-32 w-full shrink-0 min-[420px]:h-[7.5rem] sm:h-[8rem] md:h-36 lg:h-40">
                   <Image
                     src={feature.image}
                     alt=""
                     fill
                     className="object-cover object-center"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    sizes="(max-width: 640px) 20vw, (max-width: 1024px) 20vw, 18vw"
                   />
                   <div
                     className="pointer-events-none absolute inset-0"
@@ -189,7 +198,6 @@ export default function VercepFeaturesDemo() {
               </Link>
             );
           })}
-          <div aria-hidden className="w-3 shrink-0 lg:hidden" />
           </div>
         </div>
       </div>
