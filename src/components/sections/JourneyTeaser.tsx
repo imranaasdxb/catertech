@@ -7,19 +7,25 @@ import Container from "@/components/Container";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
+import journeyDesktop from "@/assets/journeybg.png";
+import journeyTablet from "@/assets/journeytablet.png";
+import journeyMobile from "@/assets/journeymoobile.png";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-const BRAND_PURPLE = "#322b81";
-const BRAND_RED = "#c21722";
-const BG = "#f3f2ef";
-const COLUMN_W = 420;
-const COLUMN_GAP = 56;
-const TRACK_PAD_X = 40;
-/** Vertical inset while pinned — keeps timeline centered with space top & bottom */
+/* ── Brand tokens (matches HeroSection) ─────────────────────────── */
+const PRIMARY    = "#1B2B4B";
+const ACCENT     = "#C9A84C";
+const BG         = "#F5F0E8";
+
+const COLUMN_W      = 420;
+const COLUMN_GAP    = 56;
+const TRACK_PAD_X   = 40;
+
 const PIN_VIEWPORT_CLASS =
   "relative flex min-h-[calc(100svh-11rem)] w-full items-center justify-center overflow-hidden py-8 sm:py-10";
-const CARD_STACK_CLASS = "relative flex h-[min(480px,58vh)] flex-col sm:h-[min(500px,60vh)]";
+const CARD_STACK_CLASS =
+  "relative flex h-[min(480px,58vh)] flex-col sm:h-[min(500px,60vh)]";
 
 const MILESTONES = [
   {
@@ -78,10 +84,52 @@ const MILESTONES = [
   },
 ];
 
+const SECTION_BG_BASE = {
+  backgroundRepeat: "no-repeat",
+  backgroundAttachment: "fixed",
+} as const;
+
+/** One main section background — CSS only, never inside GSAP pin (no sticky) */
+function JourneySectionBg() {
+  return (
+    <div className="pointer-events-none absolute -inset-px z-0" aria-hidden>
+      {/* Mobile — full width, no side gaps */}
+      <div
+        className="absolute inset-0 bg-[#F5F0E8] md:hidden"
+        style={{
+          ...SECTION_BG_BASE,
+          backgroundImage: `url(${journeyMobile.src})`,
+          backgroundSize: "100% auto",
+          backgroundPosition: "center top",
+        }}
+      />
+      {/* Tablet — edge-to-edge fill */}
+      <div
+        className="absolute inset-0 bg-[#F5F0E8] hidden md:block lg:hidden"
+        style={{
+          ...SECTION_BG_BASE,
+          backgroundImage: `url(${journeyTablet.src})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center center",
+        }}
+      />
+      {/* Desktop — full width + height, no thin edge gaps */}
+      <div
+        className="absolute inset-0 hidden lg:block"
+        style={{
+          ...SECTION_BG_BASE,
+          backgroundImage: `url(${journeyDesktop.src})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center center",
+        }}
+      />
+    </div>
+  );
+}
+
 function buildSpringPath(points: { x: number; y: number }[]): string {
   if (points.length === 0) return "";
   if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
-
   let d = `M ${points[0].x} ${points[0].y}`;
   for (let i = 1; i < points.length; i++) {
     const prev = points[i - 1];
@@ -93,13 +141,11 @@ function buildSpringPath(points: { x: number; y: number }[]): string {
   return d;
 }
 
-/** Cumulative path length at each milestone dot (for segment-by-segment draw on scroll) */
 function getCumulativePathLengths(
   pathEl: SVGPathElement,
   points: { x: number; y: number }[],
 ): number[] {
   if (points.length === 0) return [0];
-
   const cumulative: number[] = [0];
   for (let i = 1; i < points.length; i++) {
     pathEl.setAttribute("d", buildSpringPath(points.slice(0, i + 1)));
@@ -115,17 +161,16 @@ function visiblePathLength(
 ): number {
   const total = cumulative[cumulative.length - 1] ?? 0;
   if (total <= 0 || cumulative.length < 2) return 0;
-
   const segmentCount = cumulative.length - 1;
   const travel = scrollProgress * segmentCount;
   const segIndex = Math.min(segmentCount - 1, Math.floor(travel));
   const segLocal = travel - segIndex;
   const from = cumulative[segIndex] ?? 0;
-  const to = cumulative[segIndex + 1] ?? total;
-
+  const to   = cumulative[segIndex + 1] ?? total;
   return from + (to - from) * segLocal;
 }
 
+/* ── Sub-components ──────────────────────────────────────────────── */
 function MilestoneText({
   year,
   title,
@@ -136,10 +181,20 @@ function MilestoneText({
   description: string;
 }) {
   return (
-    <div className="flex h-full flex-col justify-center px-1">
-      <p className="text-4xl font-bold tracking-tight text-[#1f2937] sm:text-[2.75rem]">{year}</p>
-      <h3 className="mt-2 text-lg font-bold text-[#0a0a0a] sm:text-xl">{title}</h3>
-      <p className="mt-3 max-w-[360px] text-sm leading-relaxed text-[#6b7280] sm:text-[15px]">
+    <div className="flex h-full flex-col justify-center px-4 py-3">
+      <p
+        className="text-[2.4rem] font-extrabold leading-none tracking-tight sm:text-[2.75rem]"
+        style={{ color: ACCENT }}
+      >
+        {year}
+      </p>
+      <h3
+        className="mt-2 text-base font-bold leading-snug sm:text-lg"
+        style={{ color: PRIMARY }}
+      >
+        {title}
+      </h3>
+      <p className="mt-2 max-w-[340px] text-[13px] leading-relaxed text-[#5a6478] sm:text-sm">
         {description}
       </p>
     </div>
@@ -148,27 +203,38 @@ function MilestoneText({
 
 function MilestoneImage({ src, alt }: { src: string; alt: string }) {
   return (
-    <div className="relative h-full min-h-[200px] w-full overflow-hidden bg-[#e5e7eb] sm:min-h-[220px]">
+    <div
+      className="relative h-full min-h-[180px] w-full overflow-hidden sm:min-h-[200px]"
+      style={{ borderRadius: "0.5rem 0.5rem 0 0" }}
+    >
       <Image src={src} alt={alt} fill className="object-cover" sizes="420px" />
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `linear-gradient(to bottom, transparent 50%, rgba(245,240,232,0.55) 100%)`,
+        }}
+        aria-hidden
+      />
     </div>
   );
 }
 
+/* ── Main component ──────────────────────────────────────────────── */
 export default function JourneyTeaser() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const pinStageRef = useRef<HTMLDivElement>(null);
-  const pinRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const pathRef = useRef<SVGPathElement>(null);
-  const dotRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const sectionRef   = useRef<HTMLElement>(null);
+  const pinStageRef  = useRef<HTMLDivElement>(null);
+  const pinRef       = useRef<HTMLDivElement>(null);
+  const trackRef     = useRef<HTMLDivElement>(null);
+  const pathRef      = useRef<SVGPathElement>(null);
+  const dotRefs      = useRef<(HTMLSpanElement | null)[]>([]);
   const pathMetricsRef = useRef({ total: 0, cumulative: [0] as number[] });
 
   useGSAP(
     () => {
       const pinStage = pinStageRef.current;
-      const pin = pinRef.current;
-      const track = trackRef.current;
-      const pathEl = pathRef.current;
+      const pin      = pinRef.current;
+      const track    = trackRef.current;
+      const pathEl   = pathRef.current;
       if (!pinStage || !pin || !track || !pathEl) return;
 
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -184,7 +250,7 @@ export default function JourneyTeaser() {
             const r = dot.getBoundingClientRect();
             return {
               x: r.left + r.width / 2 - trackRect.left,
-              y: r.top + r.height / 2 - trackRect.top,
+              y: r.top  + r.height / 2 - trackRect.top,
             };
           })
           .filter((p): p is { x: number; y: number } => p !== null);
@@ -194,6 +260,8 @@ export default function JourneyTeaser() {
         pathMetricsRef.current = { total, cumulative };
         return total;
       };
+
+      let scrollTrigger: ScrollTrigger | undefined;
 
       const setupScroll = () => {
         const pathLen = syncPathMetrics();
@@ -213,7 +281,7 @@ export default function JourneyTeaser() {
           return;
         }
 
-        ScrollTrigger.create({
+        scrollTrigger = ScrollTrigger.create({
           trigger: pinStage,
           start: "top 12%",
           end: () => `+=${getScrollDistance()}`,
@@ -225,11 +293,9 @@ export default function JourneyTeaser() {
           onUpdate: (self) => {
             const { total, cumulative } = pathMetricsRef.current;
             const distance = getScrollDistance();
-            const drawn = visiblePathLength(self.progress, cumulative);
-            gsap.set(pathEl, {
-              strokeDashoffset: total - drawn,
-            });
-            gsap.set(track, { x: -distance * self.progress });
+            const drawn    = visiblePathLength(self.progress, cumulative);
+            gsap.set(pathEl, { strokeDashoffset: total - drawn });
+            gsap.set(track,  { x: -distance * self.progress });
           },
         });
       };
@@ -247,6 +313,7 @@ export default function JourneyTeaser() {
       ScrollTrigger.addEventListener("refreshInit", syncPathMetrics);
 
       return () => {
+        scrollTrigger?.kill();
         window.removeEventListener("resize", onResize);
         ScrollTrigger.removeEventListener("refreshInit", syncPathMetrics);
       };
@@ -257,34 +324,43 @@ export default function JourneyTeaser() {
   return (
     <section
       ref={sectionRef}
-      className="journey-teaser relative w-full text-[#0a0a0a]"
-      style={{ backgroundColor: BG }}
+      className="journey-teaser relative isolate w-full overflow-hidden bg-[#F5F0E8] lg:bg-transparent"
+      style={{ color: PRIMARY }}
       aria-labelledby="journey-teaser-heading"
     >
-      <Container className="pt-14 pb-6 sm:pt-16 sm:pb-8">
+      <JourneySectionBg />
+
+      {/* ── Header ──────────────────────────────────────────────── */}
+      <Container className="relative z-10 pt-14 pb-6 sm:pt-16 sm:pb-8">
         <div className="max-w-[1920px]">
+          {/* gold accent dot */}
           <span
             className="mb-4 block size-2.5 rounded-full"
-            style={{ backgroundColor: BRAND_PURPLE }}
+            style={{ backgroundColor: ACCENT }}
             aria-hidden
           />
           <h2
             id="journey-teaser-heading"
             className="max-w-3xl text-3xl font-bold leading-[1.1] tracking-tight sm:text-4xl lg:text-[2.65rem]"
+            style={{ color: PRIMARY }}
           >
             Behind the years of{" "}
-            <span style={{ color: BRAND_PURPLE }}>CaterTech</span>
+            <span style={{ color: ACCENT }}>CaterTech</span>
           </h2>
           <div className="mt-4 flex flex-wrap items-start justify-between gap-x-8 gap-y-3">
-            <p className="max-w-xl flex-1 text-base leading-relaxed text-[#6b7280] sm:text-lg">
+            <p className="max-w-xl flex-1 text-base leading-relaxed text-[#5a6478] sm:text-lg">
               Scroll through the milestones that shaped our equipment, events and kitchen
               capabilities across the UAE.
             </p>
             <Link
               href="/about/journey"
-              className="group inline-flex shrink-0 items-center gap-2 pt-0.5 text-sm font-semibold text-[#0a0a0a] transition-colors duration-300 ease-out hover:text-[#322b81] sm:pt-1"
+              className="group inline-flex shrink-0 items-center gap-2 pt-0.5 text-sm font-semibold transition-colors duration-300 ease-out sm:pt-1"
+              style={{ color: PRIMARY }}
             >
-              <span className="border-b border-transparent pb-0.5 transition-[border-color,color] duration-300 ease-out group-hover:border-[#322b81]">
+              <span
+                className="border-b pb-0.5 transition-[border-color,color] duration-300 ease-out group-hover:border-current"
+                style={{ borderColor: "transparent" }}
+              >
                 Full company journey
               </span>
               <span
@@ -298,11 +374,12 @@ export default function JourneyTeaser() {
         </div>
       </Container>
 
-      <div ref={pinStageRef} className="journey-teaser__stage w-full">
+      {/* ── Pinned horizontal scroll stage ──────────────────────── */}
+      <div ref={pinStageRef} className="journey-teaser__stage relative z-10 w-full">
         <div ref={pinRef} className={PIN_VIEWPORT_CLASS}>
           <div
             ref={trackRef}
-            className="relative flex h-[min(480px,58vh)] items-center will-change-transform sm:h-[min(500px,60vh)]"
+            className="relative z-10 flex h-[min(480px,58vh)] items-center will-change-transform sm:h-[min(500px,60vh)]"
             style={{
               gap: COLUMN_GAP,
               paddingLeft: TRACK_PAD_X,
@@ -310,89 +387,135 @@ export default function JourneyTeaser() {
               width: "max-content",
             }}
           >
-          <svg
-            className="pointer-events-none absolute inset-0 z-10 h-full w-full overflow-visible"
-            aria-hidden
-          >
-            <defs>
-              <marker
-                id="journey-spring-arrow"
-                viewBox="0 0 10 10"
-                refX="8"
-                refY="5"
-                markerWidth="7"
-                markerHeight="7"
-                orient="auto"
-              >
-                <path d="M 0 1 L 8 5 L 0 9 Z" fill={BRAND_RED} />
-              </marker>
-            </defs>
-            <path
-              ref={pathRef}
-              fill="none"
-              stroke={BRAND_RED}
-              strokeWidth={2.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              markerEnd="url(#journey-spring-arrow)"
-              opacity={0}
-            />
-          </svg>
+            {/* ── Animated SVG spring path ─────────────────────── */}
+            <svg
+              className="pointer-events-none absolute inset-0 z-10 h-full w-full overflow-visible"
+              aria-hidden
+            >
+              <defs>
+                <marker
+                  id="journey-arrow"
+                  viewBox="0 0 10 10"
+                  refX="8"
+                  refY="5"
+                  markerWidth="7"
+                  markerHeight="7"
+                  orient="auto"
+                >
+                  <path d="M 0 1 L 8 5 L 0 9 Z" fill={ACCENT} />
+                </marker>
+              </defs>
+              <path
+                ref={pathRef}
+                fill="none"
+                stroke={ACCENT}
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                markerEnd="url(#journey-arrow)"
+                opacity={0}
+              />
+            </svg>
 
-          {MILESTONES.map((milestone, index) => {
-            const imageTop = index % 2 === 0;
+            {/* ── Milestone cards ──────────────────────────────── */}
+            {MILESTONES.map((milestone, index) => {
+              const imageTop = index % 2 === 0;
 
-            return (
-              <div
-                key={milestone.year}
-                className="relative shrink-0"
-                style={{ width: COLUMN_W }}
-              >
-                <div className={CARD_STACK_CLASS}>
-                  <div
-                    className="pointer-events-none absolute top-1/2 right-0 left-0 z-0 h-px -translate-y-1/2 bg-[#d1d5db]"
-                    aria-hidden
-                  />
+              return (
+                <div
+                  key={milestone.year}
+                  className="relative shrink-0"
+                  style={{ width: COLUMN_W }}
+                >
+                  <div className={CARD_STACK_CLASS}>
+                    {/* horizontal centre rule */}
+                    <div
+                      className="pointer-events-none absolute top-1/2 right-0 left-0 z-0 h-px -translate-y-1/2"
+                      style={{ backgroundColor: `${PRIMARY}22` }}
+                      aria-hidden
+                    />
 
-                  <span
-                    ref={(el) => {
-                      dotRefs.current[index] = el;
-                    }}
-                    className="absolute top-1/2 left-1/2 z-20 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[#9ca3af] shadow-sm"
-                    aria-hidden
-                  />
+                    {/* milestone dot */}
+                    <span
+                      ref={(el) => { dotRefs.current[index] = el; }}
+                      className="absolute top-1/2 left-1/2 z-20 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 shadow-sm"
+                      style={{
+                        backgroundColor: ACCENT,
+                        borderColor: BG,
+                        boxShadow: `0 0 0 3px ${ACCENT}55`,
+                      }}
+                      aria-hidden
+                    />
 
-                  {imageTop ? (
-                    <>
-                      <div className="flex min-h-0 flex-1 flex-col justify-end pb-5">
-                        <MilestoneImage src={milestone.image} alt={milestone.alt} />
-                      </div>
-                      <div className="flex min-h-0 flex-1 flex-col justify-start pt-5">
-                        <MilestoneText
-                          year={milestone.year}
-                          title={milestone.title}
-                          description={milestone.description}
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex min-h-0 flex-1 flex-col justify-end pb-5">
-                        <MilestoneText
-                          year={milestone.year}
-                          title={milestone.title}
-                          description={milestone.description}
-                        />
-                      </div>
-                      <div className="flex min-h-0 flex-1 flex-col justify-start pt-5">
-                        <MilestoneImage src={milestone.image} alt={milestone.alt} />
-                      </div>
-                    </>
-                  )}
+                    {imageTop ? (
+                      <>
+                        {/* top half — image */}
+                        <div className="flex min-h-0 flex-1 overflow-hidden rounded-t-xl pb-4">
+                          <div
+                            className="w-full overflow-hidden rounded-xl border shadow-[0_8px_24px_rgba(27,43,75,0.10)]"
+                            style={{
+                              borderColor: `${PRIMARY}18`,
+                              backgroundColor: "#fff",
+                            }}
+                          >
+                            <MilestoneImage src={milestone.image} alt={milestone.alt} />
+                          </div>
+                        </div>
+                        {/* bottom half — text */}
+                        <div className="flex min-h-0 flex-1 flex-col justify-start pt-4">
+                          <div
+                            className="rounded-xl border shadow-[0_8px_24px_rgba(27,43,75,0.08)]"
+                            style={{
+                              borderColor: `${PRIMARY}18`,
+                              backgroundColor: "rgba(255,255,255,0.72)",
+                              backdropFilter: "blur(4px)",
+                            }}
+                          >
+                            <MilestoneText
+                              year={milestone.year}
+                              title={milestone.title}
+                              description={milestone.description}
+                            />
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {/* top half — text */}
+                        <div className="flex min-h-0 flex-1 flex-col justify-end pb-4">
+                          <div
+                            className="rounded-xl border shadow-[0_8px_24px_rgba(27,43,75,0.08)]"
+                            style={{
+                              borderColor: `${PRIMARY}18`,
+                              backgroundColor: "rgba(255,255,255,0.72)",
+                              backdropFilter: "blur(4px)",
+                            }}
+                          >
+                            <MilestoneText
+                              year={milestone.year}
+                              title={milestone.title}
+                              description={milestone.description}
+                            />
+                          </div>
+                        </div>
+                        {/* bottom half — image */}
+                        <div className="flex min-h-0 flex-1 overflow-hidden rounded-b-xl pt-4">
+                          <div
+                            className="w-full overflow-hidden rounded-xl border shadow-[0_8px_24px_rgba(27,43,75,0.10)]"
+                            style={{
+                              borderColor: `${PRIMARY}18`,
+                              backgroundColor: "#fff",
+                            }}
+                          >
+                            <MilestoneImage src={milestone.image} alt={milestone.alt} />
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
           </div>
         </div>
       </div>

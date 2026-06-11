@@ -5,7 +5,9 @@ import Link from "next/link";
 import { Handshake, Layers, Package, Sparkles, Truck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Marquee } from "@/components/ui/marquee";
-import servicesBg from "@/assets/servicesfinal.png";
+import servicesDesktop from "@/assets/servicesdesktop.png";
+import servicesTablet from "@/assets/servicestablet.png";
+import servicesMobile from "@/assets/servicesmobile.png";
 
 const marqueeData = [
   "What chafing dish capacity do I need for a 300-guest buffet?",
@@ -80,12 +82,28 @@ export default function VercepFeaturesDemo() {
     <section className="relative overflow-hidden bg-[#FBF5EC] pt-16 pb-16 sm:pt-28 sm:pb-28">
       <div className="pointer-events-none absolute inset-0 min-h-full w-full">
         <Image
-          src={servicesBg}
+          src={servicesMobile}
           alt=""
           fill
           priority={false}
           sizes="100vw"
-          className="h-full w-full object-contain object-top lg:object-cover lg:object-center"
+          className="h-full w-full object-cover object-center md:hidden"
+        />
+        <Image
+          src={servicesTablet}
+          alt=""
+          fill
+          priority={false}
+          sizes="100vw"
+          className="hidden h-full w-full object-cover object-center md:block lg:hidden"
+        />
+        <Image
+          src={servicesDesktop}
+          alt=""
+          fill
+          priority={false}
+          sizes="100vw"
+          className="hidden h-full w-full object-cover object-center lg:block"
         />
       </div>
 
@@ -155,12 +173,15 @@ export default function VercepFeaturesDemo() {
         </div>
 
         <div className="mt-10 lg:px-8 xl:px-10">
-          <div className="grid grid-cols-5 gap-2.5 px-5 pb-1 min-[420px]:gap-3 sm:gap-3.5 md:gap-4 lg:px-0 lg:gap-5">
+          <div
+            className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto overscroll-x-contain scroll-px-5 px-5 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] min-[420px]:gap-3 sm:gap-3.5 md:gap-4 md:scroll-px-6 lg:scroll-px-8 [&::-webkit-scrollbar]:hidden xl:grid xl:grid-cols-5 xl:overflow-visible xl:snap-none xl:scroll-px-0 xl:px-0 xl:pb-1 xl:gap-5"
+            aria-label="Service categories"
+          >
           {features.map((feature) => {
             const Icon = feature.icon;
             return (
               <Link
-                className="service-feature-card group flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-xl border-2 border-dashed border-accent/75 bg-white/55 backdrop-blur-[2px] transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:bg-white/80 hover:shadow-[0_14px_40px_rgba(27,43,75,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                className="service-feature-card group flex w-[calc(50vw-1.375rem)] max-w-[300px] shrink-0 snap-start cursor-pointer flex-col overflow-hidden rounded-xl border-2 border-dashed border-accent/75 bg-white/55 backdrop-blur-[2px] transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:bg-white/80 hover:shadow-[0_14px_40px_rgba(27,43,75,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 min-[420px]:w-[calc(50vw-1.5rem)] md:w-[calc(33.333vw-1.35rem)] md:max-w-[280px] lg:max-w-[300px] xl:w-auto xl:max-w-none xl:shrink xl:snap-align-none"
                 href={feature.href}
                 key={feature.title}
               >
@@ -198,6 +219,7 @@ export default function VercepFeaturesDemo() {
               </Link>
             );
           })}
+          <div aria-hidden className="w-1 shrink-0 xl:hidden" />
           </div>
         </div>
       </div>

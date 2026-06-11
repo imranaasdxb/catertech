@@ -4,7 +4,7 @@ import { ArrowRight, BadgeCheck, Globe2, Handshake, Truck } from "lucide-react";
 import Container from "@/components/Container";
 import HeroBentoGrid from "@/components/sections/HeroBentoGrid";
 import HeroShopCategories from "@/components/sections/HeroShopCategories";
-import heroDesktop from "@/assets/hero2.png";
+import heroDesktop from "@/assets/planehero.png";
 import heroTablet from "@/assets/herotablet2.png";
 import heroMobile from "@/assets/heromobile2.png";
 

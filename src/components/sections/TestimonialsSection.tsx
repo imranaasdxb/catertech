@@ -1,24 +1,26 @@
 import Container from "@/components/Container";
-import { StaggerTestimonials } from "@/components/ui/stagger-testimonials";
+import TestimonialsMarquee from "@/components/ui/testimonials-marquee";
 
 export default function TestimonialsSection() {
   return (
-    <section className="relative overflow-hidden border-t border-border/40 bg-white">
-      <Container className="relative z-10 py-24 md:py-32 lg:py-36">
-        <div className="mb-12 max-w-2xl">
-          <p className="text-[10px] font-semibold tracking-[0.24em] uppercase text-muted">
-            Client testimonials
-          </p>
-          <h2 className="mt-4 font-display text-3xl leading-[1.12] tracking-[-0.02em] text-ink md:text-[2rem] xl:text-[2.25rem]">
-            Stories from the teams we support
+    <section className="overflow-hidden border-t border-border/40 bg-bg-warm py-16 md:py-20">
+      <Container>
+        <div className="mx-auto mb-10 max-w-3xl text-center md:mb-12">
+          <div className="mb-3 inline-block rounded-full border border-border bg-white px-4 py-1">
+            <span className="text-xs font-medium text-body-muted">
+              Loved by clients
+            </span>
+          </div>
+          <h2 className="font-display text-3xl font-medium tracking-tight text-ink md:text-4xl lg:text-5xl">
+            What people are saying
           </h2>
-          <p className="mt-4 max-w-xl text-sm leading-relaxed text-body-muted md:text-[0.9375rem]">
-            Venues and operators across Dubai and the Northern Emirates share how
-            Catertech shows up on site—from enquiry to delivery and event day.
+          <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-body-muted md:text-base">
+            Real feedback from hospitality teams, event operators and venues
+            building memorable experiences across the UAE with Catertech.
           </p>
         </div>
 
-        <StaggerTestimonials />
+        <TestimonialsMarquee />
       </Container>
     </section>
   );
