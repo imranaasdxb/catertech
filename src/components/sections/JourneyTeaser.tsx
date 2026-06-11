@@ -7,7 +7,7 @@ import Container from "@/components/Container";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import journeyDesktop from "@/assets/journeybg.png";
+import journeyDesktop from "@/assets/journeydesktop.png";
 import journeyTablet from "@/assets/journeytablet.png";
 import journeyMobile from "@/assets/journeymoobile.png";
 
