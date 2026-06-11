@@ -52,11 +52,37 @@ const REASONS = [
   { icon: BadgeCheck, label: "Local Support, Faster Results" },
 ];
 
+function PartnerAside({ className }: { className?: string }) {
+  return (
+    <aside className={className}>
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-accent">
+        Why partner with Catertech?
+      </p>
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        {REASONS.map(({ icon: Icon, label }) => (
+          <div key={label} className="flex items-center gap-2.5">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-accent/35 text-accent">
+              <Icon className="h-4 w-4" strokeWidth={1.7} />
+            </span>
+            <span className="text-[10px] font-medium leading-tight text-white/82">{label}</span>
+          </div>
+        ))}
+      </div>
+      <Link
+        href="/about"
+        className="mt-5 inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-full bg-accent px-5 text-[10px] font-bold uppercase tracking-[0.14em] text-primary transition-colors hover:bg-gold-soft"
+      >
+        Learn More About Us
+        <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.2} />
+      </Link>
+    </aside>
+  );
+}
+
 export default function HeroShopCategories() {
   return (
-    <div className="bg-bg-warm/95 py-3.5 shadow-[inset_0_1px_0_rgba(27,43,75,0.08)] sm:py-4">
+    <div className="bg-bg-warm/95 pt-4 pb-8 shadow-[inset_0_1px_0_rgba(27,43,75,0.08)] sm:pt-5 sm:pb-10 md:pb-12">
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_300px] lg:grid-rows-[auto_auto] lg:items-start lg:gap-x-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-        {/* Header row — left column only (View all sits above cards, not over aside) */}
         <div className="flex items-center justify-between gap-4 lg:col-start-1 lg:row-start-1">
           <div className="flex items-center gap-3">
             <h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
@@ -66,22 +92,22 @@ export default function HeroShopCategories() {
           </div>
           <Link
             href="/shop"
-            className="hidden items-center gap-2 text-[10px] font-semibold text-body-muted transition-colors hover:text-primary sm:inline-flex"
+            className="inline-flex items-center gap-2 text-[10px] font-semibold text-body-muted transition-colors hover:text-primary"
           >
-            View all categories
+            <span className="hidden sm:inline">View all categories</span>
+            <span className="sm:hidden">View all</span>
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-primary">
               <ArrowRight className="h-3 w-3" strokeWidth={2.25} />
             </span>
           </Link>
         </div>
 
-        {/* Category cards */}
-        <div className="grid grid-cols-4 gap-3 md:grid-cols-8 lg:col-start-1 lg:row-start-2">
+        <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] lg:col-start-1 lg:row-start-2 lg:grid lg:grid-cols-8 lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden">
           {CATEGORIES.map((category) => (
             <Link
               key={category.name}
               href="/shop"
-              className="group flex min-h-[172px] flex-col overflow-hidden rounded-xl border border-primary/8 bg-white shadow-[0_10px_30px_rgba(27,43,75,0.08)] transition-transform duration-300 hover:-translate-y-0.5 sm:min-h-[178px]"
+              className="group flex w-[42vw] max-w-[168px] shrink-0 snap-start flex-col overflow-hidden rounded-xl border border-primary/8 bg-white shadow-[0_10px_30px_rgba(27,43,75,0.08)] transition-transform duration-300 hover:-translate-y-0.5 sm:w-[36vw] sm:max-w-[176px] md:max-w-[184px] lg:w-auto lg:max-w-none lg:min-h-[178px] lg:shrink"
             >
               <div className="relative h-[72px] shrink-0 bg-white sm:h-20">
                 <Image
@@ -89,7 +115,7 @@ export default function HeroShopCategories() {
                   alt={category.name}
                   fill
                   className="object-contain p-2.5 transition-transform duration-500 group-hover:scale-[1.04]"
-                  sizes="(max-width: 768px) 25vw, 10vw"
+                  sizes="(max-width: 1024px) 42vw, 10vw"
                 />
               </div>
               <div className="flex flex-1 items-end justify-between gap-2 px-3 pb-2.5 pt-1">
@@ -100,31 +126,14 @@ export default function HeroShopCategories() {
               </div>
             </Link>
           ))}
+          <div aria-hidden className="w-1 shrink-0 lg:hidden" />
         </div>
 
-        {/* Aside — top aligned with Shop by Category row, spans beside cards */}
-        <aside className="hidden flex-col rounded-2xl bg-[rgba(27,43,75,0.9)] px-5 py-6 text-white shadow-[0_16px_40px_rgba(27,43,75,0.22)] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:flex lg:self-start">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-accent">
-            Why partner with Catertech?
-          </p>
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            {REASONS.map(({ icon: Icon, label }) => (
-              <div key={label} className="flex items-center gap-2.5">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-accent/35 text-accent">
-                  <Icon className="h-4 w-4" strokeWidth={1.7} />
-                </span>
-                <span className="text-[10px] font-medium leading-tight text-white/82">{label}</span>
-              </div>
-            ))}
-          </div>
-          <Link
-            href="/about"
-            className="mt-5 inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-full bg-accent px-5 text-[10px] font-bold uppercase tracking-[0.14em] text-primary transition-colors hover:bg-gold-soft"
-          >
-            Learn More About Us
-            <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.2} />
-          </Link>
-        </aside>
+        <PartnerAside className="hidden flex-col rounded-2xl bg-[rgba(27,43,75,0.9)] px-5 py-6 text-white shadow-[0_16px_40px_rgba(27,43,75,0.22)] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:flex lg:self-start" />
+
+        <div className="overflow-x-auto lg:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <PartnerAside className="flex min-w-[min(100%,520px)] flex-col rounded-2xl bg-[rgba(27,43,75,0.9)] px-5 py-5 text-white shadow-[0_16px_40px_rgba(27,43,75,0.22)] sm:min-w-[560px] sm:px-6 sm:py-6" />
+        </div>
       </div>
     </div>
   );
