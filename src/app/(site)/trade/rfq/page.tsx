@@ -5,7 +5,7 @@ import vector1 from "@/assets/vector1.png";
 import Container from "@/components/Container";
 import { rfqEventTypes } from "@/lib/validations/forms";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
+import NextImage from "next/image";
 import { ArrowRight, CheckCircle2, FileText, ReceiptText, Timer, X } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState, type ChangeEvent } from "react";
 
@@ -62,7 +62,7 @@ function RFQGraphic() {
   return (
     <div className="relative mx-auto w-full max-w-[380px]" aria-hidden>
       <div className="absolute -left-6 top-8 h-24 w-24 rounded-full bg-primary-soft blur-2xl" />
-      <Image
+      <NextImage
         src={vector1}
         alt=""
         width={380}
