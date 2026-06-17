@@ -2,6 +2,7 @@ interface SectionHeaderProps {
   eyebrow?: string;
   title: string;
   subtitle?: string;
+  subtitleClassName?: string;
   align?: "left" | "center";
   light?: boolean;
   className?: string;
@@ -11,6 +12,7 @@ export default function SectionHeader({
   eyebrow,
   title,
   subtitle,
+  subtitleClassName = "",
   align = "left",
   light = false,
   className = "",
@@ -37,7 +39,9 @@ export default function SectionHeader({
         {title}
       </h2>
       {subtitle && (
-        <p className={`mt-4 max-w-xl text-base leading-relaxed md:text-lg ${subtitleColor}`}>
+        <p
+          className={`mt-4 max-w-xl text-base leading-relaxed md:text-lg ${subtitleColor} ${subtitleClassName}`}
+        >
           {subtitle}
         </p>
       )}

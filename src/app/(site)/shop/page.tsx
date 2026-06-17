@@ -1,7 +1,10 @@
 import Container from "@/components/Container";
 import ShopCatalogueClient from "@/components/shop/ShopCatalogueClient";
+import { getCataloguePresetData } from "@/lib/catalogue-presets";
 
-export default function ShopPage() {
+export default async function ShopPage() {
+  const catalogueData = await getCataloguePresetData();
+
   return (
     <>
       <section className="relative overflow-hidden bg-white pt-32 pb-20 md:pt-40 md:pb-24">
@@ -31,7 +34,7 @@ export default function ShopPage() {
         </Container>
       </section>
 
-      <ShopCatalogueClient />
+      <ShopCatalogueClient {...catalogueData} />
     </>
   );
 }

@@ -6,6 +6,7 @@ import {
   buildCategoryDisplayLabel,
   validateSubcategoryForCategory,
 } from "@/lib/product-taxonomy";
+import { generateProductSeo } from "@/lib/product-seo";
 import { slugify } from "@/lib/slug";
 import { z } from "zod";
 
@@ -19,6 +20,10 @@ const createSchema = z.object({
   isFeatured: z.boolean().optional(),
   published: z.boolean().optional(),
   attributes: z.record(z.string(), z.unknown()).optional(),
+  seoTitle: z.string().trim().max(80).optional(),
+  seoDescription: z.string().trim().max(180).optional(),
+  searchKeywords: z.array(z.string().trim().min(1).max(80)).optional(),
+  canonicalProductId: z.union([z.string().uuid(), z.null()]).optional(),
 });
 
 export async function GET() {
@@ -62,8 +67,16 @@ export async function POST(request: Request) {
   if (!catId) subId = null;
 
   const categoryLabel = await buildCategoryDisplayLabel(db, catId, subId);
+  const attributes = (d.attributes ?? {}) as Record<string, ProductAttributeValue>;
+  const generatedSeo = generateProductSeo({
+    title: d.title,
+    categoryName: categoryLabel?.split("›")[0]?.trim() ?? null,
+    subCategoryName: categoryLabel?.split("›")[1]?.trim() ?? null,
+    description: d.description,
+    attributes,
+  });
 
-  let base = slugify(d.title);
+  const base = slugify(d.title);
   let slug = base;
   let n = 0;
   while (n < 20) {
@@ -90,7 +103,11 @@ export async function POST(request: Request) {
       isAvailable: d.isAvailable ?? true,
       isFeatured: d.isFeatured ?? false,
       published: d.published ?? false,
-      attributes: (d.attributes ?? {}) as Record<string, ProductAttributeValue>,
+      attributes,
+      seoTitle: d.seoTitle || generatedSeo.seoTitle,
+      seoDescription: d.seoDescription || generatedSeo.seoDescription,
+      searchKeywords: d.searchKeywords?.length ? d.searchKeywords : generatedSeo.searchKeywords,
+      canonicalProductId: d.canonicalProductId ?? null,
     })
     .returning();
 

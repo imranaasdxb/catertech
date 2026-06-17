@@ -1,7 +1,7 @@
 "use client";
 
 import logo from "@/assets/logo.png";
-import vector1 from "@/assets/vector1.png";
+import vector1 from "@/assets/contact2.png";
 import Container from "@/components/Container";
 import { rfqEventTypes } from "@/lib/validations/forms";
 import { cn } from "@/lib/utils";
@@ -65,8 +65,8 @@ function RFQGraphic() {
       <NextImage
         src={vector1}
         alt=""
-        width={380}
-        height={300}
+        width={420}
+        height={380}
         className="relative h-auto w-full object-contain"
         priority
       />

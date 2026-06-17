@@ -146,6 +146,10 @@ export const products = pgTable("products", {
     .$type<Record<string, ProductAttributeValue>>()
     .notNull()
     .default({}),
+  seoTitle: text("seo_title"),
+  seoDescription: text("seo_description"),
+  searchKeywords: text("search_keywords").array().notNull().default([]),
+  canonicalProductId: uuid("canonical_product_id"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

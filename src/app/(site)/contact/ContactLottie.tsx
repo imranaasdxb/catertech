@@ -1,5 +1,5 @@
 import Image from "next/image";
-import vector3 from "@/assets/vector3.png";
+import vector3 from "@/assets/contact1.png";
 
 export function ContactLottie() {
   return (

@@ -18,6 +18,7 @@ type Props = {
   categoryName?: string;
   subCategoryName?: string;
   onPresetSelected: (attributes: Record<string, ProductAttributeValue>) => void;
+  onTitleChange?: (title: string) => void;
   onAddCustomRequested?: () => void;
   onPresetCreated?: (selection: { categoryId: string; subCategoryId: string }) => void;
   onClearFormRequested?: () => void;
@@ -43,6 +44,7 @@ export function ProductTitlePresetInput({
   categoryName,
   subCategoryName,
   onPresetSelected,
+  onTitleChange,
   onAddCustomRequested,
   onPresetCreated,
   onClearFormRequested,
@@ -175,6 +177,7 @@ export function ProductTitlePresetInput({
   function selectPreset(preset: ProductPreset) {
     if (blurTimer.current) clearTimeout(blurTimer.current);
     setTitle(preset.title);
+    onTitleChange?.(preset.title);
     setOpen(false);
     setCustomPresetOpen(false);
     onPresetSelected(preset.attributes);
@@ -276,6 +279,7 @@ export function ProductTitlePresetInput({
               value={title}
               onChange={(event) => {
                 setTitle(event.target.value);
+                onTitleChange?.(event.target.value);
                 setOpen(true);
                 setSaveError("");
                 setSaveStatus("");

@@ -48,7 +48,7 @@ const features = [
       "Same-week delivery, venue setup and post-event collection handled by our in-house logistics team.",
     icon: Truck,
     image:
-      "https://images.unsplash.com/photo-1519003722824-eedb742276e?auto=format&fit=crop&w=800&q=85",
+      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&q=85",
     title: "Logistics you can trust",
     href: "/services/event-rental",
   },
@@ -58,7 +58,7 @@ const features = [
     icon: Layers,
     image:
       "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=800&q=85",
-    title: "Events managed end-to-end",
+    title: "Event management",
     href: "/services/event-management",
   },
   {
@@ -80,10 +80,9 @@ function ServiceFeatureCard({ feature }: { feature: FeatureItem }) {
   return (
     <Link
       href={feature.href}
-      className="service-feature-card group flex w-[calc(50vw-1.375rem)] max-w-[280px] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.10),0_2px_8px_rgba(0,0,0,0.06)] transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(0,0,0,0.12),0_4px_12px_rgba(0,0,0,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a1a2e]/15 min-[420px]:w-[calc(50vw-1.5rem)] md:w-[calc(33.333vw-1.35rem)] xl:w-full xl:max-w-[280px] xl:shrink xl:snap-align-none"
+      className="service-feature-card group flex h-full w-[calc(50vw-1.375rem)] max-w-[280px] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.10),0_2px_8px_rgba(0,0,0,0.06)] transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(0,0,0,0.12),0_4px_12px_rgba(0,0,0,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a1a2e]/15 min-[420px]:w-[calc(50vw-1.5rem)] md:w-[calc(33.333vw-1.35rem)] xl:w-full xl:max-w-[280px] xl:shrink xl:snap-align-none"
     >
-      {/* 28px 24px 0 — content padding; image bleeds full width below */}
-      <div className="flex flex-col items-center px-6 pt-7 text-center">
+      <div className="flex flex-1 flex-col items-center px-6 pt-7 text-center">
         <Icon
           size={32}
           strokeWidth={1.5}
@@ -95,15 +94,15 @@ function ServiceFeatureCard({ feature }: { feature: FeatureItem }) {
           className="mt-3 block h-0.5 w-[30px] rounded-full bg-[#C9A84C]"
           aria-hidden
         />
-        <h3 className="mt-3 text-lg font-bold leading-snug text-[#1a1a2e]">
+        <h3 className="mt-3 line-clamp-1 h-[3.125rem] w-full text-lg font-bold leading-snug text-[#1a1a2e]">
           {feature.title}
         </h3>
-        <p className="mt-2.5 text-sm leading-[1.6] text-[#555555]">
+        <p className="mt-2.5 line-clamp-4 h-[5.6rem] w-full text-sm leading-[1.6] text-[#555555]">
           {feature.description}
         </p>
       </div>
 
-      <div className="relative h-[140px] w-full shrink-0">
+      <div className="relative mt-auto h-[140px] w-full shrink-0">
         <Image
           src={feature.image}
           alt=""

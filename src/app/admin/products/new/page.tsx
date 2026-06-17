@@ -16,6 +16,7 @@ import type {
   ProductAttributeValue,
   TemplateFieldDef,
 } from "@/lib/category-template";
+import { generateProductSeo } from "@/lib/product-seo";
 import { ArrowLeft, ImagePlus, Save, Tag, Upload } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -56,9 +57,12 @@ export default function NewProductPage() {
     emptyTaxonomySelection
   );
   const [templateFields, setTemplateFields] = useState<TemplateFieldDef[]>([]);
-  const [presetAttributes, setPresetAttributes] = useState<
-    Record<string, ProductAttributeValue>
-  >({});
+  const [liveTitle, setLiveTitle] = useState("");
+  const [liveAttributes, setLiveAttributes] = useState<Record<string, ProductAttributeValue>>({});
+  const [seoTitleOverride, setSeoTitleOverride] = useState<string | null>(null);
+  const [seoDescriptionOverride, setSeoDescriptionOverride] = useState<string | null>(null);
+  const [searchKeywordsOverride, setSearchKeywordsOverride] = useState<string | null>(null);
+  const [canonicalProductId, setCanonicalProductId] = useState("");
   const [presetFieldKeys, setPresetFieldKeys] = useState<string[] | undefined>(
     undefined
   );
@@ -76,7 +80,12 @@ export default function NewProductPage() {
     setCustomPresetMode(false);
     setSelectedTaxonomy(emptyTaxonomySelection);
     setTemplateFields([]);
-    setPresetAttributes({});
+    setLiveTitle("");
+    setLiveAttributes({});
+    setSeoTitleOverride(null);
+    setSeoDescriptionOverride(null);
+    setSearchKeywordsOverride(null);
+    setCanonicalProductId("");
     setPresetFieldKeys(undefined);
     setPresetRevision(0);
     setPublishIntent("draft");
@@ -87,7 +96,7 @@ export default function NewProductPage() {
     setTopSubCategoryId(selection.subCategoryId);
     if (selection.categoryId) setCustomPresetMode(false);
     setSelectedTaxonomy(selection);
-    setPresetAttributes({});
+    setLiveAttributes({});
     setPresetFieldKeys(undefined);
     setPresetRevision((revision) => revision + 1);
   }, []);
@@ -98,7 +107,7 @@ export default function NewProductPage() {
     setTopSubCategoryId("");
     setSelectedTaxonomy(emptyTaxonomySelection);
     setTemplateFields([]);
-    setPresetAttributes({});
+    setLiveAttributes({});
     setPresetFieldKeys(undefined);
     setPresetRevision((revision) => revision + 1);
   }, []);
@@ -107,7 +116,7 @@ export default function NewProductPage() {
     setCustomPresetMode(true);
     setSelectedTaxonomy(selection);
     setTemplateFields([]);
-    setPresetAttributes({});
+    setLiveAttributes({});
     setPresetFieldKeys(undefined);
     setPresetRevision((revision) => revision + 1);
   }, []);
@@ -147,6 +156,13 @@ export default function NewProductPage() {
       isFeatured: fd.get("isFeatured") === "on",
       isAvailable: fd.get("isAvailable") === "on",
       attributes: parseProductAttributes(fd, templateFields),
+      seoTitle: String(fd.get("seoTitle") || ""),
+      seoDescription: String(fd.get("seoDescription") || ""),
+      searchKeywords: String(fd.get("searchKeywords") || "")
+        .split(",")
+        .map((keyword) => keyword.trim())
+        .filter(Boolean),
+      canonicalProductId: canonicalProductId.trim() || null,
     };
 
     setLoading(true);
@@ -171,6 +187,17 @@ export default function NewProductPage() {
     setCreatedId(null);
     router.push("/admin/products");
   }
+
+  const generatedSeo = generateProductSeo({
+    title: liveTitle,
+    categoryName: selectedTaxonomy.categoryName,
+    subCategoryName: selectedTaxonomy.subCategoryName,
+    attributes: liveAttributes,
+  });
+  const seoTitleValue = seoTitleOverride ?? generatedSeo.seoTitle;
+  const seoDescriptionValue = seoDescriptionOverride ?? generatedSeo.seoDescription;
+  const searchKeywordsValue =
+    searchKeywordsOverride ?? generatedSeo.searchKeywords.join(", ");
 
   return (
     <>
@@ -247,8 +274,9 @@ export default function NewProductPage() {
                       subCategoryId={selectedTaxonomy.subCategoryId}
                       categoryName={selectedTaxonomy.categoryName}
                       subCategoryName={selectedTaxonomy.subCategoryName}
+                      onTitleChange={setLiveTitle}
                       onPresetSelected={(attributes) => {
-                        setPresetAttributes(attributes);
+                        setLiveAttributes(attributes);
                         setPresetFieldKeys(Object.keys(attributes));
                         setPresetRevision((revision) => revision + 1);
                       }}
@@ -280,10 +308,86 @@ export default function NewProductPage() {
                         key={`${selectedTaxonomy.categoryId}-${selectedTaxonomy.subCategoryId}-${presetRevision}`}
                         categoryId={selectedTaxonomy.categoryId}
                         subCategoryId={selectedTaxonomy.subCategoryId}
-                        initialAttributes={presetAttributes}
+                        initialAttributes={liveAttributes}
                         initialFieldKeys={presetFieldKeys}
                         onFieldsLoaded={setTemplateFields}
+                        onAttributesChange={setLiveAttributes}
                       />
+
+                      <section className="rounded-2xl border border-black/8 bg-[#F5F5F7]/55 p-4 md:p-5">
+                        <div className="mb-4">
+                          <p className={`${admin.formSectionTitle} mb-1`}>SEO &amp; Search</p>
+                          <p className="text-xs leading-relaxed text-[#1a1a1a]/45">
+                            Auto-filled from title, category and specs. Edit only when you want a custom search result.
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                          <div>
+                            <label htmlFor="seo-title" className={admin.labelModern}>
+                              SEO title
+                            </label>
+                            <input
+                              id="seo-title"
+                              name="seoTitle"
+                              value={seoTitleValue}
+                              onChange={(event) => setSeoTitleOverride(event.target.value)}
+                              maxLength={80}
+                              className={admin.fieldModern}
+                            />
+                            <p className="mt-1 text-[11px] text-[#1a1a1a]/38">
+                              {seoTitleValue.length}/80 characters
+                            </p>
+                          </div>
+                          <div>
+                            <label htmlFor="seo-description" className={admin.labelModern}>
+                              SEO description
+                            </label>
+                            <textarea
+                              id="seo-description"
+                              name="seoDescription"
+                              value={seoDescriptionValue}
+                              onChange={(event) => setSeoDescriptionOverride(event.target.value)}
+                              maxLength={180}
+                              rows={3}
+                              className={admin.fieldModern}
+                            />
+                            <p className="mt-1 text-[11px] text-[#1a1a1a]/38">
+                              {seoDescriptionValue.length}/180 characters
+                            </p>
+                          </div>
+                          <div>
+                            <label htmlFor="search-keywords" className={admin.labelModern}>
+                              Search keywords
+                            </label>
+                            <textarea
+                              id="search-keywords"
+                              name="searchKeywords"
+                              value={searchKeywordsValue}
+                              onChange={(event) => setSearchKeywordsOverride(event.target.value)}
+                              rows={3}
+                              className={admin.fieldModern}
+                            />
+                            <p className="mt-1 text-[11px] text-[#1a1a1a]/38">
+                              Comma-separated keywords for internal search and SEO matching.
+                            </p>
+                          </div>
+                          <div>
+                            <label htmlFor="canonical-product-id" className={admin.labelModern}>
+                              Canonical/master product ID
+                            </label>
+                            <input
+                              id="canonical-product-id"
+                              value={canonicalProductId}
+                              onChange={(event) => setCanonicalProductId(event.target.value)}
+                              placeholder="Optional master product UUID"
+                              className={admin.fieldModern}
+                            />
+                            <p className="mt-1 text-[11px] text-[#1a1a1a]/38">
+                              Optional. Use later for variants that should point to one master product.
+                            </p>
+                          </div>
+                        </div>
+                      </section>
 
                       <section>
                         <label className={admin.labelModern}>Description</label>

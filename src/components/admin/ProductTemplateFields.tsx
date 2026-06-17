@@ -16,6 +16,7 @@ type Props = {
   initialAttributes?: Record<string, ProductAttributeValue>;
   initialFieldKeys?: string[];
   onFieldsLoaded?: (fields: TemplateFieldDef[]) => void;
+  onAttributesChange?: (attributes: Record<string, ProductAttributeValue>) => void;
 };
 
 function readAttr(
@@ -34,6 +35,7 @@ export function ProductTemplateFields({
   initialAttributes,
   initialFieldKeys,
   onFieldsLoaded,
+  onAttributesChange,
 }: Props) {
   const [fields, setFields] = useState<TemplateFieldDef[]>([]);
   const [availableFields, setAvailableFields] = useState<TemplateFieldDef[]>([]);
@@ -98,6 +100,17 @@ export function ProductTemplateFields({
     updateFields(
       [...fields, selected].sort((a, b) => a.sortOrder - b.sortOrder)
     );
+  }
+
+  function emitAttributeChange(
+    key: string,
+    value: ProductAttributeValue | null
+  ) {
+    if (!onAttributesChange) return;
+    onAttributesChange({
+      ...(initialAttributes ?? {}),
+      [key]: value ?? "",
+    });
   }
 
   if (loading) {
@@ -176,6 +189,12 @@ export function ProductTemplateFields({
                     id={id}
                     name={`attr_${field.key}`}
                     defaultValue={value}
+                    onChange={(event) =>
+                      emitAttributeChange(field.key, {
+                        value: event.target.value,
+                        unit,
+                      })
+                    }
                     required={field.required}
                     placeholder={`Enter ${field.label.toLowerCase()}`}
                     className={`${admin.fieldModern} min-w-0 flex-1`}
@@ -183,6 +202,12 @@ export function ProductTemplateFields({
                   <select
                     name={`attr_${field.key}_unit`}
                     defaultValue={unit === "" || units.includes(unit) ? unit : units[0]}
+                    onChange={(event) =>
+                      emitAttributeChange(field.key, {
+                        value,
+                        unit: event.target.value,
+                      })
+                    }
                     className={`${admin.fieldModern} w-full sm:w-32`}
                     aria-label={`${field.label} unit`}
                   >
@@ -207,6 +232,7 @@ export function ProductTemplateFields({
                   id={id}
                   name={`attr_${field.key}`}
                   defaultValue={value}
+                  onChange={(event) => emitAttributeChange(field.key, event.target.value)}
                   required={field.required}
                   className={admin.fieldModern}
                 >
@@ -230,6 +256,7 @@ export function ProductTemplateFields({
                   id={id}
                   name={`attr_${field.key}`}
                   defaultValue={value}
+                  onChange={(event) => emitAttributeChange(field.key, event.target.value)}
                   required={field.required}
                   rows={3}
                   className={admin.fieldModern}
@@ -246,6 +273,7 @@ export function ProductTemplateFields({
                 id={id}
                 name={`attr_${field.key}`}
                 defaultValue={value}
+                onChange={(event) => emitAttributeChange(field.key, event.target.value)}
                 required={field.required}
                 className={admin.fieldModern}
               />

@@ -6,6 +6,7 @@ import {
   buildCategoryDisplayLabel,
   validateSubcategoryForCategory,
 } from "@/lib/product-taxonomy";
+import { generateProductSeo } from "@/lib/product-seo";
 import { slugify } from "@/lib/slug";
 import { z } from "zod";
 
@@ -19,6 +20,10 @@ const updateSchema = z.object({
   isFeatured: z.boolean().optional(),
   published: z.boolean().optional(),
   attributes: z.record(z.string(), z.unknown()).optional(),
+  seoTitle: z.string().trim().max(80).nullable().optional(),
+  seoDescription: z.string().trim().max(180).nullable().optional(),
+  searchKeywords: z.array(z.string().trim().min(1).max(80)).optional(),
+  canonicalProductId: z.union([z.string().uuid(), z.null()]).optional(),
 });
 
 export async function GET(
@@ -66,7 +71,7 @@ export async function PUT(
   const [row] = await db.select().from(products).where(eq(products.id, id));
   if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  let nextCat =
+  const nextCat =
     d.categoryId !== undefined ? d.categoryId : row.categoryId ?? null;
   let nextSub =
     d.subCategoryId !== undefined ? d.subCategoryId : row.subCategoryId ?? null;
@@ -99,6 +104,18 @@ export async function PUT(
   const title = d.title ?? row.title;
   const nextSlug =
     d.title !== undefined ? slugify(d.title) : row.slug;
+  const nextAttributes =
+    d.attributes !== undefined
+      ? (d.attributes as Record<string, ProductAttributeValue>)
+      : row.attributes;
+  const generatedSeo = generateProductSeo({
+    title,
+    categoryName: categoryLabel?.split("›")[0]?.trim() ?? null,
+    subCategoryName: categoryLabel?.split("›")[1]?.trim() ?? null,
+    description:
+      d.description !== undefined ? d.description : row.description,
+    attributes: nextAttributes,
+  });
 
   const [updated] = await db
     .update(products)
@@ -114,10 +131,21 @@ export async function PUT(
       isAvailable: d.isAvailable ?? row.isAvailable,
       isFeatured: d.isFeatured ?? row.isFeatured,
       published: d.published ?? row.published,
-      attributes:
-        d.attributes !== undefined
-          ? (d.attributes as Record<string, ProductAttributeValue>)
-          : row.attributes,
+      attributes: nextAttributes,
+      seoTitle:
+        d.seoTitle !== undefined ? d.seoTitle || generatedSeo.seoTitle : row.seoTitle,
+      seoDescription:
+        d.seoDescription !== undefined
+          ? d.seoDescription || generatedSeo.seoDescription
+          : row.seoDescription,
+      searchKeywords:
+        d.searchKeywords !== undefined
+          ? d.searchKeywords.length
+            ? d.searchKeywords
+            : generatedSeo.searchKeywords
+          : row.searchKeywords,
+      canonicalProductId:
+        d.canonicalProductId !== undefined ? d.canonicalProductId : row.canonicalProductId,
       updatedAt: new Date(),
     })
     .where(eq(products.id, id))
