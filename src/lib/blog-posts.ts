@@ -1,4 +1,5 @@
 import { getSanityClient } from "@/sanity/lib/client";
+import { sanityImageUrl } from "@/sanity/lib/image";
 import {
   allBlogPostsQuery,
   allBlogSlugsQuery,
@@ -126,33 +127,56 @@ function markText(span: SanitySpan) {
 function portableTextToHtml(blocks?: SanityBlock[] | null) {
   if (!blocks?.length) return "";
 
-  return blocks
-    .map((block) => {
-      if (block._type === "image" && block.asset?.url) {
-        const alt = escapeHtml(block.alt ?? "");
-        return `<img src="${escapeHtml(block.asset.url)}" alt="${alt}" />`;
+  const parts: string[] = [];
+  let openList: "ul" | "ol" | null = null;
+
+  const closeList = () => {
+    if (openList) {
+      parts.push(`</${openList}>`);
+      openList = null;
+    }
+  };
+
+  for (const block of blocks) {
+    if (block._type === "image" && block.asset?.url) {
+      closeList();
+      const alt = escapeHtml(block.alt ?? "");
+      const src = sanityImageUrl(block.asset.url, { width: 1200 });
+      parts.push(`<img src="${escapeHtml(src)}" alt="${alt}" />`);
+      continue;
+    }
+
+    if (block._type !== "block") continue;
+
+    const text = (block.children ?? []).map(markText).join("").trim();
+    if (!text) continue;
+
+    if (block.listItem === "bullet" || block.listItem === "number") {
+      const tag = block.listItem === "number" ? "ol" : "ul";
+      if (openList !== tag) {
+        closeList();
+        openList = tag;
+        parts.push(`<${tag}>`);
       }
+      parts.push(`<li>${text}</li>`);
+      continue;
+    }
 
-      if (block._type !== "block") return "";
+    closeList();
 
-      const text = (block.children ?? []).map(markText).join("").trim();
-      if (!text) return "";
+    const tag =
+      block.style === "h2"
+        ? "h2"
+        : block.style === "h3"
+          ? "h3"
+          : block.style === "blockquote"
+            ? "blockquote"
+            : "p";
+    parts.push(`<${tag}>${text}</${tag}>`);
+  }
 
-      if (block.listItem === "bullet") return `<ul><li>${text}</li></ul>`;
-      if (block.listItem === "number") return `<ol><li>${text}</li></ol>`;
-
-      const tag =
-        block.style === "h2"
-          ? "h2"
-          : block.style === "h3"
-            ? "h3"
-            : block.style === "blockquote"
-              ? "blockquote"
-              : "p";
-      return `<${tag}>${text}</${tag}>`;
-    })
-    .filter(Boolean)
-    .join("");
+  closeList();
+  return parts.join("");
 }
 
 function mapSanityPost(row: SanityPostResult): BlogPostPublic {

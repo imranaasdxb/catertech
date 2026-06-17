@@ -1,14 +1,13 @@
-import Image from "next/image";
 import Link from "next/link";
 import Container from "@/components/Container";
+import BlogArticleBody from "@/components/blog/BlogArticleBody";
+import BlogCoverImage from "@/components/blog/BlogCoverImage";
 import type { BlogPostPublic } from "@/lib/blog-posts";
 
 type Props = {
   post: BlogPostPublic;
   related?: BlogPostPublic[];
 };
-
-type ProseBlock = { type: "lead" | "bold" | "body"; text: string };
 
 function splitBlogTitle(title: string): { lead: string; accent: string } {
   const words = title.trim().split(/\s+/);
@@ -21,51 +20,6 @@ function splitBlogTitle(title: string): { lead: string; accent: string } {
     lead: words.join(" "),
     accent: accentWords.join(" "),
   };
-}
-
-function parseContentParagraphs(html: string): string[] {
-  const matches = html.match(/<p[^>]*>([\s\S]*?)<\/p>/gi);
-  if (!matches?.length) return [];
-
-  return matches
-    .map((block) =>
-      block
-        .replace(/<p[^>]*>|<\/p>/gi, "")
-        .replace(/<[^>]+>/g, "")
-        .replace(/&nbsp;/g, " ")
-        .replace(/&amp;/g, "&")
-        .replace(/&lt;/g, "<")
-        .replace(/&gt;/g, ">")
-        .trim(),
-    )
-    .filter(Boolean);
-}
-
-function buildProseBlocks(post: BlogPostPublic): ProseBlock[] {
-  const paragraphs = parseContentParagraphs(post.content);
-  const blocks: ProseBlock[] = [];
-
-  if (post.excerpt) {
-    blocks.push({ type: "lead", text: post.excerpt });
-  }
-
-  paragraphs.forEach((text, index) => {
-    if (post.excerpt && index === 0) {
-      blocks.push({ type: "bold", text });
-      return;
-    }
-    if (!post.excerpt && index === 0) {
-      blocks.push({ type: "lead", text });
-      return;
-    }
-    if (!post.excerpt && index === 1) {
-      blocks.push({ type: "bold", text });
-      return;
-    }
-    blocks.push({ type: "body", text });
-  });
-
-  return blocks;
 }
 
 function BlogTitle({ title }: { title: string }) {
@@ -87,9 +41,6 @@ function BlogTitle({ title }: { title: string }) {
 }
 
 export default function BlogPostArticle({ post, related = [] }: Props) {
-  const proseBlocks = buildProseBlocks(post);
-  const useRichHtml = proseBlocks.length === 0;
-
   return (
     <article className="bg-white">
       <Container className="pb-16 pt-32 md:pb-24 md:pt-40">
@@ -122,12 +73,14 @@ export default function BlogPostArticle({ post, related = [] }: Props) {
               <BlogTitle title={post.title} />
             </div>
 
-            <div className="relative mt-10 aspect-square w-full max-w-[420px] overflow-hidden bg-[#f3f4f6]">
-              <Image
+            <div className="relative mt-10 aspect-square w-full max-w-[420px] overflow-hidden rounded-2xl bg-[#f3f4f6]">
+              <BlogCoverImage
                 src={post.coverImage}
                 alt={post.coverImageAlt}
                 fill
                 priority
+                sanityWidth={840}
+                sanityHeight={840}
                 className="object-cover"
                 sizes="(max-width: 1024px) 100vw, 420px"
               />
@@ -139,29 +92,7 @@ export default function BlogPostArticle({ post, related = [] }: Props) {
           </aside>
 
           <div className="min-w-0 lg:pt-1">
-            {useRichHtml ? (
-              <div
-                className="blog-prose text-[#3d3d45] [&_a]:text-primary [&_a]:underline [&_h2]:mb-4 [&_h2]:mt-10 [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:text-ink [&_h3]:mb-3 [&_h3]:mt-8 [&_h3]:text-xl [&_h3]:font-semibold [&_img]:my-8 [&_img]:max-w-full [&_img]:rounded-lg [&_li]:mb-2 [&_ol]:my-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-6 [&_p]:text-[17px] [&_p]:leading-[1.8] [&_ul]:my-6 [&_ul]:list-disc [&_ul]:pl-6"
-                dangerouslySetInnerHTML={{ __html: post.content }}
-              />
-            ) : (
-              <div className="space-y-6 md:space-y-7">
-                {proseBlocks.map((block, index) => (
-                  <p
-                    key={`${block.type}-${index}`}
-                    className={
-                      block.type === "lead"
-                        ? "text-[1.2rem] font-medium leading-[1.75] text-[#2a2a32] md:text-[1.35rem] md:leading-[1.72]"
-                        : block.type === "bold"
-                          ? "text-[17px] font-bold leading-[1.75] text-ink"
-                          : "text-[17px] leading-[1.85] text-[#3d3d45]"
-                    }
-                  >
-                    {block.text}
-                  </p>
-                ))}
-              </div>
-            )}
+            <BlogArticleBody excerpt={post.excerpt} content={post.content} />
           </div>
         </div>
 
@@ -196,10 +127,12 @@ export default function BlogPostArticle({ post, related = [] }: Props) {
                   className="group block overflow-hidden rounded-2xl border border-border bg-white transition-shadow hover:shadow-[0_10px_30px_rgba(15,15,15,0.08)]"
                 >
                   <div className="relative aspect-16/10 overflow-hidden bg-[#f3f4f6]">
-                    <Image
+                    <BlogCoverImage
                       src={item.coverImage}
                       alt={item.coverImageAlt}
                       fill
+                      sanityWidth={640}
+                      sanityHeight={400}
                       className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                       sizes="(max-width: 640px) 100vw, 33vw"
                     />

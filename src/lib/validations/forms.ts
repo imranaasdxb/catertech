@@ -38,12 +38,16 @@ export const quoteSchema = z.object({
     .min(1),
 });
 
-const lineItemSchema = z.object({
-  item: z.string(),
-  qty: z.string(),
-  unit: z.string(),
-  notes: z.string(),
-});
+export const rfqEventTypes = [
+  "Wedding",
+  "Corporate Event",
+  "Exhibition",
+  "Conference",
+  "Private Party",
+  "Catering Event",
+  "Government Event",
+  "Other",
+] as const;
 
 export const rfqSchema = z.object({
   companyName: z.string().min(1).max(300),
@@ -53,6 +57,14 @@ export const rfqSchema = z.object({
   email: z.string().email().max(320),
   budgetAed: z.string().max(100).optional().or(z.literal("")),
   emirate: z.string().max(100).optional().or(z.literal("")),
-  requiredDate: z.string().max(50).optional().or(z.literal("")),
-  lineItems: z.array(lineItemSchema).min(1),
+  eventName: z.string().min(1).max(300),
+  eventType: z.enum(rfqEventTypes),
+  eventDate: z.string().max(50).optional().or(z.literal("")),
+  eventDuration: z.string().max(100).optional().or(z.literal("")),
+  venueName: z.string().max(300).optional().or(z.literal("")),
+  venueLocation: z.string().max(300).optional().or(z.literal("")),
+  expectedGuests: z.string().max(50).optional().or(z.literal("")),
+  notes: z.string().max(10000).optional().or(z.literal("")),
 });
+
+export type RfqPayload = z.infer<typeof rfqSchema>;

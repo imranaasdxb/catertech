@@ -182,15 +182,18 @@ export const tradeEnquiries = pgTable("trade_enquiries", {
     .notNull(),
 });
 
-export type RfqLineItem = {
-  item: string;
-  qty: string;
-  unit: string;
-  notes: string;
+export type RfqAttachmentFile = {
+  name: string;
+  size: number;
+  type: string;
+  url?: string | null;
+  /** Inline preview when object storage is unavailable (images only, size-capped). */
+  dataUrl?: string | null;
 };
 
-export const rfqSubmissions = pgTable("rfq_submissions", {
+export const rfqSubmissions = pgTable("rfq_events_submissons", {
   id: uuid("id").defaultRandom().primaryKey(),
+  referenceNo: text("reference_no").notNull().unique(),
   companyName: text("company_name").notNull(),
   tradeLicenceNo: text("trade_licence_no"),
   contactPerson: text("contact_person").notNull(),
@@ -198,9 +201,18 @@ export const rfqSubmissions = pgTable("rfq_submissions", {
   email: text("email").notNull(),
   budgetAed: text("budget_aed"),
   emirate: text("emirate"),
-  requiredDate: text("required_date"),
-  lineItems: jsonb("line_items").$type<RfqLineItem[]>().notNull(),
-  attachmentUrls: text("attachment_urls").array().notNull().default([]),
+  eventName: text("event_name").notNull(),
+  eventType: text("event_type").notNull(),
+  eventDate: text("event_date"),
+  eventDuration: text("event_duration"),
+  venueName: text("venue_name"),
+  venueLocation: text("venue_location"),
+  expectedGuests: text("expected_guests"),
+  attachmentFiles: jsonb("attachment_files")
+    .$type<RfqAttachmentFile[]>()
+    .notNull()
+    .default([]),
+  notes: text("notes"),
   status: text("status").notNull().default("new"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()

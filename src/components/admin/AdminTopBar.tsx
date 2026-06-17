@@ -18,7 +18,7 @@ function titleForPath(pathname: string): string {
   if (pathname.startsWith("/admin/products")) return "Products";
   if (pathname.startsWith("/admin/quotations")) return "Quotations";
   if (pathname.startsWith("/admin/enquiries")) return "Quick enquiries";
-  if (pathname.startsWith("/admin/rfq")) return "Trade enquiries";
+  if (pathname.startsWith("/admin/rfq")) return "Events RFQ enquiry";
   if (pathname.startsWith("/admin/contacts")) return "Contacts";
   return "Admin";
 }

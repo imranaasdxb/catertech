@@ -4,7 +4,7 @@ import { ArrowRight, BadgeCheck, Globe2, Handshake, Truck } from "lucide-react";
 import Container from "@/components/Container";
 import HeroBentoGrid from "@/components/sections/HeroBentoGrid";
 import HeroShopCategories from "@/components/sections/HeroShopCategories";
-import heroDesktop from "@/assets/planehero.png";
+import heroDesktop from "@/assets/heroplane4.png";
 import heroTablet from "@/assets/herotablet2.png";
 import heroMobile from "@/assets/heromobile2.png";
 
@@ -100,7 +100,7 @@ export default function HeroSection() {
         <div className="relative z-10 flex min-h-0 flex-1 flex-col">
           <div className="h-(--header-height) shrink-0" aria-hidden />
           <Container className="flex min-h-0 flex-1 flex-col justify-center py-3 sm:py-4 md:py-5 lg:py-3">
-            <div className="grid grid-cols-1 items-start gap-4 sm:gap-5 md:grid-cols-[minmax(0,1fr)_minmax(170px,36%)] md:items-center md:gap-5 lg:block lg:gap-0">
+            <div className="grid grid-cols-1 items-center gap-4 sm:gap-5 md:grid-cols-[minmax(0,1fr)_minmax(260px,50%)] md:gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(480px,50%)] lg:gap-10 xl:gap-12">
               <div className="relative z-10 max-w-4xl">
                 <p className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-accent-dark sm:text-[11px]">
                   <span className="h-px w-8 bg-accent" aria-hidden />
@@ -158,7 +158,9 @@ export default function HeroSection() {
                 </div>
               </div>
 
-              <HeroBentoGrid className="relative z-10 mx-auto w-full max-md:mt-1 md:mx-0 md:justify-self-end lg:hidden" />
+              <div className="relative z-10 flex w-full justify-center max-md:mt-1 lg:py-10 xl:py-12">
+                <HeroBentoGrid className="mx-auto" />
+              </div>
             </div>
           </Container>
         </div>

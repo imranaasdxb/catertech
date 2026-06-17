@@ -1,5 +1,4 @@
 import footerBgImage from "@/assets/footerbg.png";
-import logo from "@/assets/logo.png";
 import Image from "next/image";
 import Link from "next/link";
 import FooterMapPanel from "@/components/layout/FooterMapPanel";
@@ -199,13 +198,10 @@ export default function Footer() {
         <div className="mt-12 grid grid-cols-1 gap-10 lg:mt-16 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,2fr)] lg:gap-14">
           <div>
             <Link href="/" className="inline-flex items-center" aria-label="Catertech home">
-              <Image
-                src={logo}
-                alt="Catertech"
-                width={350}
-                height={150}
-                className="h-10 w-auto max-h-[42px] object-contain"
-              />
+              <span className="font-display text-[1.75rem] font-bold leading-none tracking-tight sm:text-[1.85rem]">
+                <span className="text-white">Cater</span>
+                <span className="text-accent">Tech</span>
+              </span>
             </Link>
 
             <p className="mt-3 text-sm font-medium text-accent">{data.company.tagline}</p>
@@ -313,7 +309,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-10 border-t border-accent/35 pt-6 lg:mt-12">
+        <div className="mt-10   pt-6 lg:mt-12">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <p className="flex items-center gap-2 text-xs text-white/75">
               <Shield className="size-3.5 text-accent" strokeWidth={1.75} />

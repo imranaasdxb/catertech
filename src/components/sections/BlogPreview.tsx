@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import Container from "@/components/Container";
+import BlogCoverImage from "@/components/blog/BlogCoverImage";
 import { getLatestBlogPosts } from "@/lib/blog-posts";
 
 export default async function BlogPreview() {
@@ -24,10 +24,12 @@ export default async function BlogPreview() {
             <article key={post.slug}>
               <Link href={`/blog/${post.slug}`} className="group block">
                 <div className="relative mb-4 aspect-[16/10] overflow-hidden rounded-2xl bg-[#f3f4f6]">
-                  <Image
+                  <BlogCoverImage
                     src={post.coverImage}
                     alt={post.coverImageAlt}
                     fill
+                    sanityWidth={800}
+                    sanityHeight={500}
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                   />

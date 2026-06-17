@@ -21,6 +21,12 @@ const manageQuerySchema = z.object({
   search: z.string().trim().max(160).default(""),
 });
 
+const createSchema = z.object({
+  title: z.string().trim().min(1).max(240),
+  categoryId: z.string().uuid(),
+  subCategoryId: z.string().uuid().nullable().optional(),
+});
+
 export async function GET(request: Request) {
   const db = getDb();
   if (!db) {
@@ -137,4 +143,91 @@ export async function GET(request: Request) {
     .orderBy(asc(productTitlePresets.sortOrder), asc(productTitlePresets.sourceLabel));
 
   return NextResponse.json({ presets: rows });
+}
+
+export async function POST(request: Request) {
+  const db = getDb();
+  if (!db) {
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const parsed = createSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const title = parsed.data.title.trim();
+  const subCategoryId = parsed.data.subCategoryId || null;
+
+  const [category] = await db
+    .select({ id: productCategories.id })
+    .from(productCategories)
+    .where(eq(productCategories.id, parsed.data.categoryId))
+    .limit(1);
+
+  if (!category) {
+    return NextResponse.json({ error: "Category not found" }, { status: 404 });
+  }
+
+  if (subCategoryId) {
+    const [subCategory] = await db
+      .select({ id: productSubcategories.id })
+      .from(productSubcategories)
+      .where(
+        and(
+          eq(productSubcategories.id, subCategoryId),
+          eq(productSubcategories.categoryId, parsed.data.categoryId)
+        )
+      )
+      .limit(1);
+
+    if (!subCategory) {
+      return NextResponse.json({ error: "Sub-category not found" }, { status: 404 });
+    }
+  }
+
+  const [existing] = await db
+    .select({
+      id: productTitlePresets.id,
+      title: productTitlePresets.title,
+      sourceLabel: productTitlePresets.sourceLabel,
+      attributes: productTitlePresets.attributes,
+    })
+    .from(productTitlePresets)
+    .where(
+      and(
+        eq(productTitlePresets.categoryId, parsed.data.categoryId),
+        eq(productTitlePresets.sourceLabel, title)
+      )
+    )
+    .limit(1);
+
+  if (existing) {
+    return NextResponse.json({ preset: existing, existed: true });
+  }
+
+  const [created] = await db
+    .insert(productTitlePresets)
+    .values({
+      categoryId: parsed.data.categoryId,
+      subCategoryId,
+      title,
+      sourceLabel: title,
+      attributes: {},
+    })
+    .returning({
+      id: productTitlePresets.id,
+      title: productTitlePresets.title,
+      sourceLabel: productTitlePresets.sourceLabel,
+      attributes: productTitlePresets.attributes,
+    });
+
+  return NextResponse.json({ preset: created, existed: false }, { status: 201 });
 }

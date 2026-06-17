@@ -1,68 +1,34 @@
 "use client";
 
-import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-const BENTO_CARDS = [
-  {
-    key: "main",
-    className: "col-span-2 min-h-[88px] sm:min-h-[100px]",
-    poster:
-      "https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=800&q=85",
-    videoSrc: "",
-    alt: "Commercial catering equipment showcase",
-  },
-  {
-    key: "left",
-    className: "min-h-[72px] sm:min-h-[80px]",
-    poster:
-      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=600&q=85",
-    videoSrc: "",
-    alt: "Professional kitchen setup",
-  },
-  {
-    key: "right",
-    className: "min-h-[72px] sm:min-h-[80px]",
-    poster:
-      "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=600&q=85",
-    videoSrc: "",
-    alt: "Event and banquet styling",
-  },
-] as const;
+const ROW_HEIGHT =
+  "min-h-[100px] sm:min-h-[112px] md:min-h-[124px] lg:min-h-[148px] xl:min-h-[164px] 2xl:min-h-[176px]";
 
-function BentoMedia({
-  poster,
+const CARD_BASE =
+  "relative overflow-hidden rounded-2xl border border-black/8 bg-white shadow-[0_4px_18px_rgba(27,43,75,0.1)]";
+
+function BentoVideo({
   videoSrc,
   alt,
+  className,
 }: {
-  poster: string;
   videoSrc: string;
   alt: string;
+  className?: string;
 }) {
-  if (videoSrc) {
-    return (
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        poster={poster}
-        className="absolute inset-0 h-full w-full object-cover"
-        aria-label={alt}
-      >
-        <source src={videoSrc} type="video/mp4" />
-      </video>
-    );
-  }
-
   return (
-    <Image
-      src={poster}
-      alt={alt}
-      fill
-      className="object-cover"
-      sizes="(max-width: 768px) 45vw, 220px"
-    />
+    <video
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="auto"
+      className={cn("absolute inset-0 h-full w-full", className)}
+      aria-label={alt}
+    >
+      <source src={videoSrc} type="video/mp4" />
+    </video>
   );
 }
 
@@ -74,25 +40,49 @@ export default function HeroBentoGrid({ className }: HeroBentoGridProps) {
   return (
     <div
       className={cn(
-        "grid w-full max-w-[360px] grid-cols-2 gap-2 sm:max-w-[400px] sm:gap-2.5 md:max-w-none md:gap-3",
+        "w-full max-w-[520px] sm:max-w-[560px] md:max-w-[600px] lg:max-w-[580px] xl:max-w-[640px] 2xl:max-w-[680px]",
         className,
       )}
     >
-      {BENTO_CARDS.map((card) => (
+      <div className="flex flex-col gap-3 sm:gap-3.5 lg:gap-4">
+        {/* Top — full width, unchanged */}
         <div
-          key={card.key}
           className={cn(
-            "relative overflow-hidden rounded-xl border border-primary/10 bg-white/80 shadow-[0_10px_28px_rgba(27,43,75,0.1)]",
-            card.className,
+            CARD_BASE,
+            "min-h-[120px] sm:min-h-[136px] md:min-h-[148px] lg:min-h-[192px] xl:min-h-[212px] 2xl:min-h-[228px]",
           )}
         >
-          <BentoMedia poster={card.poster} videoSrc={card.videoSrc} alt={card.alt} />
-          <div
-            className="pointer-events-none absolute inset-0 bg-linear-to-t from-primary/25 via-transparent to-transparent"
-            aria-hidden
+          <BentoVideo
+            videoSrc="/videos/plate.mp4"
+            alt="Premium plateware and catering presentation"
+            className="object-cover object-center"
           />
         </div>
-      ))}
+
+        {/* Bottom row — kitchen left, chairs right (no overlap) */}
+        <div
+          className={cn(
+            "grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1.18fr)] gap-3 sm:gap-3.5 lg:gap-4",
+            ROW_HEIGHT,
+          )}
+        >
+          <div className={cn(CARD_BASE, "h-full min-h-0")}>
+            <BentoVideo
+              videoSrc="/videos/kitchen.mp4"
+              alt="Commercial kitchen equipment in action"
+              className="object-cover object-center"
+            />
+          </div>
+
+          <div className={cn(CARD_BASE, "h-full min-h-0")}>
+            <BentoVideo
+              videoSrc="/videos/chairs.mp4"
+              alt="Event seating and venue styling"
+              className="object-cover object-center"
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

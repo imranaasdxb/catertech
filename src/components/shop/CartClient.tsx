@@ -629,13 +629,6 @@ export default function CartClient() {
                       <MessageCircle className="h-4 w-4" strokeWidth={2} />
                       Ask on WhatsApp
                     </button>
-
-                    <Link
-                      href="/trade/rfq"
-                      className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-[#e5e7eb] bg-white px-6 py-3 text-xs font-bold uppercase tracking-[0.14em] text-body-muted transition-colors hover:border-primary hover:text-primary"
-                    >
-                      Trade / Bulk Enquiry
-                    </Link>
                   </div>
 
                   <div className="my-6 h-px bg-[#e5e7eb]" />

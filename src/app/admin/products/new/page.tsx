@@ -49,6 +49,9 @@ export default function NewProductPage() {
   const [blockingSubtitle, setBlockingSubtitle] = useState("");
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
+  const [topCategoryId, setTopCategoryId] = useState("");
+  const [topSubCategoryId, setTopSubCategoryId] = useState("");
+  const [customPresetMode, setCustomPresetMode] = useState(false);
   const [selectedTaxonomy, setSelectedTaxonomy] = useState<TaxonomySelection>(
     emptyTaxonomySelection
   );
@@ -63,10 +66,14 @@ export default function NewProductPage() {
   const [publishIntent, setPublishIntent] = useState<"draft" | "live">("draft");
 
   const canShowProductFields = Boolean(selectedTaxonomy.categoryId);
+  const canShowTitleSection = canShowProductFields || customPresetMode;
 
   const resetCreateForm = useCallback(() => {
     setFormKey((k) => k + 1);
     setError("");
+    setTopCategoryId("");
+    setTopSubCategoryId("");
+    setCustomPresetMode(false);
     setSelectedTaxonomy(emptyTaxonomySelection);
     setTemplateFields([]);
     setPresetAttributes({});
@@ -76,9 +83,36 @@ export default function NewProductPage() {
   }, []);
 
   const handleTaxonomySelection = useCallback((selection: TaxonomySelection) => {
+    setTopCategoryId(selection.categoryId);
+    setTopSubCategoryId(selection.subCategoryId);
+    if (selection.categoryId) setCustomPresetMode(false);
     setSelectedTaxonomy(selection);
     setPresetAttributes({});
     setPresetFieldKeys(undefined);
+    setPresetRevision((revision) => revision + 1);
+  }, []);
+
+  const clearTopTaxonomyForCustomPreset = useCallback(() => {
+    setCustomPresetMode(true);
+    setTopCategoryId("");
+    setTopSubCategoryId("");
+    setSelectedTaxonomy(emptyTaxonomySelection);
+    setTemplateFields([]);
+    setPresetAttributes({});
+    setPresetFieldKeys(undefined);
+    setPresetRevision((revision) => revision + 1);
+  }, []);
+
+  const handleCustomPresetSelection = useCallback((selection: TaxonomySelection) => {
+    setCustomPresetMode(true);
+    setSelectedTaxonomy(selection);
+    setTemplateFields([]);
+    setPresetAttributes({});
+    setPresetFieldKeys(undefined);
+    setPresetRevision((revision) => revision + 1);
+  }, []);
+
+  const refreshPresetAfterSave = useCallback(() => {
     setPresetRevision((revision) => revision + 1);
   }, []);
 
@@ -106,16 +140,8 @@ export default function NewProductPage() {
     const payload = {
       title: String(fd.get("title") || ""),
       description: String(fd.get("description") || "") || undefined,
-      categoryId: (() => {
-        const raw = fd.get("categoryId");
-        const s = typeof raw === "string" ? raw.trim() : "";
-        return s === "" ? null : s;
-      })(),
-      subCategoryId: (() => {
-        const raw = fd.get("subCategoryId");
-        const s = typeof raw === "string" ? raw.trim() : "";
-        return s === "" ? null : s;
-      })(),
+      categoryId: selectedTaxonomy.categoryId || null,
+      subCategoryId: selectedTaxonomy.subCategoryId || null,
       images: commit.urls,
       published: publishIntent === "live",
       isFeatured: fd.get("isFeatured") === "on",
@@ -181,11 +207,16 @@ export default function NewProductPage() {
             className="overflow-hidden rounded-[28px] border border-black/6 bg-white shadow-[0px_24px_80px_rgba(0,0,0,0.06)]"
           >
             <div className="border-b border-black/6 bg-[#F5F5F7]/60 px-5 py-4 md:px-7">
-              <ProductCategorySelects layout="row" onSelectionChange={handleTaxonomySelection} />
+              <ProductCategorySelects
+                layout="row"
+                selectedCategoryId={topCategoryId}
+                selectedSubCategoryId={topSubCategoryId}
+                onSelectionChange={handleTaxonomySelection}
+              />
             </div>
 
             <div className="p-5 md:p-7 lg:p-8">
-              {!canShowProductFields ? (
+              {!canShowTitleSection ? (
                 <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-dashed border-black/10 bg-[#F5F5F7]/40 p-8 text-center text-sm text-[#1a1a1a]/45">
                   Select a category above to load the product form.
                 </div>
@@ -202,7 +233,7 @@ export default function NewProductPage() {
                       <div className="flex min-w-0 flex-wrap items-center gap-2">
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-[#5B2D9B]/10 px-3 py-1 text-xs font-semibold text-[#5B2D9B]">
                           <Tag size={12} aria-hidden />
-                          {selectedTaxonomy.categoryName}
+                          {selectedTaxonomy.categoryName || "Choose preset category"}
                         </span>
                         {selectedTaxonomy.subCategoryName ? (
                           <span className="inline-flex items-center rounded-full bg-[#F5F5F7] px-3 py-1 text-xs font-semibold text-[#1a1a1a]/70 ring-1 ring-black/8">
@@ -212,59 +243,73 @@ export default function NewProductPage() {
                       </div>
                     </div>
                     <ProductTitlePresetInput
-                      key={`${selectedTaxonomy.categoryId}-${selectedTaxonomy.subCategoryId}`}
                       categoryId={selectedTaxonomy.categoryId}
                       subCategoryId={selectedTaxonomy.subCategoryId}
+                      categoryName={selectedTaxonomy.categoryName}
+                      subCategoryName={selectedTaxonomy.subCategoryName}
                       onPresetSelected={(attributes) => {
                         setPresetAttributes(attributes);
                         setPresetFieldKeys(Object.keys(attributes));
                         setPresetRevision((revision) => revision + 1);
                       }}
+                      onAddCustomRequested={clearTopTaxonomyForCustomPreset}
+                      onPresetCreated={refreshPresetAfterSave}
+                      onClearFormRequested={resetCreateForm}
+                      onCustomPresetSelectionChange={handleCustomPresetSelection}
                     />
                   </section>
 
-                  <section>
-                    <div className="mb-3 flex items-center gap-2 text-sm font-bold text-[#1a1a1a]">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F5F5F7] text-[#5B2D9B]">
-                        <ImagePlus size={16} aria-hidden="true" />
-                      </span>
-                      Gallery
+                  {!canShowProductFields ? (
+                    <div className="rounded-2xl border border-dashed border-black/10 bg-[#F5F5F7]/50 p-5 text-sm text-[#1a1a1a]/55">
+                      Choose a preset category and click Add preset to load the product
+                      details form for this custom title.
                     </div>
-                    <AdminGalleryUpload ref={galleryRef} id="product-gallery-file" />
-                  </section>
+                  ) : (
+                    <>
+                      <section>
+                        <div className="mb-3 flex items-center gap-2 text-sm font-bold text-[#1a1a1a]">
+                          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#F5F5F7] text-[#5B2D9B]">
+                            <ImagePlus size={16} aria-hidden="true" />
+                          </span>
+                          Gallery
+                        </div>
+                        <AdminGalleryUpload ref={galleryRef} id="product-gallery-file" />
+                      </section>
 
-                  <ProductTemplateFields
-                    key={`${selectedTaxonomy.categoryId}-${selectedTaxonomy.subCategoryId}-${presetRevision}`}
-                    categoryId={selectedTaxonomy.categoryId}
-                    subCategoryId={selectedTaxonomy.subCategoryId}
-                    initialAttributes={presetAttributes}
-                    initialFieldKeys={presetFieldKeys}
-                    onFieldsLoaded={setTemplateFields}
-                  />
+                      <ProductTemplateFields
+                        key={`${selectedTaxonomy.categoryId}-${selectedTaxonomy.subCategoryId}-${presetRevision}`}
+                        categoryId={selectedTaxonomy.categoryId}
+                        subCategoryId={selectedTaxonomy.subCategoryId}
+                        initialAttributes={presetAttributes}
+                        initialFieldKeys={presetFieldKeys}
+                        onFieldsLoaded={setTemplateFields}
+                      />
 
-                  <section>
-                    <label className={admin.labelModern}>Description</label>
-                    <RichText name="description" defaultHtml="" embed editorMinHeight={220} />
-                  </section>
+                      <section>
+                        <label className={admin.labelModern}>Description</label>
+                        <RichText name="description" defaultHtml="" embed editorMinHeight={220} />
+                      </section>
 
-                  <section>
-                    <label className={admin.labelModern}>Options</label>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-black/8 bg-[#F5F5F7]/70 px-4 py-3 text-sm font-semibold text-[#1a1a1a]">
-                        <input type="checkbox" name="isFeatured" className={admin.checkbox} />
-                        Featured on homepage
-                      </label>
-                      <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-black/8 bg-[#F5F5F7]/70 px-4 py-3 text-sm font-semibold text-[#1a1a1a]">
-                        <input
-                          type="checkbox"
-                          name="isAvailable"
-                          defaultChecked
-                          className={admin.checkbox}
-                        />
-                        Available for quote
-                      </label>
-                    </div>
-                  </section>
+                      <section>
+                        <label className={admin.labelModern}>Options</label>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-black/8 bg-[#F5F5F7]/70 px-4 py-3 text-sm font-semibold text-[#1a1a1a]">
+                            <input type="checkbox" name="isFeatured" className={admin.checkbox} />
+                            Featured on homepage
+                          </label>
+                          <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-black/8 bg-[#F5F5F7]/70 px-4 py-3 text-sm font-semibold text-[#1a1a1a]">
+                            <input
+                              type="checkbox"
+                              name="isAvailable"
+                              defaultChecked
+                              className={admin.checkbox}
+                            />
+                            Available for quote
+                          </label>
+                        </div>
+                      </section>
+                    </>
+                  )}
 
                   {error ? (
                     <p className={`${admin.error} rounded-xl border border-red-100 bg-red-50/80 px-4 py-3`}>
@@ -279,6 +324,8 @@ export default function NewProductPage() {
                     >
                       Cancel
                     </Link>
+                    {canShowProductFields ? (
+                      <>
                     <button
                       type="submit"
                       disabled={loading || blockingOpen}
@@ -298,6 +345,8 @@ export default function NewProductPage() {
                       <Upload size={16} aria-hidden="true" />
                       {loading && publishIntent === "live" ? "Publishing…" : "Publish live"}
                     </button>
+                      </>
+                    ) : null}
                   </div>
                 </div>
               )}

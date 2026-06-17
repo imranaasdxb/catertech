@@ -18,7 +18,7 @@ const links: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/quotations", label: "Quotations", icon: ClipboardList },
   { href: "/admin/enquiries", label: "Quick enquiries", icon: UsersRound },
-  { href: "/admin/rfq", label: "Trade enquiries", icon: LayoutGrid },
+  { href: "/admin/rfq", label: "Events RFQ enquiry", icon: LayoutGrid },
   { href: "/admin/contacts", label: "Contacts", icon: Mail },
 ];
 

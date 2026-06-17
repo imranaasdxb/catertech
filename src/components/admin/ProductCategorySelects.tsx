@@ -12,6 +12,8 @@ export type TaxonomyRow = {
 type Props = {
   initialCategoryId?: string | null;
   initialSubCategoryId?: string | null;
+  selectedCategoryId?: string | null;
+  selectedSubCategoryId?: string | null;
   hint?: string;
   /** Top toolbar: category + sub-category in one row */
   layout?: "default" | "row";
@@ -34,6 +36,8 @@ export function notifyProductTaxonomyChanged() {
 export function ProductCategorySelects({
   initialCategoryId = null,
   initialSubCategoryId = null,
+  selectedCategoryId,
+  selectedSubCategoryId,
   hint,
   layout = "default",
   onSelectionChange,
@@ -71,9 +75,9 @@ export function ProductCategorySelects({
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCategoryId(initialCategoryId ?? "");
-    setSubCategoryId(initialSubCategoryId ?? "");
-  }, [initialCategoryId, initialSubCategoryId]);
+    setCategoryId(selectedCategoryId ?? initialCategoryId ?? "");
+    setSubCategoryId(selectedSubCategoryId ?? initialSubCategoryId ?? "");
+  }, [initialCategoryId, initialSubCategoryId, selectedCategoryId, selectedSubCategoryId]);
 
   const subs = useMemo(() => {
     const c = taxonomy.find((x) => x.id === categoryId);

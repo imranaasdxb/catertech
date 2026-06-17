@@ -30,7 +30,7 @@ const features = [
       "From chafing dishes to banquet seating — one trade desk for procurement, rental and logistics across the UAE.",
     icon: Package,
     image:
-      "https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=800&q=85",
+      "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=85",
     title: "Full-range supply",
     href: "/services/catering-equipment",
   },
@@ -72,6 +72,54 @@ const features = [
   },
 ];
 
+type FeatureItem = (typeof features)[number];
+
+function ServiceFeatureCard({ feature }: { feature: FeatureItem }) {
+  const Icon = feature.icon;
+
+  return (
+    <Link
+      href={feature.href}
+      className="service-feature-card group flex w-[calc(50vw-1.375rem)] max-w-[280px] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.10),0_2px_8px_rgba(0,0,0,0.06)] transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(0,0,0,0.12),0_4px_12px_rgba(0,0,0,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a1a2e]/15 min-[420px]:w-[calc(50vw-1.5rem)] md:w-[calc(33.333vw-1.35rem)] xl:w-full xl:max-w-[280px] xl:shrink xl:snap-align-none"
+    >
+      {/* 28px 24px 0 — content padding; image bleeds full width below */}
+      <div className="flex flex-col items-center px-6 pt-7 text-center">
+        <Icon
+          size={32}
+          strokeWidth={1.5}
+          className="text-[#C9A84C]"
+          fill="none"
+          aria-hidden
+        />
+        <span
+          className="mt-3 block h-0.5 w-[30px] rounded-full bg-[#C9A84C]"
+          aria-hidden
+        />
+        <h3 className="mt-3 text-lg font-bold leading-snug text-[#1a1a2e]">
+          {feature.title}
+        </h3>
+        <p className="mt-2.5 text-sm leading-[1.6] text-[#555555]">
+          {feature.description}
+        </p>
+      </div>
+
+      <div className="relative h-[140px] w-full shrink-0">
+        <Image
+          src={feature.image}
+          alt=""
+          fill
+          className="object-cover object-center"
+          sizes="280px"
+        />
+        <div
+          className="pointer-events-none absolute inset-0 bg-linear-to-b from-white from-0% to-transparent to-40%"
+          aria-hidden
+        />
+      </div>
+    </Link>
+  );
+}
+
 export default function VercepFeaturesDemo() {
   const third = Math.ceil(marqueeData.length / 3);
   const m1 = marqueeData.slice(0, third);
@@ -79,7 +127,7 @@ export default function VercepFeaturesDemo() {
   const m3 = marqueeData.slice(third * 2);
 
   return (
-    <section className="relative overflow-hidden bg-[#FBF5EC] pt-16 pb-16 sm:pt-28 sm:pb-28">
+    <section className="relative overflow-hidden bg-[#f5f4f0] pt-16 pb-16 sm:pt-28 sm:pb-28">
       <div className="pointer-events-none absolute inset-0 min-h-full w-full">
         <Image
           src={servicesMobile}
@@ -127,9 +175,9 @@ export default function VercepFeaturesDemo() {
               }}
             /> */}
            
-            <div className="absolute right-0 z-10 h-full w-20 bg-linear-to-l from-[#FBF5EC]/90" />
+            <div className="absolute right-0 z-10 h-full w-20 bg-linear-to-l from-[#f5f4f0]/90" />
 
-            <div className="-mx-6 flex w-screen flex-col md:-mx-10 lg:-mx-16">
+            {/* <div className="-mx-6 flex w-screen flex-col md:-mx-10 lg:-mx-16">
               <Marquee className="[--duration:45s] [--gap:0.75rem]" repeat={4}>
                 {m1.map((q) => (
                   <Badge
@@ -168,57 +216,18 @@ export default function VercepFeaturesDemo() {
                   </Badge>
                 ))}
               </Marquee>
-            </div>
+            </div> */}
           </div>
         </div>
 
         <div className="mt-10 lg:px-8 xl:px-10">
           <div
-            className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto overscroll-x-contain scroll-px-5 px-5 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] min-[420px]:gap-3 sm:gap-3.5 md:gap-4 md:scroll-px-6 lg:scroll-px-8 [&::-webkit-scrollbar]:hidden xl:grid xl:grid-cols-5 xl:overflow-visible xl:snap-none xl:scroll-px-0 xl:px-0 xl:pb-1 xl:gap-5"
+            className="flex snap-x snap-mandatory gap-2.5 overflow-x-auto overscroll-x-contain scroll-px-5 px-5 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] min-[420px]:gap-3 sm:gap-3.5 md:gap-4 md:scroll-px-6 lg:scroll-px-8 [&::-webkit-scrollbar]:hidden xl:grid xl:grid-cols-5 xl:justify-items-center xl:overflow-visible xl:snap-none xl:scroll-px-0 xl:px-0 xl:pb-1 xl:gap-5"
             aria-label="Service categories"
           >
-          {features.map((feature) => {
-            const Icon = feature.icon;
-            return (
-              <Link
-                className="service-feature-card group flex w-[calc(50vw-1.375rem)] max-w-[300px] shrink-0 snap-start cursor-pointer flex-col overflow-hidden rounded-xl border-2 border-dashed border-accent/75 bg-white/55 backdrop-blur-[2px] transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:bg-white/80 hover:shadow-[0_14px_40px_rgba(27,43,75,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 min-[420px]:w-[calc(50vw-1.5rem)] md:w-[calc(33.333vw-1.35rem)] md:max-w-[280px] lg:max-w-[300px] xl:w-auto xl:max-w-none xl:shrink xl:snap-align-none"
-                href={feature.href}
-                key={feature.title}
-              >
-                <div className="flex min-h-[208px] flex-1 flex-col items-center gap-3 px-2.5 py-6 text-center min-[420px]:min-h-[224px] min-[420px]:gap-3.5 min-[420px]:px-3 min-[420px]:py-7 sm:min-h-[236px] sm:px-3.5 sm:py-7 md:min-h-[252px] md:px-4 md:py-8 lg:min-h-[268px] lg:py-9">
-                  <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-accent/30 bg-[#FBF5EC]/90 shadow-[0_6px_18px_rgba(201,168,76,0.14)] min-[420px]:size-10 sm:size-11 lg:size-12">
-                    <Icon className="size-4 text-accent-dark transition-colors duration-300 group-hover:text-primary min-[420px]:size-4 sm:size-[18px] lg:size-5" />
-                  </div>
-
-                  <h3 className="font-display text-[11px] font-medium leading-tight tracking-tight text-ink transition-colors duration-300 group-hover:text-primary min-[420px]:text-xs sm:text-sm md:text-base lg:text-lg">
-                    {feature.title}
-                  </h3>
-                  <p className="line-clamp-3 text-[10px] leading-snug text-body-muted min-[420px]:text-[11px] sm:text-xs md:text-sm lg:leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-
-                <div className="relative h-32 w-full shrink-0 min-[420px]:h-[7.5rem] sm:h-[8rem] md:h-36 lg:h-40">
-                  <Image
-                    src={feature.image}
-                    alt=""
-                    fill
-                    className="object-cover object-center"
-                    sizes="(max-width: 640px) 20vw, (max-width: 1024px) 20vw, 18vw"
-                  />
-                  <div
-                    className="pointer-events-none absolute inset-0"
-                    style={{
-                      background: `
-                        radial-gradient(ellipse 130% 92% at 50% -6%, rgba(251, 245, 236, 0.98) 0%, rgba(251, 245, 236, 0.7) 26%, rgba(251, 245, 236, 0.32) 46%, rgba(251, 245, 236, 0.06) 62%, transparent 78%),
-                        radial-gradient(ellipse 85% 60% at 50% 8%, rgba(27, 43, 75, 0.07) 0%, transparent 72%)
-                      `,
-                    }}
-                  />
-                </div>
-              </Link>
-            );
-          })}
+          {features.map((feature) => (
+            <ServiceFeatureCard feature={feature} key={feature.title} />
+          ))}
           <div aria-hidden className="w-1 shrink-0 xl:hidden" />
           </div>
         </div>

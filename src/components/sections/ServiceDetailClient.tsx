@@ -2,31 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Check, Clock, Shield, Truck } from "lucide-react";
-import { useState } from "react";
+import { Check, Clock, Shield, Truck } from "lucide-react";
 import Container from "@/components/Container";
-import WaterRiseCta from "@/components/ui/WaterRiseCta";
-import { cn } from "@/lib/utils";
-import { useCart } from "@/lib/cart-context";
 import type { ServiceData } from "@/lib/services";
 
 export default function ServiceDetailClient({ service }: { service: ServiceData }) {
-  const { addItem } = useCart();
-  const [added, setAdded] = useState(false);
-
-  const handleAdd = () => {
-    addItem({
-      id: service.cartId,
-      name: service.title,
-      category: "Services",
-      price: "Quote Required",
-      image: service.image,
-      type: "service",
-    });
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2500);
-  };
-
   return (
     <div className="min-h-screen bg-white font-sans">
       <section className="relative overflow-hidden bg-white pt-32 pb-12 md:pt-40 md:pb-16">
@@ -121,35 +101,9 @@ export default function ServiceDetailClient({ service }: { service: ServiceData 
                   Interested in {service.title}?
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-body-muted">
-                  Add this service to your quote basket and we&apos;ll send a detailed
-                  proposal within 4 business hours.
+                  Contact our team and we&apos;ll send a detailed proposal within 4
+                  business hours.
                 </p>
-
-                <button
-                  type="button"
-                  onClick={handleAdd}
-                  disabled={added}
-                  className={cn(
-                    "btn-brand mt-6 w-full min-h-10 rounded-xl px-5 py-2.5 text-[0.68rem] font-semibold uppercase tracking-[0.14em] sm:min-h-11",
-                    added && "border-green-200 bg-green-50 text-green-700",
-                    added && "[&_.btn-brand__arrow]:hidden",
-                  )}
-                >
-                  <span className="btn-brand__content justify-center gap-2">
-                    {added ? "Added to quote basket" : "Add to quote basket"}
-                    {!added ? (
-                      <span className="btn-brand__arrow h-7 w-7 sm:h-8 sm:w-8" aria-hidden>
-                        <ArrowRight className="size-3.5 sm:size-4" strokeWidth={2} />
-                      </span>
-                    ) : null}
-                  </span>
-                </button>
-
-                <div className="mt-4">
-                  <WaterRiseCta href="/trade/rfq" size="md" className="w-full justify-center">
-                    Request quote directly
-                  </WaterRiseCta>
-                </div>
 
                 <ul className="mt-6 space-y-3 border-t border-[#e8e4df] pt-6">
                   <li className="flex items-center gap-2.5 text-xs text-body-muted">

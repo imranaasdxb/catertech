@@ -54,7 +54,7 @@ export function AdminDashboardView(m: DashboardMetrics) {
     { label: "Contact messages", value: messageCount, href: "/admin/contacts" },
     { label: "New contacts", value: newContacts, href: "/admin/contacts" },
     { label: "Quick enquiries", value: enquiryCount, href: "/admin/enquiries" },
-    { label: "Trade enquiries (RFQ)", value: rfqCount, href: "/admin/rfq" },
+    { label: "Events RFQ enquiry", value: rfqCount, href: "/admin/rfq" },
     { label: "Cart quotations", value: quoteCount, href: "/admin/quotations" },
     { label: "New quotes", value: newQuotes, href: "/admin/quotations" },
   ];
@@ -116,7 +116,7 @@ export function AdminDashboardView(m: DashboardMetrics) {
     { name: "Products", meta: `${formatNum(productCount)} SKUs`, href: "/admin/products", color: "#6366F1" },
     { name: "Contacts", meta: `${formatNum(messageCount)} threads`, href: "/admin/contacts", color: "#F97316" },
     {
-      name: "Trade enquiries",
+      name: "Events RFQ enquiry",
       meta: `${formatNum(rfqCount)} RFQs`,
       href: "/admin/rfq",
       color: "#EC4899",

@@ -12,7 +12,7 @@ import {
 } from "@/lib/shop-products";
 import { useCart } from "@/lib/cart-context";
 
-type AccordionKey = "description" | "packaging" | "shipping";
+type AccordionKey = "description";
 
 /* ─── Star Rating ──────────────────────────────────────────────────── */
 function StarRating({
@@ -646,19 +646,8 @@ export default function ProductEquipmentDetail({
               </div>
             )}
 
-            {/* Secondary CTA — bulk/trade */}
-            <Link
-              href="/trade/rfq"
-              className="w-full inline-flex items-center justify-center gap-2 border border-sand text-sand hover:bg-sand hover:text-white text-sm font-semibold tracking-wider rounded-xl px-6 py-3.5 transition-all duration-200 mb-8"
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-              </svg>
-              Request a Bulk / Trade Quote
-            </Link>
-
             {/* Trust trio */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-white rounded-2xl border border-border p-5">
+            <div className="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4 bg-white rounded-2xl border border-border p-5">
               <TrustItem
                 icon={
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
@@ -745,14 +734,10 @@ export default function ProductEquipmentDetail({
           </section>
         ) : null}
 
-        {/* ── Accordion — Description / Specs / Packaging / Shipping ── */}
+        {/* ── Description & specs ── */}
         <div className="mt-16 rounded-2xl border border-border bg-white overflow-hidden shadow-[0_2px_16px_rgba(26,31,46,0.04)]">
           {(
-            [
-              ["description", "Product Description & Specs"],
-              ["packaging", "Packaging"],
-              ["shipping", "Shipping & Delivery"],
-            ] as [AccordionKey, string][]
+            [["description", "Product Description & Specs"]] as [AccordionKey, string][]
           ).map(([key, label], idx, arr) => {
             const open = openSection === key;
             return (
@@ -830,8 +815,6 @@ export default function ProductEquipmentDetail({
                         </div>
                       </div>
                     )}
-                    {key === "packaging" && <p>{product.packaging}</p>}
-                    {key === "shipping" && <p>{product.shipping}</p>}
                   </div>
                 </div>
               </div>
