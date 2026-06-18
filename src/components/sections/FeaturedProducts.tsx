@@ -1,15 +1,15 @@
-import { getCataloguePresetData } from "@/lib/catalogue-presets";
+import { getCatalogueProductData } from "@/lib/catalogue-presets";
 import FeaturedProductsClient, {
   type CategoryRow,
-  type PresetRow,
+  type ProductRow,
 } from "@/components/sections/FeaturedProductsClient";
 
 export default async function FeaturedProducts() {
-  const data = await getCataloguePresetData();
+  const data = await getCatalogueProductData({ featuredOnly: true });
   return (
     <FeaturedProductsClient
       categories={data.categories as CategoryRow[]}
-      presets={data.presets as PresetRow[]}
+      products={data.products as ProductRow[]}
       catalogError={data.catalogError}
     />
   );

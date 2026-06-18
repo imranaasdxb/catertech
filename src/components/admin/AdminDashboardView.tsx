@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { AdminLeadStatsChart } from "./AdminLeadStatsChart";
+import { AdminWidgetCard } from "./AdminWidgetCard";
+import { adminCard } from "./adminTheme";
 
 export type DashboardMetrics = {
   productCount: number;
@@ -20,12 +22,15 @@ function buildTrend(end: number, points = 10): number[] {
   });
 }
 
-const ACCENTS = [
-  { tile: "#EDE8F7", ink: "#5B2D9B" },
-  { tile: "#E8F1FF", ink: "#2563EB" },
-  { tile: "#E6F7ED", ink: "#16A34A" },
-  { tile: "#E6F7F4", ink: "#0D9488" },
-] as const;
+const CARD_SUBTITLES: Record<string, string> = {
+  Products: "Live in catalogue",
+  "Contact messages": "Total inbox threads",
+  "New contacts": "Awaiting review",
+  "Quick enquiries": "Submitted enquiries",
+  "Events RFQ enquiry": "Event RFQ requests",
+  "Cart quotations": "Quote submissions",
+  "New quotes": "Pending quotations",
+};
 
 const WEEK_LABELS = ["W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10"];
 
@@ -97,7 +102,7 @@ export function AdminDashboardView(m: DashboardMetrics) {
       href: "/admin/products",
       tag: "CATALOGUE",
       tag2: "ADMIN",
-      swatch: "#EDE8F7",
+      swatch: "#fdeadf",
       letter: "P",
     },
     {
@@ -107,72 +112,58 @@ export function AdminDashboardView(m: DashboardMetrics) {
       href: "/admin/quotations",
       tag: "SALES",
       tag2: "BASKET",
-      swatch: "#E6F7ED",
+      swatch: "#eceaec",
       letter: "Q",
     },
   ];
 
   const modules = [
-    { name: "Products", meta: `${formatNum(productCount)} SKUs`, href: "/admin/products", color: "#6366F1" },
-    { name: "Contacts", meta: `${formatNum(messageCount)} threads`, href: "/admin/contacts", color: "#F97316" },
+    { name: "Products", meta: `${formatNum(productCount)} SKUs`, href: "/admin/products", color: "#f87941" },
+    { name: "Contacts", meta: `${formatNum(messageCount)} threads`, href: "/admin/contacts", color: "#ec6326" },
     {
       name: "Events RFQ enquiry",
       meta: `${formatNum(rfqCount)} RFQs`,
       href: "/admin/rfq",
-      color: "#EC4899",
+      color: "#2f3035",
     },
   ];
 
   return (
     <div className="space-y-8 font-sans">
       <div>
-        <h2 className="text-2xl md:text-[28px] font-bold text-[#1a1a1a] tracking-tight">Overview</h2>
-        <p className="text-sm text-[#1a1a1a]/50 mt-2 max-w-2xl leading-relaxed">
+        <h2 className="text-2xl md:text-[28px] font-bold text-admin-ink tracking-tight">Overview</h2>
+        <p className="text-sm text-admin-ink/50 mt-2 max-w-2xl leading-relaxed">
           Snapshot counts from your database. Use the sidebar to manage catalogue, content, and leads.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-5">
-        {cards.map((c, i) => {
-          const pal = ACCENTS[i % ACCENTS.length];
-          return (
-            <Link
-              key={c.label}
-              href={c.href}
-              className="group flex items-stretch gap-4 rounded-[24px] bg-white p-6 transition-transform hover:-translate-y-0.5"
-              style={{ boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.05)" }}
-            >
-              <span
-                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl"
-                style={{ background: pal.tile, color: pal.ink }}
-              >
-                <StatIcon kind={i % 4} />
-              </span>
-              <span className="flex flex-col justify-between min-w-0 flex-1">
-                <span className="text-xs font-semibold text-[#1a1a1a]/45 uppercase tracking-wide">{c.label}</span>
-                <span className="text-2xl md:text-3xl font-bold text-[#1a1a1a] tabular-nums leading-tight text-right">
-                  {formatNum(c.value)}
-                </span>
-              </span>
-            </Link>
-          );
-        })}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 md:gap-5">
+        {cards.map((c, i) => (
+          <AdminWidgetCard
+            key={c.label}
+            title={c.label}
+            value={formatNum(c.value)}
+            subtitle={CARD_SUBTITLES[c.label]}
+            href={c.href}
+            icon={<StatIcon kind={i % 4} />}
+            variant={i}
+          />
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
         <section
-          className="lg:col-span-4 rounded-[24px] bg-white p-6 md:p-8 flex flex-col items-center text-center"
-          style={{ boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.05)" }}
+          className={`lg:col-span-4 p-6 md:p-8 flex flex-col items-center text-center ${adminCard}`}
         >
           <div className="relative w-36 h-36 mb-6">
             <svg className="absolute inset-0 -rotate-90" viewBox="0 0 120 120" aria-hidden>
-              <circle cx="60" cy="60" r="54" fill="none" stroke="#EDE8F7" strokeWidth="10" />
+              <circle cx="60" cy="60" r="54" fill="none" stroke="#fdeadf" strokeWidth="10" />
               <circle
                 cx="60"
                 cy="60"
                 r="54"
                 fill="none"
-                stroke="#5B2D9B"
+                stroke="#f87941"
                 strokeWidth="10"
                 strokeLinecap="round"
                 strokeDasharray={`${0.72 * 2 * Math.PI * 54} ${2 * Math.PI * 54}`}
@@ -181,20 +172,20 @@ export function AdminDashboardView(m: DashboardMetrics) {
             <span
               className="absolute inset-0 m-auto flex h-[88px] w-[88px] items-center justify-center rounded-full text-white text-lg font-bold"
               style={{
-                background: "linear-gradient(145deg, #5B2D9B, #7c5ce0)",
-                boxShadow: "0px 10px 25px rgba(75, 38, 164, 0.35)",
+                background: "linear-gradient(145deg, #f87941, #f9b095)",
+                boxShadow: "0px 10px 25px rgba(248, 121, 65, 0.35)",
               }}
             >
               CT
             </span>
           </div>
-          <h3 className="text-lg font-bold text-[#1a1a1a]">CaterTech admin</h3>
-          <p className="text-sm text-[#1a1a1a]/45 mt-1">Operations &amp; catalogue</p>
+          <h3 className="text-lg font-bold text-admin-ink">CaterTech admin</h3>
+          <p className="text-sm text-admin-ink/45 mt-1">Operations &amp; catalogue</p>
 
           <div className="mt-8 w-full flex flex-wrap justify-center gap-6">
-            <SkillRing label="Catalogue" value={catalogScore} color="#F97316" />
-            <SkillRing label="Contacts" value={contactsScore} color="#22C55E" />
-            <SkillRing label="Pipeline" value={pipelineScore} color="#0D9488" />
+            <SkillRing label="Catalogue" value={catalogScore} color="#f87941" />
+            <SkillRing label="Contacts" value={contactsScore} color="#f9b095" />
+            <SkillRing label="Pipeline" value={pipelineScore} color="#2f3035" />
           </div>
         </section>
 
@@ -209,26 +200,25 @@ export function AdminDashboardView(m: DashboardMetrics) {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
         <section
-          className="lg:col-span-5 rounded-[24px] bg-white p-6 md:p-8 flex flex-col"
-          style={{ boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.05)" }}
+          className={`lg:col-span-5 p-6 md:p-8 flex flex-col ${adminCard}`}
         >
-          <h3 className="text-lg font-bold text-[#1a1a1a] mb-6">Recent focus</h3>
+          <h3 className="text-lg font-bold text-admin-ink mb-6">Recent focus</h3>
           <ul className="space-y-4 flex-1">
             {activities.map((a) => (
               <li key={a.title}>
                 <Link
                   href={a.href}
-                  className="flex gap-3 rounded-2xl p-3 -mx-3 hover:bg-[#F5F5F7] transition-colors"
+                  className="flex gap-3 rounded-2xl p-3 -mx-3 hover:bg-admin-bg transition-colors"
                 >
                   <span
                     className="mt-1 h-9 w-9 shrink-0 rounded-xl flex items-center justify-center text-white"
-                    style={{ background: "#5B2D9B" }}
+                    style={{ background: "#f87941" }}
                   >
                     <ChevronDotIcon />
                   </span>
                   <span className="min-w-0 text-left">
-                    <span className="block text-sm font-semibold text-[#1a1a1a] leading-snug">{a.title}</span>
-                    <span className="block text-xs text-[#1a1a1a]/45 mt-1">{a.sub}</span>
+                    <span className="block text-sm font-semibold text-admin-ink leading-snug">{a.title}</span>
+                    <span className="block text-xs text-admin-ink/45 mt-1">{a.sub}</span>
                   </span>
                 </Link>
               </li>
@@ -237,7 +227,7 @@ export function AdminDashboardView(m: DashboardMetrics) {
           <div className="flex justify-center mt-6">
             <Link
               href="/admin/contacts"
-              className="h-11 w-11 rounded-full border border-black/[0.08] flex items-center justify-center text-[#5B2D9B] hover:bg-[#F5F5F7] transition-colors"
+              className="h-11 w-11 rounded-full border border-black/[0.08] flex items-center justify-center text-admin-accent hover:bg-admin-bg transition-colors"
               aria-label="Go to contacts"
             >
               <DownChevronIcon />
@@ -247,34 +237,33 @@ export function AdminDashboardView(m: DashboardMetrics) {
 
         <section className="lg:col-span-7 space-y-5">
           <div className="flex items-center justify-between gap-4">
-            <h3 className="text-lg font-bold text-[#1a1a1a]">Quick access</h3>
+            <h3 className="text-lg font-bold text-admin-ink">Quick access</h3>
           </div>
           <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1">
             {quickLinks.map((job) => (
               <Link
                 key={job.title}
                 href={job.href}
-                className="min-w-[260px] max-w-[280px] shrink-0 rounded-[24px] bg-white p-5 flex flex-col gap-3 transition-transform hover:-translate-y-0.5"
-                style={{ boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.05)" }}
+                className={`min-w-[260px] max-w-[280px] shrink-0 p-5 flex flex-col gap-3 ${adminCard} hover:-translate-y-0.5`}
               >
                 <div className="flex items-start gap-3">
                   <span
-                    className="h-12 w-12 rounded-2xl flex items-center justify-center text-sm font-bold text-[#1a1a1a]"
+                    className="h-12 w-12 rounded-2xl flex items-center justify-center text-sm font-bold text-admin-ink"
                     style={{ background: job.swatch }}
                   >
                     {job.letter}
                   </span>
                   <span className="min-w-0">
-                    <span className="block font-bold text-[#1a1a1a] leading-tight">{job.title}</span>
-                    <span className="block text-xs font-semibold text-[#1a1a1a]/45 mt-1">{job.meta}</span>
+                    <span className="block font-bold text-admin-ink leading-tight">{job.title}</span>
+                    <span className="block text-xs font-semibold text-admin-ink/45 mt-1">{job.meta}</span>
                   </span>
                 </div>
-                <p className="text-xs text-[#1a1a1a]/50 leading-relaxed line-clamp-3">{job.excerpt}</p>
+                <p className="text-xs text-admin-ink/50 leading-relaxed line-clamp-3">{job.excerpt}</p>
                 <div className="flex flex-wrap gap-2 pt-1">
-                  <span className="rounded-full bg-[#F5F5F7] px-3 py-1 text-[10px] font-bold tracking-wide text-[#1a1a1a]/55">
+                  <span className="rounded-full bg-admin-bg px-3 py-1 text-[10px] font-bold tracking-wide text-admin-ink/55">
                     {job.tag}
                   </span>
-                  <span className="rounded-full bg-[#F5F5F7] px-3 py-1 text-[10px] font-bold tracking-wide text-[#1a1a1a]/55">
+                  <span className="rounded-full bg-admin-bg px-3 py-1 text-[10px] font-bold tracking-wide text-admin-ink/55">
                     {job.tag2}
                   </span>
                 </div>
@@ -286,11 +275,11 @@ export function AdminDashboardView(m: DashboardMetrics) {
 
       <section>
         <div className="flex items-center justify-between gap-4 mb-5">
-          <h3 className="text-lg font-bold text-[#1a1a1a]">Modules</h3>
+          <h3 className="text-lg font-bold text-admin-ink">Modules</h3>
           <Link
             href="/admin/products"
             className="text-xs font-bold uppercase tracking-wide"
-            style={{ color: "#5B2D9B" }}
+            style={{ color: "#f87941" }}
           >
             View more
           </Link>
@@ -300,8 +289,7 @@ export function AdminDashboardView(m: DashboardMetrics) {
             <Link
               key={mod.name}
               href={mod.href}
-              className="rounded-[20px] bg-white p-4 flex items-center gap-3 hover:-translate-y-0.5 transition-transform"
-              style={{ boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.05)" }}
+              className={`p-4 flex items-center gap-3 ${adminCard} hover:-translate-y-0.5`}
             >
               <span
                 className="h-11 w-11 rounded-xl shrink-0 flex items-center justify-center text-white text-sm font-bold"
@@ -310,8 +298,8 @@ export function AdminDashboardView(m: DashboardMetrics) {
                 {mod.name.slice(0, 1)}
               </span>
               <span className="min-w-0">
-                <span className="block font-bold text-[#1a1a1a] text-sm truncate">{mod.name}</span>
-                <span className="block text-xs text-[#1a1a1a]/45 truncate">{mod.meta}</span>
+                <span className="block font-bold text-admin-ink text-sm truncate">{mod.name}</span>
+                <span className="block text-xs text-admin-ink/45 truncate">{mod.meta}</span>
               </span>
             </Link>
           ))}
@@ -328,7 +316,7 @@ function SkillRing({ label, value, color }: { label: string; value: number; colo
   return (
     <div className="flex flex-col items-center gap-2 w-[72px]">
       <svg width="56" height="56" viewBox="0 0 56 56" className="-rotate-90" aria-hidden>
-        <circle cx="28" cy="28" r={r} fill="none" stroke="#EFEFF4" strokeWidth="6" />
+        <circle cx="28" cy="28" r={r} fill="none" stroke="#eceaec" strokeWidth="6" />
         <circle
           cx="28"
           cy="28"
@@ -340,9 +328,9 @@ function SkillRing({ label, value, color }: { label: string; value: number; colo
           strokeDasharray={`${dash} ${c}`}
         />
       </svg>
-      <span className="text-[10px] font-semibold text-[#1a1a1a]/45 text-center leading-tight">
+      <span className="text-[10px] font-semibold text-admin-ink/45 text-center leading-tight">
         {label}
-        <span className="block text-[#1a1a1a] mt-0.5">{value}%</span>
+        <span className="block text-admin-ink mt-0.5">{value}%</span>
       </span>
     </div>
   );

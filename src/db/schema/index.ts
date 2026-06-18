@@ -9,6 +9,7 @@ import {
   index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 /** Master list: product categories (dropdown + filters). */
 export const productCategories = pgTable("product_categories", {
@@ -124,39 +125,54 @@ export const productTitlePresets = pgTable(
   ]
 );
 
-export const products = pgTable("products", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  title: text("title").notNull(),
-  slug: text("slug").notNull().unique(),
-  description: text("description"),
-  /** Denormalized storefront label, e.g. "Cooking › Gas ranges" — kept in sync from taxonomy on save. */
-  category: text("category"),
-  categoryId: uuid("category_id").references(() => productCategories.id, {
-    onDelete: "set null",
-  }),
-  subCategoryId: uuid("sub_category_id").references(() => productSubcategories.id, {
-    onDelete: "set null",
-  }),
-  images: text("images").array().notNull().default([]),
-  isAvailable: boolean("is_available").notNull().default(true),
-  isFeatured: boolean("is_featured").notNull().default(false),
-  published: boolean("published").notNull().default(false),
-  /** Values for category template fields (dimensions, color, material, etc.). */
-  attributes: jsonb("attributes")
-    .$type<Record<string, ProductAttributeValue>>()
-    .notNull()
-    .default({}),
-  seoTitle: text("seo_title"),
-  seoDescription: text("seo_description"),
-  searchKeywords: text("search_keywords").array().notNull().default([]),
-  canonicalProductId: uuid("canonical_product_id"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
+export const products = pgTable(
+  "products",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    title: text("title").notNull(),
+    slug: text("slug").notNull().unique(),
+    description: text("description"),
+    /** Denormalized storefront label, e.g. "Cooking › Gas ranges" — kept in sync from taxonomy on save. */
+    category: text("category"),
+    categoryId: uuid("category_id").references(() => productCategories.id, {
+      onDelete: "set null",
+    }),
+    subCategoryId: uuid("sub_category_id").references(() => productSubcategories.id, {
+      onDelete: "set null",
+    }),
+    productTitlePresetId: uuid("product_title_preset_id").references(
+      () => productTitlePresets.id,
+      { onDelete: "set null" }
+    ),
+    images: text("images").array().notNull().default([]),
+    isAvailable: boolean("is_available").notNull().default(true),
+    isFeatured: boolean("is_featured").notNull().default(false),
+    published: boolean("published").notNull().default(false),
+    /** Values for category template fields (dimensions, color, material, etc.). */
+    attributes: jsonb("attributes")
+      .$type<Record<string, ProductAttributeValue>>()
+      .notNull()
+      .default({}),
+    seoTitle: text("seo_title"),
+    seoDescription: text("seo_description"),
+    searchKeywords: text("search_keywords").array().notNull().default([]),
+    canonicalProductId: uuid("canonical_product_id"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    index("products_storefront_published_idx")
+      .on(t.isFeatured.desc(), t.createdAt.desc())
+      .where(sql`${t.published} = true`),
+    index("products_updated_at_idx").on(t.updatedAt.desc()),
+    index("products_category_idx").on(t.categoryId),
+    index("products_product_title_preset_idx").on(t.productTitlePresetId),
+  ]
+);
 
 export const contactMessages = pgTable("contact_messages", {
   id: uuid("id").defaultRandom().primaryKey(),

@@ -11,6 +11,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type DragEvent,
 } from "react";
 
 export type GalleryCommitResult =
@@ -62,8 +63,11 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
 
     const [pickingBusy, setPickingBusy] = useState(false);
     const [committing, setCommitting] = useState(false);
+    const [dragOver, setDragOver] = useState(false);
     const [lastError, setLastError] = useState("");
     const fileRef = useRef<HTMLInputElement>(null);
+    const dropZoneRef = useRef<HTMLDivElement>(null);
+    const galleryActiveRef = useRef(false);
 
     useEffect(() => {
       return () => {
@@ -82,17 +86,17 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
       });
     }, []);
 
-    const runPickFiles = useCallback((files: FileList | null) => {
+    const addImageFiles = useCallback((files: FileList | File[] | null) => {
       if (!files?.length) {
         if (fileRef.current) fileRef.current.value = "";
         setPickingBusy(false);
         return;
       }
 
+      const list = Array.isArray(files) ? files : Array.from(files);
       const additions: GalleryItem[] = [];
       let rejected = 0;
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+      for (const file of list) {
         if (!isChosenImageFile(file)) {
           rejected++;
           continue;
@@ -116,6 +120,89 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
       setPickingBusy(false);
       if (fileRef.current) fileRef.current.value = "";
     }, []);
+
+    const readClipboardImages = useCallback((clipboard: DataTransfer | null) => {
+      if (!clipboard) return [] as File[];
+
+      const fromItems: File[] = [];
+      if (clipboard.items?.length) {
+        for (let i = 0; i < clipboard.items.length; i++) {
+          const item = clipboard.items[i];
+          if (item.kind !== "file") continue;
+          const file = item.getAsFile();
+          if (file && isChosenImageFile(file)) fromItems.push(file);
+        }
+      }
+
+      if (fromItems.length) return fromItems;
+
+      return Array.from(clipboard.files ?? []).filter(isChosenImageFile);
+    }, []);
+
+    useEffect(() => {
+      const onDocMouseDown = (e: MouseEvent) => {
+        galleryActiveRef.current = Boolean(
+          dropZoneRef.current?.contains(e.target as Node)
+        );
+      };
+      document.addEventListener("mousedown", onDocMouseDown);
+      return () => document.removeEventListener("mousedown", onDocMouseDown);
+    }, []);
+
+    useEffect(() => {
+      const onPaste = (e: ClipboardEvent) => {
+        if (committing || pickingBusy) return;
+
+        const active = document.activeElement;
+        const inGallery =
+          galleryActiveRef.current ||
+          Boolean(active && dropZoneRef.current?.contains(active));
+        if (!inGallery) return;
+
+        if (active instanceof HTMLInputElement && active.type !== "file") return;
+        if (active instanceof HTMLTextAreaElement) return;
+        if (active instanceof HTMLElement && active.isContentEditable) return;
+
+        const pasted = readClipboardImages(e.clipboardData);
+        if (!pasted.length) return;
+
+        e.preventDefault();
+        setPickingBusy(true);
+        addImageFiles(pasted);
+      };
+
+      document.addEventListener("paste", onPaste);
+      return () => document.removeEventListener("paste", onPaste);
+    }, [addImageFiles, committing, pickingBusy, readClipboardImages]);
+
+    const handleDragOver = useCallback(
+      (e: DragEvent<HTMLDivElement>) => {
+        if (committing || pickingBusy) return;
+        e.preventDefault();
+        e.stopPropagation();
+        setDragOver(true);
+      },
+      [committing, pickingBusy]
+    );
+
+    const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const next = e.relatedTarget as Node | null;
+      if (!next || !e.currentTarget.contains(next)) setDragOver(false);
+    }, []);
+
+    const handleDrop = useCallback(
+      (e: DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragOver(false);
+        if (committing || pickingBusy) return;
+        setPickingBusy(true);
+        addImageFiles(e.dataTransfer.files);
+      },
+      [addImageFiles, committing, pickingBusy]
+    );
 
     useImperativeHandle(ref, () => ({
       async commitPendingUploads() {
@@ -168,7 +255,17 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
     const showHint = Boolean(hint?.trim());
 
     return (
-      <div className="space-y-3">
+      <div
+        ref={dropZoneRef}
+        tabIndex={-1}
+        onDragEnter={handleDragOver}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`space-y-3 rounded-xl outline-none transition-[box-shadow] ${
+          dragOver ? "ring-2 ring-admin-accent/35 ring-offset-2 ring-offset-white" : ""
+        }`}
+      >
         <input
           ref={fileRef}
           id={id}
@@ -179,7 +276,7 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
           disabled={pickingBusy || committing}
           onChange={(e) => {
             setPickingBusy(true);
-            runPickFiles(e.target.files);
+            addImageFiles(e.target.files);
           }}
         />
 
@@ -189,9 +286,9 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
             className={`${admin.secondaryBtn} inline-flex cursor-pointer items-center gap-2 border border-[#ebe6f7] bg-white ${committing ? "pointer-events-none opacity-50" : ""}`}
           >
             {pickingBusy ? (
-              <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[#5B2D9B]" aria-hidden />
+              <Loader2 className="h-4 w-4 shrink-0 animate-spin text-admin-accent" aria-hidden />
             ) : (
-              <ImagePlus className="h-4 w-4 shrink-0 text-[#5B2D9B]" aria-hidden />
+              <ImagePlus className="h-4 w-4 shrink-0 text-admin-accent" aria-hidden />
             )}
             {pickingBusy ? "Adding…" : "Choose images"}
           </label>
@@ -215,8 +312,8 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
                 key={id}
                 className="relative h-[7.5rem] w-[7.5rem] shrink-0 animate-pulse overflow-hidden rounded-xl border border-black/[0.06] bg-[#eae8f2]"
               >
-                <div className="absolute inset-0 flex items-center justify-center bg-[#faf8ff]/90">
-                  <Loader2 className="h-6 w-6 animate-spin text-[#5B2D9B]" aria-hidden />
+                <div className="absolute inset-0 flex items-center justify-center bg-[#fff6f1]/90">
+                  <Loader2 className="h-6 w-6 animate-spin text-admin-accent" aria-hidden />
                 </div>
               </div>
             ))}
@@ -224,29 +321,40 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
         ) : items.length === 0 ? (
           <label
             htmlFor={id}
-            className={`flex min-h-[7.5rem] w-full cursor-pointer items-center justify-center rounded-xl border border-dashed border-black/12 bg-[#F5F5F7]/50 transition-colors hover:border-[#5B2D9B]/35 hover:bg-[#faf8ff]/80 ${committing ? "pointer-events-none opacity-50" : ""}`}
+            className={`flex min-h-[7.5rem] w-full cursor-pointer items-center justify-center rounded-xl border border-dashed transition-colors ${
+              dragOver
+                ? "border-admin-accent/50 bg-[#fff6f1]"
+                : "border-black/12 bg-admin-bg/50 hover:border-admin-accent/35 hover:bg-[#fff6f1]/80"
+            } ${committing ? "pointer-events-none opacity-50" : ""}`}
           >
-            <span className="inline-flex items-center gap-2 text-xs font-medium text-[#1a1a1a]/40">
-              <ImagePlus className="h-4 w-4 text-[#5B2D9B]/60" aria-hidden />
-              Add images
+            <span className="inline-flex flex-col items-center gap-1 text-center">
+              <span className="inline-flex items-center gap-2 text-xs font-medium text-admin-ink/40">
+                <ImagePlus className="h-4 w-4 text-admin-accent/60" aria-hidden />
+                Add images
+              </span>
+              <span className="text-[10px] font-medium text-admin-ink/30">
+                Drag &amp; drop or paste here
+              </span>
             </span>
           </label>
         ) : (
           <div
             role="list"
-            className="relative flex gap-3 overflow-x-auto pb-1 pt-0.5 [scrollbar-width:thin]"
+            className={`relative flex gap-3 overflow-x-auto pb-1 pt-0.5 [scrollbar-width:thin] rounded-xl border border-dashed border-transparent transition-colors ${
+              dragOver ? "border-admin-accent/35 bg-[#fff6f1]/60" : ""
+            }`}
           >
             {items.map((it, idx) => (
               <article
                 key={it.id}
                 role="listitem"
-                className="relative w-[7.5rem] shrink-0 overflow-hidden rounded-xl border border-black/[0.06] bg-[#faf8ff] shadow-sm"
+                className="relative w-[7.5rem] shrink-0 overflow-hidden rounded-xl border border-black/[0.06] bg-[#fff6f1] shadow-sm"
               >
                 <button
                   type="button"
                   aria-label={`Remove image ${idx + 1}`}
                   onClick={() => removeAt(idx)}
-                  className="absolute right-1.5 top-1.5 z-10 rounded-full bg-white/95 p-1 text-[#1a1a1a]/60 shadow hover:text-red-600"
+                  className="absolute right-1.5 top-1.5 z-10 rounded-full bg-white/95 p-1 text-admin-ink/60 shadow hover:text-red-600"
                   disabled={committing}
                 >
                   <X className="h-4 w-4" />
@@ -260,11 +368,11 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
                   />
                 </div>
                 {idx === 0 ? (
-                  <p className="border-t border-black/[0.04] px-2 py-1 text-center text-[10px] font-semibold uppercase tracking-wide text-[#5B2D9B]/90">
+                  <p className="border-t border-black/[0.04] px-2 py-1 text-center text-[10px] font-semibold uppercase tracking-wide text-admin-accent/90">
                     Primary
                   </p>
                 ) : (
-                  <p className="border-t border-black/[0.04] px-2 py-1 text-center text-[10px] text-[#1a1a1a]/40">
+                  <p className="border-t border-black/[0.04] px-2 py-1 text-center text-[10px] text-admin-ink/40">
                     &nbsp;
                   </p>
                 )}

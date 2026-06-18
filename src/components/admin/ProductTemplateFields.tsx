@@ -12,7 +12,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Props = {
   categoryId: string;
-  subCategoryId: string;
+  /** Kept for form compatibility; does not reload template fields when changed */
+  subCategoryId?: string;
   initialAttributes?: Record<string, ProductAttributeValue>;
   initialFieldKeys?: string[];
   onFieldsLoaded?: (fields: TemplateFieldDef[]) => void;
@@ -31,7 +32,7 @@ function readAttr(
 
 export function ProductTemplateFields({
   categoryId,
-  subCategoryId,
+  subCategoryId: _subCategoryId,
   initialAttributes,
   initialFieldKeys,
   onFieldsLoaded,
@@ -48,7 +49,6 @@ export function ProductTemplateFields({
     let cancelled = false;
 
     const params = new URLSearchParams({ categoryId });
-    if (subCategoryId) params.set("subCategoryId", subCategoryId);
 
     void fetch(`/api/admin/category-templates?${params}`)
       .then(async (res) => {
@@ -75,7 +75,7 @@ export function ProductTemplateFields({
     return () => {
       cancelled = true;
     };
-  }, [categoryId, initialFieldKeys, subCategoryId, onFieldsLoaded]);
+  }, [categoryId, initialFieldKeys, onFieldsLoaded]);
 
   const remainingFields = useMemo(() => {
     const activeKeys = new Set(fields.map((field) => field.key));
@@ -115,8 +115,8 @@ export function ProductTemplateFields({
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 rounded-2xl border border-black/6 bg-[#F5F5F7]/60 px-4 py-6 text-sm text-[#1a1a1a]/50">
-        <Loader2 className="h-4 w-4 animate-spin text-[#5B2D9B]" />
+      <div className="flex items-center gap-2 rounded-2xl border border-black/6 bg-admin-bg/60 px-4 py-6 text-sm text-admin-ink/50">
+        <Loader2 className="h-4 w-4 animate-spin text-admin-accent" />
         Loading category fields…
       </div>
     );
@@ -131,12 +131,12 @@ export function ProductTemplateFields({
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className={`${admin.formSectionTitle} mb-0`}>Category fields</p>
-          <p className="mt-1 text-xs text-[#1a1a1a]/45">
+          <p className="mt-1 text-xs text-admin-ink/45">
             Preset values stay editable. Remove fields you do not need or add another field.
           </p>
         </div>
         {remainingFields.length ? (
-          <label className="relative inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-semibold text-[#1a1a1a] shadow-sm transition hover:border-black/20">
+          <label className="relative inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-semibold text-admin-ink shadow-sm transition hover:border-black/20">
             <Plus size={14} aria-hidden="true" />
             Add field
             <select
@@ -169,7 +169,7 @@ export function ProductTemplateFields({
               <button
                 type="button"
                 onClick={() => removeField(field.key)}
-                className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-[#1a1a1a]/35 transition hover:bg-black/5 hover:text-[#1a1a1a]"
+                className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-admin-ink/35 transition hover:bg-black/5 hover:text-admin-ink"
                 aria-label={`Remove ${field.label}`}
                 title={`Remove ${field.label}`}
               >
@@ -282,7 +282,7 @@ export function ProductTemplateFields({
         })}
         </div>
       ) : (
-        <p className="rounded-xl border border-dashed border-black/10 bg-[#F5F5F7]/45 px-4 py-5 text-sm text-[#1a1a1a]/45">
+        <p className="rounded-xl border border-dashed border-black/10 bg-admin-bg/45 px-4 py-5 text-sm text-admin-ink/45">
           This preset has no saved specification fields. Add only the fields needed for this product.
         </p>
       )}

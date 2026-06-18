@@ -348,6 +348,7 @@ export default function ProductEquipmentDetail({
                   src={mainSrc}
                   alt={product.name}
                   fill
+                  unoptimized
                   className="object-cover"
                   priority
                   sizes="(max-width: 1024px) 100vw, 55vw"

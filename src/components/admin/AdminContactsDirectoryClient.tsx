@@ -259,7 +259,7 @@ export default function AdminContactsDirectoryClient({
                     className="border-b border-border last:border-0 hover:bg-[#fafafa]/80"
                   >
                     <td className="px-4 py-3 align-top">
-                      <span className="inline-flex rounded-lg bg-[#F5F5F7] px-2 py-1 text-[11px] font-semibold text-charcoal">
+                      <span className="inline-flex rounded-lg bg-admin-bg px-2 py-1 text-[11px] font-semibold text-charcoal">
                         {r.sourceLabel}
                       </span>
                     </td>

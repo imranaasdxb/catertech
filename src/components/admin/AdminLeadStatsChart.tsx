@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
+import { adminCard } from "./adminTheme";
 
-const PURPLE = "#5B2D9B";
-const ORANGE = "#F97316";
+const CHART_ACCENT = "#f87941";
+const CHART_INK = "#2f3035";
 
 type SeriesKey = "products" | "leads";
 
@@ -105,18 +106,15 @@ export function AdminLeadStatsChart({ products, leads, labels }: Props) {
     : 0.5;
 
   return (
-    <div
-      className="rounded-[24px] bg-white p-6 md:p-8 h-full min-h-[320px] flex flex-col"
-      style={{ boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.05)" }}
-    >
+    <div className={`h-full min-h-[320px] flex flex-col p-6 md:p-8 ${adminCard}`}>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-lg font-bold text-[#1a1a1a] tracking-tight">Record activity</h2>
-          <p className="text-sm text-[#1a1a1a]/45 mt-1">Smoothed trend across recent weeks (derived from current totals).</p>
+          <h2 className="text-lg font-bold text-admin-ink tracking-tight">Record activity</h2>
+          <p className="text-sm text-admin-ink/45 mt-1">Smoothed trend across recent weeks (derived from current totals).</p>
         </div>
         <button
           type="button"
-          className="self-start sm:self-center rounded-full border border-black/[0.08] bg-[#F5F5F7] px-4 py-2 text-xs font-semibold text-[#1a1a1a]/70"
+          className="self-start sm:self-center rounded-full border border-black/[0.08] bg-admin-bg px-4 py-2 text-xs font-semibold text-admin-ink/70"
         >
           This month
         </button>
@@ -125,13 +123,13 @@ export function AdminLeadStatsChart({ products, leads, labels }: Props) {
       <div className="flex flex-wrap gap-x-5 gap-y-3 mb-2">
         <ToggleRow
           label="Products"
-          color={PURPLE}
+          color={CHART_ACCENT}
           on={() => setVisible((v) => ({ ...v, products: !v.products }))}
           active={visible.products}
         />
         <ToggleRow
           label="Lead pipeline"
-          color={ORANGE}
+          color={CHART_INK}
           on={() => setVisible((v) => ({ ...v, leads: !v.leads }))}
           active={visible.leads}
         />
@@ -149,8 +147,8 @@ export function AdminLeadStatsChart({ products, leads, labels }: Props) {
         >
           <defs>
             <linearGradient id="adminChartFade" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={PURPLE} stopOpacity="0.12" />
-              <stop offset="100%" stopColor={PURPLE} stopOpacity="0" />
+              <stop offset="0%" stopColor={CHART_ACCENT} stopOpacity="0.12" />
+              <stop offset="100%" stopColor={CHART_ACCENT} stopOpacity="0" />
             </linearGradient>
           </defs>
 
@@ -163,7 +161,7 @@ export function AdminLeadStatsChart({ products, leads, labels }: Props) {
                 x2={w - pad.r}
                 y1={y}
                 y2={y}
-                stroke="#1a1a1a"
+                stroke="#2f3035"
                 strokeOpacity={0.06}
                 strokeWidth={1}
               />
@@ -173,10 +171,10 @@ export function AdminLeadStatsChart({ products, leads, labels }: Props) {
           {fillPath ? <path d={fillPath} fill="url(#adminChartFade)" opacity={0.9} /> : null}
 
           {visible.products && paths.products ? (
-            <path d={paths.products} fill="none" stroke={PURPLE} strokeWidth={3} strokeLinecap="round" />
+            <path d={paths.products} fill="none" stroke={CHART_ACCENT} strokeWidth={3} strokeLinecap="round" />
           ) : null}
           {visible.leads && paths.leads ? (
-            <path d={paths.leads} fill="none" stroke={ORANGE} strokeWidth={3} strokeLinecap="round" />
+            <path d={paths.leads} fill="none" stroke={CHART_INK} strokeWidth={3} strokeLinecap="round" />
           ) : null}
 
           {tooltipIdx != null ? (
@@ -186,7 +184,7 @@ export function AdminLeadStatsChart({ products, leads, labels }: Props) {
                 x2={pad.l + (innerW * (products.length <= 1 ? 0 : tooltipIdx / (products.length - 1)))}
                 y1={pad.t}
                 y2={pad.t + innerH}
-                stroke={PURPLE}
+                stroke={CHART_ACCENT}
                 strokeOpacity={0.25}
                 strokeWidth={1}
               />
@@ -203,15 +201,15 @@ export function AdminLeadStatsChart({ products, leads, labels }: Props) {
               minWidth: 160,
             }}
           >
-            <p className="font-bold text-[#1a1a1a] mb-1">{labels[tooltipIdx] ?? `Week ${tooltipIdx + 1}`}</p>
+            <p className="font-bold text-admin-ink mb-1">{labels[tooltipIdx] ?? `Week ${tooltipIdx + 1}`}</p>
             {visible.products ? (
-              <p className="text-[#1a1a1a]/70">
-                Products: <span className="font-semibold" style={{ color: PURPLE }}>{products[tooltipIdx]}</span>
+              <p className="text-admin-ink/70">
+                Products: <span className="font-semibold" style={{ color: CHART_ACCENT }}>{products[tooltipIdx]}</span>
               </p>
             ) : null}
             {visible.leads ? (
-              <p className="text-[#1a1a1a]/70">
-                Leads: <span className="font-semibold" style={{ color: ORANGE }}>{leads[tooltipIdx]}</span>
+              <p className="text-admin-ink/70">
+                Leads: <span className="font-semibold" style={{ color: CHART_INK }}>{leads[tooltipIdx]}</span>
               </p>
             ) : null}
           </div>
@@ -236,7 +234,7 @@ function ToggleRow({
     <button
       type="button"
       onClick={on}
-      className="flex items-center gap-2.5 text-xs font-semibold text-[#1a1a1a]/70 hover:text-[#1a1a1a] transition-colors"
+      className="flex items-center gap-2.5 text-xs font-semibold text-admin-ink/70 hover:text-admin-ink transition-colors"
     >
       <span
         className="relative h-6 w-11 rounded-full transition-colors"

@@ -102,6 +102,12 @@ export async function PUT(
       : categoryLabelRaw;
 
   const title = d.title ?? row.title;
+  const presetLinkageChanged =
+    (d.title !== undefined && d.title !== row.title) ||
+    (d.categoryId !== undefined && d.categoryId !== row.categoryId) ||
+    (d.subCategoryId !== undefined && d.subCategoryId !== row.subCategoryId);
+  const productTitlePresetId =
+    presetLinkageChanged ? null : row.productTitlePresetId;
   const nextSlug =
     d.title !== undefined ? slugify(d.title) : row.slug;
   const nextAttributes =
@@ -127,6 +133,7 @@ export async function PUT(
       category: categoryLabel,
       categoryId: nextCat,
       subCategoryId: nextSub,
+      productTitlePresetId,
       images: d.images !== undefined ? d.images : row.images,
       isAvailable: d.isAvailable ?? row.isAvailable,
       isFeatured: d.isFeatured ?? row.isFeatured,

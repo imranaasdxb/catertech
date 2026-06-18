@@ -48,7 +48,13 @@ function matchesFilter(c: TaxonomyRow, filter: SubFilter): boolean {
 }
 
 function mapCategory(row: { id: string; name: string }, subs: SubRow[] = []): TaxonomyRow {
-  return { id: row.id, name: row.name, subcategories: subs };
+  return {
+    id: row.id,
+    name: row.name,
+    subcategories: subs,
+    presetCount: 0,
+    createdPresetCount: 0,
+  };
 }
 
 export default function AdminProductTaxonomyClient() {
@@ -321,8 +327,8 @@ export default function AdminProductTaxonomyClient() {
                   onClick={() => setActiveView("presets")}
                   className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition ${
                     activeView === "presets"
-                      ? "bg-[#1a1a1a] text-white"
-                      : "text-[#1a1a1a]/60 hover:bg-[#F5F5F7] hover:text-[#1a1a1a]"
+                      ? "bg-admin-ink text-white"
+                      : "text-admin-ink/60 hover:bg-admin-bg hover:text-admin-ink"
                   }`}
                 >
                   <PackageSearch className="h-3.5 w-3.5" />
@@ -333,8 +339,8 @@ export default function AdminProductTaxonomyClient() {
                   onClick={() => setActiveView("taxonomy")}
                   className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition ${
                     activeView === "taxonomy"
-                      ? "bg-[#1a1a1a] text-white"
-                      : "text-[#1a1a1a]/60 hover:bg-[#F5F5F7] hover:text-[#1a1a1a]"
+                      ? "bg-admin-ink text-white"
+                      : "text-admin-ink/60 hover:bg-admin-bg hover:text-admin-ink"
                   }`}
                 >
                   <ListTree className="h-3.5 w-3.5" />
@@ -348,7 +354,7 @@ export default function AdminProductTaxonomyClient() {
             <AdminProductPresetsPanel categories={categories} />
           ) : (
           <div className="overflow-hidden rounded-[24px] border border-black/6 bg-white shadow-[0px_20px_64px_rgba(0,0,0,0.06)]">
-            <div className="space-y-3 border-b border-black/6 bg-[#F5F5F7]/60 px-4 py-4 sm:px-6">
+            <div className="space-y-3 border-b border-black/6 bg-admin-bg/60 px-4 py-4 sm:px-6">
               <form
                 onSubmit={(e) => void addCategory(e)}
                 className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end"
@@ -383,7 +389,7 @@ export default function AdminProductTaxonomyClient() {
                       <button
                         type="button"
                         onClick={() => removeNewSub(index)}
-                        className="absolute right-2 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-[#1a1a1a]/40 hover:bg-black/5 hover:text-[#1a1a1a]"
+                        className="absolute right-2 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-admin-ink/40 hover:bg-black/5 hover:text-admin-ink"
                         title="Remove"
                         aria-label={`Remove sub-category ${index + 1}`}
                       >
@@ -415,7 +421,7 @@ export default function AdminProductTaxonomyClient() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="relative min-w-0 flex-1">
                   <Search
-                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#1a1a1a]/35"
+                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-admin-ink/35"
                     aria-hidden
                   />
                   <input
@@ -459,35 +465,35 @@ export default function AdminProductTaxonomyClient() {
               ) : null}
 
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-[#1a1a1a]">
+                <p className="text-sm font-semibold text-admin-ink">
                   {loading ? "…" : `${categories.length} total`}
                   {!loading && filteredCategories.length !== categories.length ? (
-                    <span className="font-normal text-[#1a1a1a]/45">
+                    <span className="font-normal text-admin-ink/45">
                       {" "}
                       · {filteredCategories.length} matched
                     </span>
                   ) : null}
                   {!loading && filteredCategories.length > 0 ? (
-                    <span className="font-normal text-[#1a1a1a]/45">
+                    <span className="font-normal text-admin-ink/45">
                       {" "}
                       · showing {rangeStart}–{rangeEnd}
                     </span>
                   ) : null}
                 </p>
                 {!loading && filteredCategories.length > PAGE_SIZE ? (
-                  <span className="text-xs font-medium text-[#1a1a1a]/40">
+                  <span className="text-xs font-medium text-admin-ink/40">
                     Page {safePage + 1} of {totalPages}
                   </span>
                 ) : null}
               </div>
 
               {loading ? (
-                <div className="flex min-h-[280px] items-center justify-center gap-2 text-[#1a1a1a]/45">
-                  <Loader2 className="h-6 w-6 animate-spin text-[#5B2D9B]" />
+                <div className="flex min-h-[280px] items-center justify-center gap-2 text-admin-ink/45">
+                  <Loader2 className="h-6 w-6 animate-spin text-admin-accent" />
                   Loading…
                 </div>
               ) : filteredCategories.length === 0 ? (
-                <div className="flex min-h-[280px] items-center justify-center text-sm text-[#1a1a1a]/45">
+                <div className="flex min-h-[280px] items-center justify-center text-sm text-admin-ink/45">
                   {categories.length === 0
                     ? "No categories yet — add one above."
                     : searchQuery || subFilter !== "all"
@@ -513,17 +519,17 @@ export default function AdminProductTaxonomyClient() {
                         >
                           <div className="flex items-start justify-between gap-2 border-b border-black/5 px-4 py-3">
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-base font-semibold text-[#1a1a1a]" title={c.name}>
+                              <p className="truncate text-base font-semibold text-admin-ink" title={c.name}>
                                 {c.name}
                               </p>
-                              <p className="mt-0.5 text-xs text-[#1a1a1a]/40">
+                              <p className="mt-0.5 text-xs text-admin-ink/40">
                                 {subs.length} sub-categor{subs.length === 1 ? "y" : "ies"}
                               </p>
                             </div>
                             <div className="flex shrink-0 items-center gap-0.5">
                               <button
                                 type="button"
-                                className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-[#5B2D9B] hover:bg-[#5B2D9B]/10"
+                                className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-admin-accent hover:bg-admin-accent/10"
                                 onClick={() =>
                                   setTemplateTarget({
                                     categoryId: c.id,
@@ -536,7 +542,7 @@ export default function AdminProductTaxonomyClient() {
                               </button>
                               <button
                                 type="button"
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#5B2D9B] hover:bg-[#5B2D9B]/10"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-admin-accent hover:bg-admin-accent/10"
                                 disabled={busyCat === c.id}
                                 onClick={() => void renameCategory(c.id, c.name)}
                                 title="Rename"
@@ -559,7 +565,7 @@ export default function AdminProductTaxonomyClient() {
 
                           <div className="flex flex-col gap-2 px-4 py-3">
                             <div className="flex items-center gap-2">
-                              <span className="w-[72px] shrink-0 text-[10px] font-bold uppercase tracking-wide text-[#5B2D9B]/80">
+                              <span className="w-[72px] shrink-0 text-[10px] font-bold uppercase tracking-wide text-admin-accent/80">
                                 Subs
                               </span>
                               <input
@@ -568,7 +574,7 @@ export default function AdminProductTaxonomyClient() {
                                 onChange={(e) =>
                                   setSubDraft((p) => ({ ...p, [c.id]: e.target.value }))
                                 }
-                                className="min-w-0 flex-1 rounded-lg border border-black/10 bg-white px-2.5 py-1.5 text-xs text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/35 focus:border-[#5B2D9B]/40"
+                                className="min-w-0 flex-1 rounded-lg border border-black/10 bg-white px-2.5 py-1.5 text-xs text-admin-ink outline-none placeholder:text-admin-ink/35 focus:border-admin-accent/40"
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter") {
                                     e.preventDefault();
@@ -596,13 +602,13 @@ export default function AdminProductTaxonomyClient() {
                                     key={s.id}
                                     className="flex items-center justify-between gap-2 rounded-lg bg-white px-2 py-1 text-xs"
                                   >
-                                    <span className="min-w-0 truncate text-[#1a1a1a]/85" title={s.name}>
+                                    <span className="min-w-0 truncate text-admin-ink/85" title={s.name}>
                                       {s.name}
                                     </span>
                                     <div className="flex shrink-0 items-center">
                                       <button
                                         type="button"
-                                        className="inline-flex h-6 w-6 items-center justify-center rounded text-[#5B2D9B] hover:bg-[#5B2D9B]/10"
+                                        className="inline-flex h-6 w-6 items-center justify-center rounded text-admin-accent hover:bg-admin-accent/10"
                                         disabled={busySub === s.id}
                                         onClick={() =>
                                           setTemplateTarget({
@@ -618,7 +624,7 @@ export default function AdminProductTaxonomyClient() {
                                       </button>
                                       <button
                                         type="button"
-                                        className="inline-flex h-6 w-6 items-center justify-center rounded text-[#5B2D9B] hover:bg-[#5B2D9B]/10"
+                                        className="inline-flex h-6 w-6 items-center justify-center rounded text-admin-accent hover:bg-admin-accent/10"
                                         disabled={busySub === s.id}
                                         onClick={() => void renameSub(c.id, s.id, s.name)}
                                       >
@@ -644,7 +650,7 @@ export default function AdminProductTaxonomyClient() {
                                 ))}
                               </ul>
                             ) : (
-                              <p className="text-[10px] text-[#1a1a1a]/35">Optional — none yet</p>
+                              <p className="text-[10px] text-admin-ink/35">Optional — none yet</p>
                             )}
                           </div>
                         </li>
@@ -663,7 +669,7 @@ export default function AdminProductTaxonomyClient() {
                         <ChevronLeft className="h-4 w-4" aria-hidden />
                         Back
                       </button>
-                      <span className="text-xs font-semibold tabular-nums text-[#1a1a1a]/45">
+                      <span className="text-xs font-semibold tabular-nums text-admin-ink/45">
                         {safePage + 1} / {totalPages}
                       </span>
                       <button

@@ -43,6 +43,7 @@ export default function Header() {
   }, []);
 
   const isHome = pathname === "/";
+  const isShop = pathname === "/shop";
 
   const navLinkClass = (href: string) =>
     `text-[13px] font-semibold uppercase tracking-[0.12em] text-primary transition-colors duration-200 ${
@@ -54,7 +55,9 @@ export default function Header() {
       <header
         className={`site-header fixed top-0 left-0 right-0 z-50 ${
           scrolled ? "site-header--scrolled" : ""
-        } ${isHome && !scrolled ? "site-header--on-hero" : ""}`}
+        } ${isHome && !scrolled ? "site-header--on-hero" : ""} ${
+          isShop && !scrolled ? "site-header--on-shop" : ""
+        }`}
       >
         <Container className="flex h-[var(--header-height)] min-h-[84px] items-center justify-between gap-4">
           <Link

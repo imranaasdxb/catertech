@@ -136,7 +136,7 @@ function DetailRow({
   const display = value?.trim() ? value : "—";
   return (
     <div className={`flex items-start gap-3 py-3 ${className}`}>
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#F5F5F7] text-[#5B2D9B]">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-admin-bg text-admin-accent">
         <Icon className="h-4 w-4" strokeWidth={1.75} aria-hidden />
       </span>
       <div className="min-w-0 flex-1 pt-0.5">
@@ -486,7 +486,7 @@ export default function AdminRfqClient({ dbConfigured }: { dbConfigured: boolean
         {selected ? (
           <div className="space-y-6 py-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex rounded-lg bg-[#EDE8F7] px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-[#5B2D9B]">
+              <span className="inline-flex rounded-lg bg-[#fdeadf] px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-admin-accent">
                 {selected.referenceNo}
               </span>
               <span className="inline-flex rounded-lg bg-offwhite border border-border px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-charcoal">

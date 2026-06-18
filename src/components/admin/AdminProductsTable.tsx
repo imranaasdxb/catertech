@@ -6,6 +6,7 @@ import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import AdminProductViewPanel from "@/components/admin/AdminProductViewPanel";
 import { AdminPanelModal } from "@/components/admin/AdminPanelModal";
 import { AdminTypedDeleteDialog } from "@/components/admin/AdminTypedDeleteDialog";
+import { notifyProductTaxonomyChanged } from "@/components/admin/ProductCategorySelects";
 import { products, type ProductAttributeValue } from "@/db/schema";
 import type { InferSelectModel } from "drizzle-orm";
 import { Check, Eye, Loader2, Pencil, Search, Trash2 } from "lucide-react";
@@ -405,8 +406,8 @@ export default function AdminProductsTable({
         onClose={closeEdit}
       >
         {editLoading ? (
-          <div className="flex flex-col items-center gap-3 py-20 text-[#1a1a1a]/50">
-            <Loader2 className="h-8 w-8 animate-spin text-[#5B2D9B]" aria-hidden />
+          <div className="flex flex-col items-center gap-3 py-20 text-admin-ink/50">
+            <Loader2 className="h-8 w-8 animate-spin text-admin-accent" aria-hidden />
             <p className="text-sm">Loading editor…</p>
           </div>
         ) : editLoadErr ? (
@@ -455,6 +456,7 @@ export default function AdminProductsTable({
           try {
             const res = await fetch(`/api/admin/products/${deleteTarget.id}`, { method: "DELETE" });
             if (!res.ok) throw new Error();
+            notifyProductTaxonomyChanged();
             router.refresh();
           } finally {
             setDeletingId(null);

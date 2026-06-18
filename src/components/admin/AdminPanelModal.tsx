@@ -43,16 +43,16 @@ export function AdminPanelModal({
       >
         <header className="flex shrink-0 items-start justify-between gap-4 border-b border-black/8 bg-white px-5 py-4 sm:px-6">
           <div className="min-w-0 pr-2">
-            <h2 id="admin-panel-title" className="text-lg font-bold tracking-tight text-[#1a1a1a]">
+            <h2 id="admin-panel-title" className="text-lg font-bold tracking-tight text-admin-ink">
               {title}
             </h2>
             {subtitle ? (
-              <p className="mt-1 text-sm leading-snug text-[#1a1a1a]/48">{subtitle}</p>
+              <p className="mt-1 text-sm leading-snug text-admin-ink/48">{subtitle}</p>
             ) : null}
           </div>
           <button
             type="button"
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#1a1a1a]/45 transition-colors hover:bg-black/[0.06] hover:text-[#1a1a1a]"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-admin-ink/45 transition-colors hover:bg-black/[0.06] hover:text-admin-ink"
             aria-label="Close"
             onClick={onClose}
           >

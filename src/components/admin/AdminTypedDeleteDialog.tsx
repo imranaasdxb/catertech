@@ -62,20 +62,20 @@ export function AdminTypedDeleteDialog({
       >
         <button
           type="button"
-          className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full text-[#1a1a1a]/45 hover:bg-black/[0.05]"
+          className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full text-admin-ink/45 hover:bg-black/[0.05]"
           aria-label="Close"
           onClick={onCancel}
         >
           <X className="h-5 w-5" />
         </button>
-        <h2 id="typed-del-title" className="text-lg font-bold text-[#1a1a1a] pr-10">
+        <h2 id="typed-del-title" className="text-lg font-bold text-admin-ink pr-10">
           Remove this {noun}?
         </h2>
         {highlight ? (
           <p className={`mt-2 text-sm ${admin.tdMuted} line-clamp-2 font-medium`}>{highlight}</p>
         ) : null}
         <p className={`mt-3 text-sm leading-relaxed ${admin.muted}`}>
-          Type <strong className="text-[#1a1a1a]">{ADMIN_DELETE_CONFIRM_WORD}</strong> below to confirm.
+          Type <strong className="text-admin-ink">{ADMIN_DELETE_CONFIRM_WORD}</strong> below to confirm.
           This cannot be undone.
         </p>
         <input

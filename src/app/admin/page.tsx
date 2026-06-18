@@ -16,18 +16,18 @@ export default async function AdminDashboardPage() {
   if (!db) {
     return (
       <div className="font-sans">
-        <h1 className="mb-2 text-3xl font-bold text-[#1a1a1a]">Dashboard</h1>
-        <p className="max-w-md text-sm leading-relaxed text-[#1a1a1a]/50">
+        <h1 className="mb-2 text-3xl font-bold text-admin-ink">Dashboard</h1>
+        <p className="max-w-md text-sm leading-relaxed text-admin-ink/50">
           Set{" "}
-          <code className="rounded-md bg-[#F5F5F7] px-1.5 py-0.5 text-[#1a1a1a]">
+          <code className="rounded-md bg-admin-bg px-1.5 py-0.5 text-admin-ink">
             DATABASE_URL
           </code>{" "}
           in{" "}
-          <code className="rounded-md bg-[#F5F5F7] px-1.5 py-0.5 text-[#1a1a1a]">
+          <code className="rounded-md bg-admin-bg px-1.5 py-0.5 text-admin-ink">
             .env.local
           </code>{" "}
           and run{" "}
-          <code className="rounded-md bg-[#F5F5F7] px-1.5 py-0.5 text-[#1a1a1a]">
+          <code className="rounded-md bg-admin-bg px-1.5 py-0.5 text-admin-ink">
             npx drizzle-kit push
           </code>{" "}
           to create tables in Neon.

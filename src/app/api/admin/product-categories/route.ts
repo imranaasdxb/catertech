@@ -1,7 +1,12 @@
-import { asc } from "drizzle-orm";
+import { asc, count, countDistinct } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { productCategories, productSubcategories } from "@/db/schema";
+import {
+  productCategories,
+  products,
+  productSubcategories,
+  productTitlePresets,
+} from "@/db/schema";
 import {
   uniqueCategorySlug,
 } from "@/lib/product-taxonomy";
@@ -17,19 +22,50 @@ export async function GET() {
   if (!db)
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
 
-  const cats = await db
-    .select()
-    .from(productCategories)
-    .orderBy(asc(productCategories.sortOrder), asc(productCategories.name));
+  const [cats, subs, presetCounts, createdPresetCounts] = await Promise.all([
+    db
+      .select()
+      .from(productCategories)
+      .orderBy(asc(productCategories.sortOrder), asc(productCategories.name)),
+    db
+      .select()
+      .from(productSubcategories)
+      .orderBy(asc(productSubcategories.sortOrder), asc(productSubcategories.name)),
+    db
+      .select({
+        categoryId: productTitlePresets.categoryId,
+        presetCount: count(),
+      })
+      .from(productTitlePresets)
+      .groupBy(productTitlePresets.categoryId),
+    db
+      .select({
+        categoryId: products.categoryId,
+        createdPresetCount: countDistinct(products.productTitlePresetId),
+      })
+      .from(products)
+      .groupBy(products.categoryId),
+  ]);
 
-  const subs = await db
-    .select()
-    .from(productSubcategories)
-    .orderBy(asc(productSubcategories.sortOrder), asc(productSubcategories.name));
+  const subcategoriesByCategory = new Map<string, typeof subs>();
+  for (const subcategory of subs) {
+    const current = subcategoriesByCategory.get(subcategory.categoryId) ?? [];
+    current.push(subcategory);
+    subcategoriesByCategory.set(subcategory.categoryId, current);
+  }
+
+  const presetCountByCategory = new Map(
+    presetCounts.map((row) => [row.categoryId, row.presetCount])
+  );
+  const createdPresetCountByCategory = new Map(
+    createdPresetCounts.map((row) => [row.categoryId, row.createdPresetCount])
+  );
 
   const categories = cats.map((c) => ({
     ...c,
-    subcategories: subs.filter((s) => s.categoryId === c.id),
+    subcategories: subcategoriesByCategory.get(c.id) ?? [],
+    presetCount: presetCountByCategory.get(c.id) ?? 0,
+    createdPresetCount: createdPresetCountByCategory.get(c.id) ?? 0,
   }));
 
   return NextResponse.json({ categories });

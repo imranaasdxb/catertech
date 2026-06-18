@@ -1,6 +1,11 @@
 "use client";
 
 import { admin } from "@/components/admin/adminTheme";
+import {
+  incrementProductTaxonomyPresetCount,
+  loadProductTaxonomy,
+  type TaxonomyRow,
+} from "@/components/admin/ProductCategorySelects";
 import type { ProductAttributeValue } from "@/lib/category-template";
 import { Check, ChevronDown, Loader2, Plus, RotateCcw, Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -10,6 +15,7 @@ type ProductPreset = {
   title: string;
   sourceLabel: string;
   attributes: Record<string, ProductAttributeValue>;
+  created: boolean;
 };
 
 type Props = {
@@ -19,6 +25,7 @@ type Props = {
   subCategoryName?: string;
   onPresetSelected: (attributes: Record<string, ProductAttributeValue>) => void;
   onTitleChange?: (title: string) => void;
+  onPresetIdentityChange?: (presetId: string | null) => void;
   onAddCustomRequested?: () => void;
   onPresetCreated?: (selection: { categoryId: string; subCategoryId: string }) => void;
   onClearFormRequested?: () => void;
@@ -32,12 +39,6 @@ type Props = {
   }) => void;
 };
 
-type TaxonomyRow = {
-  id: string;
-  name: string;
-  subcategories: { id: string; name: string }[];
-};
-
 export function ProductTitlePresetInput({
   categoryId,
   subCategoryId,
@@ -45,6 +46,7 @@ export function ProductTitlePresetInput({
   subCategoryName,
   onPresetSelected,
   onTitleChange,
+  onPresetIdentityChange,
   onAddCustomRequested,
   onPresetCreated,
   onClearFormRequested,
@@ -98,20 +100,22 @@ export function ProductTitlePresetInput({
 
   useEffect(() => {
     let cancelled = false;
-    void fetch("/api/admin/product-categories")
-      .then(async (res) => {
-        if (!res.ok) throw new Error("load failed");
-        return (await res.json()) as { categories?: TaxonomyRow[] };
-      })
-      .then((data) => {
-        if (!cancelled) setTaxonomy(data.categories ?? []);
-      })
-      .catch(() => {
-        if (!cancelled) setTaxonomy([]);
-      });
+    const loadTaxonomy = () => {
+      void loadProductTaxonomy()
+        .then((categories) => {
+          if (!cancelled) setTaxonomy(categories);
+        })
+        .catch(() => {
+          if (!cancelled) setTaxonomy([]);
+        });
+    };
+
+    loadTaxonomy();
+    window.addEventListener("ct-product-taxonomy-updated", loadTaxonomy);
 
     return () => {
       cancelled = true;
+      window.removeEventListener("ct-product-taxonomy-updated", loadTaxonomy);
     };
   }, []);
 
@@ -121,7 +125,8 @@ export function ProductTitlePresetInput({
     setPresetSubCategoryId(subCategoryId);
     setSaveError("");
     setSaveStatus("");
-  }, [categoryId, subCategoryId]);
+    onPresetIdentityChange?.(null);
+  }, [categoryId, onPresetIdentityChange, subCategoryId]);
 
   const filtered = useMemo(() => {
     const query = title.trim().toLowerCase();
@@ -138,6 +143,11 @@ export function ProductTitlePresetInput({
   const presetCategory = useMemo(() => {
     return taxonomy.find((row) => row.id === presetCategoryId);
   }, [presetCategoryId, taxonomy]);
+
+  const selectedCategoryProgress = useMemo(
+    () => taxonomy.find((row) => row.id === categoryId),
+    [categoryId, taxonomy]
+  );
 
   const presetSubCategory = useMemo(() => {
     return presetSubcategories.find((row) => row.id === presetSubCategoryId);
@@ -180,6 +190,7 @@ export function ProductTitlePresetInput({
     onTitleChange?.(preset.title);
     setOpen(false);
     setCustomPresetOpen(false);
+    onPresetIdentityChange?.(preset.id);
     onPresetSelected(preset.attributes);
   }
 
@@ -191,6 +202,7 @@ export function ProductTitlePresetInput({
     setPresetSubCategoryId("");
     setSaveError("");
     setSaveStatus("");
+    onPresetIdentityChange?.(null);
     onAddCustomRequested?.();
   }
 
@@ -230,7 +242,9 @@ export function ProductTitlePresetInput({
         const exists = current.some((preset) => preset.id === data.preset!.id);
         return exists ? current : [data.preset!, ...current];
       });
+      onPresetIdentityChange?.(data.preset.id);
     }
+    if (!data.existed) incrementProductTaxonomyPresetCount(presetCategoryId);
     setSaveStatus(data.existed ? "Preset already exists." : "Preset added.");
     onPresetCreated?.({
       categoryId: presetCategoryId,
@@ -250,14 +264,14 @@ export function ProductTitlePresetInput({
       >
         <div className="relative">
           <div className="mb-1.5 flex items-center justify-between gap-3">
-            <label htmlFor="product-title" className="block text-sm font-semibold text-[#1a1a1a]">
+            <label htmlFor="product-title" className="block text-sm font-semibold text-admin-ink">
               Title *
             </label>
             {customPresetOpen ? (
               <button
                 type="button"
                 onClick={onClearFormRequested}
-                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white text-[#1a1a1a]/55 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition hover:border-[#5B2D9B]/30 hover:bg-[#F5F5F7] hover:text-[#5B2D9B]"
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white text-admin-ink/55 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition hover:border-admin-accent/30 hover:bg-admin-bg hover:text-admin-accent"
                 aria-label="Clear form and choose category again"
                 title="Clear form"
               >
@@ -269,7 +283,7 @@ export function ProductTitlePresetInput({
             <Search
               size={15}
               aria-hidden="true"
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#1a1a1a]/35"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-admin-ink/35"
             />
             <input
               id="product-title"
@@ -280,6 +294,7 @@ export function ProductTitlePresetInput({
               onChange={(event) => {
                 setTitle(event.target.value);
                 onTitleChange?.(event.target.value);
+                onPresetIdentityChange?.(null);
                 setOpen(true);
                 setSaveError("");
                 setSaveStatus("");
@@ -289,13 +304,22 @@ export function ProductTitlePresetInput({
                 blurTimer.current = setTimeout(() => setOpen(false), 120);
               }}
               placeholder="Type a product name or choose a preset"
-              className={`${admin.fieldModern} pl-9 pr-11`}
+              className={`${admin.fieldModern} pl-9 pr-28`}
             />
+            {categoryId ? (
+              <span
+                className="pointer-events-none absolute right-10 top-1/2 -translate-y-1/2 text-xs font-bold tabular-nums text-admin-ink/45"
+                aria-label={`${selectedCategoryProgress?.createdPresetCount ?? 0} of ${selectedCategoryProgress?.presetCount ?? 0} product title presets created`}
+              >
+                ({selectedCategoryProgress?.createdPresetCount ?? 0}/
+                {selectedCategoryProgress?.presetCount ?? 0})
+              </span>
+            ) : null}
             <button
               type="button"
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => setOpen((current) => !current)}
-              className="absolute right-1 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg text-[#1a1a1a]/55 transition hover:bg-black/5 hover:text-[#1a1a1a]"
+              className="absolute right-1 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-lg text-admin-ink/55 transition hover:bg-black/5 hover:text-admin-ink"
               aria-label="Show product title presets"
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : <ChevronDown size={17} />}
@@ -328,7 +352,7 @@ export function ProductTitlePresetInput({
                 <option value="">-- Select --</option>
                 {taxonomy.map((category) => (
                   <option key={category.id} value={category.id}>
-                    {category.name}
+                    {category.name} ({category.createdPresetCount}/{category.presetCount})
                   </option>
                 ))}
               </select>
@@ -362,7 +386,7 @@ export function ProductTitlePresetInput({
               type="button"
               disabled={!canSavePreset}
               onClick={() => void addPreset()}
-              className={`${admin.primaryBtn} min-h-11 justify-center gap-2 whitespace-nowrap bg-[#5B2D9B] px-4 shadow-[0_8px_20px_rgba(91,45,155,0.24)] hover:bg-[#4b2586] disabled:cursor-not-allowed disabled:opacity-55`}
+              className={`${admin.primaryBtn} min-h-11 justify-center gap-2 whitespace-nowrap bg-admin-accent px-4 shadow-[0_8px_20px_rgba(248,121,65,0.24)] hover:bg-[#ec6326] disabled:cursor-not-allowed disabled:opacity-55`}
             >
               {savingPreset ? (
                 <Loader2 size={15} className="animate-spin" />
@@ -391,19 +415,37 @@ export function ProductTitlePresetInput({
                 type="button"
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => selectPreset(preset)}
-                className="block w-full rounded-lg px-3 py-2.5 text-left transition hover:bg-[#F5F5F7]"
+                className="flex w-full items-center justify-between gap-4 rounded-lg px-3 py-2.5 text-left transition hover:bg-admin-bg"
               >
-                <span className="block text-sm font-semibold text-[#1a1a1a]">{preset.title}</span>
-                {preset.sourceLabel !== preset.title ? (
-                  <span className="mt-0.5 block text-xs text-[#1a1a1a]/50">
-                    {preset.sourceLabel}
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-admin-ink">
+                    {preset.title}
                   </span>
-                ) : null}
+                  {preset.sourceLabel !== preset.title ? (
+                    <span className="mt-0.5 block truncate text-xs text-admin-ink/50">
+                      {preset.sourceLabel}
+                    </span>
+                  ) : null}
+                </span>
+                <span
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                    preset.created
+                      ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                      : "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+                  }`}
+                >
+                  {preset.created ? (
+                    <Check size={12} strokeWidth={2.5} aria-hidden />
+                  ) : (
+                    <span className="size-2.5 rounded-full border-2 border-current" aria-hidden />
+                  )}
+                  {preset.created ? "Created" : "Not created"}
+                </span>
               </button>
             ))
           ) : (
             <div className="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5">
-              <p className="min-w-0 text-sm text-[#1a1a1a]/50">
+              <p className="min-w-0 text-sm text-admin-ink/50">
                 No matching preset.
               </p>
               <button
@@ -411,7 +453,7 @@ export function ProductTitlePresetInput({
                 disabled={!title.trim()}
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={requestCustomPreset}
-                className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg bg-[#5B2D9B] px-3 text-xs font-bold text-white shadow-[0_6px_16px_rgba(91,45,155,0.22)] transition hover:bg-[#4b2586] disabled:cursor-not-allowed disabled:opacity-45"
+                className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg bg-admin-accent px-3 text-xs font-bold text-white shadow-[0_6px_16px_rgba(248,121,65,0.22)] transition hover:bg-[#ec6326] disabled:cursor-not-allowed disabled:opacity-45"
               >
                 Add this
               </button>

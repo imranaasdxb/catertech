@@ -1,7 +1,11 @@
-import { desc, eq } from "drizzle-orm";
+import { count, desc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { products, type ProductAttributeValue } from "@/db/schema";
+import {
+  products,
+  productTitlePresets,
+  type ProductAttributeValue,
+} from "@/db/schema";
 import {
   buildCategoryDisplayLabel,
   validateSubcategoryForCategory,
@@ -24,6 +28,7 @@ const createSchema = z.object({
   seoDescription: z.string().trim().max(180).optional(),
   searchKeywords: z.array(z.string().trim().min(1).max(80)).optional(),
   canonicalProductId: z.union([z.string().uuid(), z.null()]).optional(),
+  productTitlePresetId: z.union([z.string().uuid(), z.null()]).optional(),
 });
 
 export async function GET() {
@@ -66,6 +71,31 @@ export async function POST(request: Request) {
   }
   if (!catId) subId = null;
 
+  const productTitlePresetId = d.productTitlePresetId ?? null;
+  if (productTitlePresetId) {
+    const [preset] = await db
+      .select({
+        id: productTitlePresets.id,
+        categoryId: productTitlePresets.categoryId,
+        subCategoryId: productTitlePresets.subCategoryId,
+      })
+      .from(productTitlePresets)
+      .where(eq(productTitlePresets.id, productTitlePresetId))
+      .limit(1);
+
+    if (
+      !preset ||
+      !catId ||
+      preset.categoryId !== catId ||
+      preset.subCategoryId !== subId
+    ) {
+      return NextResponse.json(
+        { error: "Selected title preset does not belong to this category selection." },
+        { status: 400 }
+      );
+    }
+  }
+
   const categoryLabel = await buildCategoryDisplayLabel(db, catId, subId);
   const attributes = (d.attributes ?? {}) as Record<string, ProductAttributeValue>;
   const generatedSeo = generateProductSeo({
@@ -99,6 +129,7 @@ export async function POST(request: Request) {
       category: categoryLabel,
       categoryId: catId,
       subCategoryId: subId,
+      productTitlePresetId,
       images: d.images ?? [],
       isAvailable: d.isAvailable ?? true,
       isFeatured: d.isFeatured ?? false,
@@ -109,7 +140,16 @@ export async function POST(request: Request) {
       searchKeywords: d.searchKeywords?.length ? d.searchKeywords : generatedSeo.searchKeywords,
       canonicalProductId: d.canonicalProductId ?? null,
     })
-    .returning();
+    .returning({ id: products.id, slug: products.slug });
 
-  return NextResponse.json(row, { status: 201 });
+  let presetProgressIncremented = false;
+  if (productTitlePresetId) {
+    const [{ linkedProductCount }] = await db
+      .select({ linkedProductCount: count() })
+      .from(products)
+      .where(eq(products.productTitlePresetId, productTitlePresetId));
+    presetProgressIncremented = linkedProductCount === 1;
+  }
+
+  return NextResponse.json({ ...row, presetProgressIncremented }, { status: 201 });
 }

@@ -10,7 +10,10 @@ import {
   parseProductAttributes,
   ProductTemplateFields,
 } from "@/components/admin/ProductTemplateFields";
-import { ProductCategorySelects } from "@/components/admin/ProductCategorySelects";
+import {
+  notifyProductTaxonomyChanged,
+  ProductCategorySelects,
+} from "@/components/admin/ProductCategorySelects";
 import { ADMIN_PURPLE, admin, adminCardShadow } from "@/components/admin/adminTheme";
 import { products } from "@/db/schema";
 import type { TemplateFieldDef } from "@/lib/category-template";
@@ -101,6 +104,7 @@ export default function ProductEditClient({
       setError(JSON.stringify(data.error ?? "Save failed"));
       return;
     }
+    notifyProductTaxonomyChanged();
     void router.refresh();
     setShowSaved(true);
   }
@@ -108,6 +112,7 @@ export default function ProductEditClient({
   async function runDelete() {
     const res = await fetch(`/api/admin/products/${product.id}`, { method: "DELETE" });
     if (!res.ok) throw new Error("Delete failed");
+    notifyProductTaxonomyChanged();
     setTypedDeleteOpen(false);
     void Promise.resolve().then(() => {
       if (onDeleted) onDeleted();
@@ -174,7 +179,7 @@ export default function ProductEditClient({
 
           {categoryId ? (
             <ProductTemplateFields
-              key={`${categoryId}-${subCategoryId}`}
+              key={categoryId}
               categoryId={categoryId}
               subCategoryId={subCategoryId}
               initialAttributes={(product.attributes ?? {}) as Record<string, string | { value: string; unit?: string }>}

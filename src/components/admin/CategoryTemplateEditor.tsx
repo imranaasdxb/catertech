@@ -146,8 +146,8 @@ export function CategoryTemplateEditor({
       ) : null}
 
       {loading ? (
-        <div className="flex items-center justify-center gap-2 py-16 text-[#1a1a1a]/50">
-          <Loader2 className="h-6 w-6 animate-spin text-[#5B2D9B]" />
+        <div className="flex items-center justify-center gap-2 py-16 text-admin-ink/50">
+          <Loader2 className="h-6 w-6 animate-spin text-admin-accent" />
           Loading…
         </div>
       ) : (
@@ -158,7 +158,7 @@ export function CategoryTemplateEditor({
               className="rounded-xl border border-black/6 bg-white p-3"
             >
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs font-semibold text-[#1a1a1a]/40">Field {index + 1}</span>
+                <span className="text-xs font-semibold text-admin-ink/40">Field {index + 1}</span>
                 <button
                   type="button"
                   onClick={() => removeField(index)}
@@ -171,7 +171,7 @@ export function CategoryTemplateEditor({
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-[#1a1a1a]/55">Name</label>
+                  <label className="mb-1 block text-xs font-semibold text-admin-ink/55">Name</label>
                   <input
                     value={field.label}
                     onChange={(e) => updateField(index, { label: e.target.value })}
@@ -180,7 +180,7 @@ export function CategoryTemplateEditor({
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-[#1a1a1a]/55">Type</label>
+                  <label className="mb-1 block text-xs font-semibold text-admin-ink/55">Type</label>
                   <select
                     value={field.type}
                     onChange={(e) =>
@@ -199,7 +199,7 @@ export function CategoryTemplateEditor({
 
               {field.type === "dimension" ? (
                 <div className="mt-2">
-                  <label className="mb-1 block text-xs font-semibold text-[#1a1a1a]/55">Units</label>
+                  <label className="mb-1 block text-xs font-semibold text-admin-ink/55">Units</label>
                   <input
                     value={(field.unitOptions ?? DIMENSION_UNITS).join(", ")}
                     onChange={(e) =>
@@ -218,7 +218,7 @@ export function CategoryTemplateEditor({
 
               {field.type === "select" ? (
                 <div className="mt-2">
-                  <label className="mb-1 block text-xs font-semibold text-[#1a1a1a]/55">Options</label>
+                  <label className="mb-1 block text-xs font-semibold text-admin-ink/55">Options</label>
                   <input
                     value={(field.options ?? []).join(", ")}
                     onChange={(e) =>
@@ -235,7 +235,7 @@ export function CategoryTemplateEditor({
                 </div>
               ) : null}
 
-              <label className="mt-2 flex cursor-pointer items-center gap-2 text-xs text-[#1a1a1a]/65">
+              <label className="mt-2 flex cursor-pointer items-center gap-2 text-xs text-admin-ink/65">
                 <input
                   type="checkbox"
                   checked={Boolean(field.required)}

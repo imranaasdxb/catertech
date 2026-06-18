@@ -16,12 +16,12 @@ export function AdminBlockingOverlay(props: {
       aria-busy="true"
       aria-label={props.title}
     >
-      <Loader2 className="h-11 w-11 shrink-0 animate-spin text-[#5B2D9B]" aria-hidden />
-      <p className="mt-5 max-w-sm text-center text-[15px] font-semibold leading-snug text-[#1a1a1a]">
+      <Loader2 className="h-11 w-11 shrink-0 animate-spin text-admin-accent" aria-hidden />
+      <p className="mt-5 max-w-sm text-center text-[15px] font-semibold leading-snug text-admin-ink">
         {props.title}
       </p>
       {props.subtitle ? (
-        <p className="mt-2 max-w-sm text-center text-sm leading-snug text-[#1a1a1a]/48">
+        <p className="mt-2 max-w-sm text-center text-sm leading-snug text-admin-ink/48">
           {props.subtitle}
         </p>
       ) : null}
@@ -59,7 +59,7 @@ export function AdminSuccessModal(props: {
       >
         <button
           type="button"
-          className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full text-[#1a1a1a]/45 hover:bg-black/5 hover:text-[#1a1a1a] transition-colors"
+          className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full text-admin-ink/45 hover:bg-black/5 hover:text-admin-ink transition-colors"
           aria-label="Close"
           onClick={closeOverlay}
         >
@@ -71,13 +71,13 @@ export function AdminSuccessModal(props: {
         >
           ✓
         </div>
-        <h2 id="admin-success-title" className="text-xl font-bold text-[#1a1a1a] tracking-tight pr-8">
+        <h2 id="admin-success-title" className="text-xl font-bold text-admin-ink tracking-tight pr-8">
           {props.title}
         </h2>
-        <p className="mt-2 text-sm leading-relaxed text-[#1a1a1a]/55">{props.message}</p>
+        <p className="mt-2 text-sm leading-relaxed text-admin-ink/55">{props.message}</p>
         <button
           type="button"
-          className="mt-8 w-full rounded-full py-3.5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(75,38,164,0.25)] hover:opacity-95 active:opacity-90"
+          className="mt-8 w-full rounded-full py-3.5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(248,121,65,0.25)] hover:opacity-95 active:opacity-90"
           style={{ backgroundColor: ADMIN_PURPLE }}
           onClick={props.onConfirm}
         >

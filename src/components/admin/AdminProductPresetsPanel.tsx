@@ -248,10 +248,10 @@ export function AdminProductPresetsPanel({
 
   return (
     <section className="overflow-hidden border border-black/6 bg-white">
-      <div className="flex flex-col gap-3 border-b border-black/6 bg-[#F5F5F7]/60 px-4 py-4 sm:px-6 lg:flex-row lg:items-center">
+      <div className="flex flex-col gap-3 border-b border-black/6 bg-admin-bg/60 px-4 py-4 sm:px-6 lg:flex-row lg:items-center">
         <div className="relative min-w-0 flex-1">
           <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#1a1a1a]/35"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-admin-ink/35"
             aria-hidden
           />
           <input
@@ -291,7 +291,7 @@ export function AdminProductPresetsPanel({
             setPage(1);
           }}
           disabled={!categoryId || subcategories.length === 0}
-          className={`${admin.fieldModern} py-2.5 text-sm disabled:bg-[#F5F5F7] disabled:text-[#1a1a1a]/35 lg:w-[220px]`}
+          className={`${admin.fieldModern} py-2.5 text-sm disabled:bg-admin-bg disabled:text-admin-ink/35 lg:w-[220px]`}
           aria-label="Filter product presets by sub-category"
         >
           <option value="">All sub-categories</option>
@@ -309,12 +309,12 @@ export function AdminProductPresetsPanel({
             onClick={() => selectCategoryChip("")}
             className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-[11px] font-semibold transition ${
               categoryId === ""
-                ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
-                : "border-black/10 bg-white text-[#1a1a1a]/65 hover:border-black/25 hover:text-[#1a1a1a]"
+                ? "border-admin-ink bg-admin-ink text-white"
+                : "border-black/10 bg-white text-admin-ink/65 hover:border-black/25 hover:text-admin-ink"
             }`}
           >
             <span>All</span>
-            <span className={categoryId === "" ? "text-white/70" : "text-[#1a1a1a]/38"}>
+            <span className={categoryId === "" ? "text-white/70" : "text-admin-ink/38"}>
               {categoryCounts.reduce((total, category) => total + category.count, 0)}
             </span>
           </button>
@@ -327,12 +327,12 @@ export function AdminProductPresetsPanel({
                 onClick={() => selectCategoryChip(category.categoryId)}
                 className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1.5 text-[11px] font-semibold transition ${
                   active
-                    ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
-                    : "border-black/10 bg-white text-[#1a1a1a]/65 hover:border-black/25 hover:text-[#1a1a1a]"
+                    ? "border-admin-ink bg-admin-ink text-white"
+                    : "border-black/10 bg-white text-admin-ink/65 hover:border-black/25 hover:text-admin-ink"
                 }`}
               >
                 <span>{category.categoryName}</span>
-                <span className={active ? "text-white/70" : "text-[#1a1a1a]/38"}>
+                <span className={active ? "text-white/70" : "text-admin-ink/38"}>
                   {category.count}
                 </span>
               </button>
@@ -348,34 +348,34 @@ export function AdminProductPresetsPanel({
       ) : null}
 
       <div className="flex items-center justify-between gap-3 border-b border-black/6 px-4 py-3 sm:px-6">
-        <p className="text-xs font-semibold uppercase tracking-wide text-[#1a1a1a]/45">
+        <p className="text-xs font-semibold uppercase tracking-wide text-admin-ink/45">
           {loading ? "Loading..." : `${pagination.total} product presets`}
         </p>
-        <p className="text-xs font-medium tabular-nums text-[#1a1a1a]/40">
+        <p className="text-xs font-medium tabular-nums text-admin-ink/40">
           Page {pagination.page} of {pagination.totalPages}
         </p>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1080px] table-fixed text-left text-sm">
-          <thead className="border-b border-black/6 bg-[#F5F5F7]/75">
+          <thead className="border-b border-black/6 bg-admin-bg/75">
             <tr>
-              <th className="w-[58px] px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide text-[#1a1a1a]/45">
+              <th className="w-[58px] px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide text-admin-ink/45">
                 S.N
               </th>
-              <th className="w-[220px] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#1a1a1a]/45 sm:px-6">
+              <th className="w-[220px] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-admin-ink/45 sm:px-6">
                 Title
               </th>
-              <th className="w-[180px] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#1a1a1a]/45">
+              <th className="w-[180px] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-admin-ink/45">
                 Category
               </th>
-              <th className="w-[180px] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#1a1a1a]/45">
+              <th className="w-[180px] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-admin-ink/45">
                 Sub-category
               </th>
-              <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[#1a1a1a]/45">
+              <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-admin-ink/45">
                 Specifications
               </th>
-              <th className="w-[96px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-[#1a1a1a]/45">
+              <th className="w-[96px] px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-admin-ink/45">
                 Actions
               </th>
             </tr>
@@ -383,13 +383,13 @@ export function AdminProductPresetsPanel({
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="h-64 text-center text-[#1a1a1a]/45">
+                <td colSpan={6} className="h-64 text-center text-admin-ink/45">
                   <Loader2 className="mx-auto h-5 w-5 animate-spin" aria-label="Loading" />
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={6} className="h-64 text-center text-sm text-[#1a1a1a]/45">
+                <td colSpan={6} className="h-64 text-center text-sm text-admin-ink/45">
                   No product presets match these filters.
                 </td>
               </tr>
@@ -402,9 +402,9 @@ export function AdminProductPresetsPanel({
                 return (
                   <tr
                     key={row.id}
-                    className="group border-b border-black/6 align-top transition-colors last:border-b-0 hover:bg-[#F5F5F7]/50"
+                    className="group border-b border-black/6 align-top transition-colors last:border-b-0 hover:bg-admin-bg/50"
                   >
-                    <td className="px-3 py-4 text-center text-xs font-semibold tabular-nums text-[#1a1a1a]/40">
+                    <td className="px-3 py-4 text-center text-xs font-semibold tabular-nums text-admin-ink/40">
                       {(pagination.page - 1) * pagination.pageSize + index + 1}
                     </td>
                     <td className="px-4 py-4 sm:px-6">
@@ -420,11 +420,11 @@ export function AdminProductPresetsPanel({
                           aria-label="Preset title"
                         />
                       ) : (
-                        <span className="font-semibold text-[#1a1a1a]">{row.title}</span>
+                        <span className="font-semibold text-admin-ink">{row.title}</span>
                       )}
                     </td>
-                    <td className="px-4 py-4 text-sm text-[#1a1a1a]/70">{row.categoryName}</td>
-                    <td className="px-4 py-4 text-sm text-[#1a1a1a]/55">
+                    <td className="px-4 py-4 text-sm text-admin-ink/70">{row.categoryName}</td>
+                    <td className="px-4 py-4 text-sm text-admin-ink/55">
                       {row.subCategoryName ?? "—"}
                     </td>
                     <td className="px-4 py-4">
@@ -439,13 +439,13 @@ export function AdminProductPresetsPanel({
                               return (
                                 <div key={key} className="border-b border-black/8 pb-2">
                                   <div className="mb-1 flex items-center justify-between gap-1">
-                                    <label className="text-[10px] font-bold uppercase tracking-wide text-[#1a1a1a]/45">
+                                    <label className="text-[10px] font-bold uppercase tracking-wide text-admin-ink/45">
                                       {field?.label ?? fieldLabel(key)}
                                     </label>
                                     <button
                                       type="button"
                                       onClick={() => removeAttribute(key)}
-                                      className="grid h-5 w-5 place-items-center text-[#1a1a1a]/35 hover:text-red-600"
+                                      className="grid h-5 w-5 place-items-center text-admin-ink/35 hover:text-red-600"
                                       title={`Remove ${field?.label ?? fieldLabel(key)}`}
                                     >
                                       <X className="h-3 w-3" />
@@ -498,12 +498,12 @@ export function AdminProductPresetsPanel({
                             })}
                           </div>
                           {loadingTemplate ? (
-                            <p className="flex items-center gap-1 text-xs text-[#1a1a1a]/40">
+                            <p className="flex items-center gap-1 text-xs text-admin-ink/40">
                               <Loader2 className="h-3 w-3 animate-spin" />
                               Loading available fields...
                             </p>
                           ) : unusedFields.length ? (
-                            <label className="relative inline-flex items-center gap-1.5 text-xs font-semibold text-[#1a1a1a]/65">
+                            <label className="relative inline-flex items-center gap-1.5 text-xs font-semibold text-admin-ink/65">
                               <Plus className="h-3.5 w-3.5" />
                               Add field
                               <select
@@ -525,8 +525,8 @@ export function AdminProductPresetsPanel({
                       ) : Object.keys(attributes).length ? (
                         <div className="flex flex-wrap gap-x-4 gap-y-1.5">
                           {Object.entries(attributes).map(([key, value]) => (
-                            <span key={key} className="text-xs text-[#1a1a1a]/65">
-                              <strong className="font-semibold capitalize text-[#1a1a1a]/45">
+                            <span key={key} className="text-xs text-admin-ink/65">
+                              <strong className="font-semibold capitalize text-admin-ink/45">
                                 {fieldLabel(key)}:
                               </strong>{" "}
                               {formatAttribute(value)}
@@ -534,7 +534,7 @@ export function AdminProductPresetsPanel({
                           ))}
                         </div>
                       ) : (
-                        <span className="text-xs text-[#1a1a1a]/35">No saved specifications</span>
+                        <span className="text-xs text-admin-ink/35">No saved specifications</span>
                       )}
                     </td>
                     <td className="px-4 py-4">
@@ -559,7 +559,7 @@ export function AdminProductPresetsPanel({
                               type="button"
                               disabled={saving}
                               onClick={() => setEditDraft(null)}
-                              className="grid h-8 w-8 place-items-center text-[#1a1a1a]/55 hover:bg-black/5"
+                              className="grid h-8 w-8 place-items-center text-admin-ink/55 hover:bg-black/5"
                               title="Cancel editing"
                               aria-label="Cancel editing"
                             >
@@ -570,7 +570,7 @@ export function AdminProductPresetsPanel({
                           <button
                             type="button"
                             onClick={() => startEdit(row)}
-                            className="grid h-8 w-8 place-items-center text-[#1a1a1a]/45 opacity-60 transition hover:bg-black/5 hover:text-[#1a1a1a] group-hover:opacity-100"
+                            className="grid h-8 w-8 place-items-center text-admin-ink/45 opacity-60 transition hover:bg-black/5 hover:text-admin-ink group-hover:opacity-100"
                             title="Edit preset"
                             aria-label={`Edit ${row.title}`}
                           >
@@ -600,7 +600,7 @@ export function AdminProductPresetsPanel({
           <ChevronLeft className="h-3.5 w-3.5" />
           Back
         </button>
-        <span className="text-xs font-semibold tabular-nums text-[#1a1a1a]/45">
+        <span className="text-xs font-semibold tabular-nums text-admin-ink/45">
           {pagination.total === 0
             ? "0 rows"
             : `${(pagination.page - 1) * pagination.pageSize + 1}–${Math.min(

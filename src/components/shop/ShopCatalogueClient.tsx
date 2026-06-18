@@ -3,23 +3,24 @@
 import FeaturedProductsClient from "@/components/sections/FeaturedProductsClient";
 import type {
   CatalogueCategoryRow,
-  CataloguePresetRow,
+  CatalogueProductRow,
 } from "@/lib/catalogue-presets";
 
 export default function ShopCatalogueClient({
   categories,
-  presets,
+  products,
   catalogError,
 }: {
   categories: CatalogueCategoryRow[];
-  presets: CataloguePresetRow[];
+  products: CatalogueProductRow[];
   catalogError?: string;
 }) {
   return (
     <FeaturedProductsClient
       categories={categories}
-      presets={presets}
+      products={products}
       catalogError={catalogError}
+      compactTop
     />
   );
 }

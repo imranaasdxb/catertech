@@ -50,6 +50,26 @@
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 0.875rem;
+
+  /* Admin dashboard shell — premium SaaS layout */
+  --color-admin-bg: #f7f7f5;
+  --color-admin-shell: #fbfbfa;
+  --color-admin-surface: #ffffff;
+  --color-admin-surface-2: #fbfbfa;
+  --color-admin-border: #eeeeee;
+  --color-admin-ink: #111111;
+  --color-admin-muted: #6b7280;
+  --color-admin-faint: #9ca3af;
+  --color-admin-nav-active: #111111;
+  --color-admin-nav-hover: #f3f3f1;
+  --color-admin-accent: #f87941;
+  --color-admin-accent-strong: #ec6326;
+  --color-admin-accent-soft: #f9b095;
+  --color-admin-accent-tint: #fdeadf;
+
+  --admin-sidebar-width: 17.5rem;
+  --admin-sidebar-collapsed: 4.5rem;
+  --admin-header-height: 4.5rem;
 }
 
 :root {
@@ -94,6 +114,17 @@ h2 {
 
 h3 {
   font-weight: 700;
+}
+
+/* Admin dashboard — rounded main canvas */
+.admin-dashboard-content {
+  min-height: calc(100dvh - var(--admin-header-height));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .admin-dashboard-content {
+    transition: border-radius 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  }
 }
 
 /* Marquee animation for client logos */
@@ -470,6 +501,15 @@ h3 {
   box-shadow: none;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
+}
+
+/* Shop hero — frosted header with soft drop shadow over background */
+.site-header.site-header--on-shop {
+  border-bottom-color: rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 28px rgba(26, 31, 46, 0.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  backdrop-filter: blur(14px) saturate(1.2);
 }
 
 .site-header > * {

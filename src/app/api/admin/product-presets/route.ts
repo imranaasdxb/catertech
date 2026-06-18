@@ -1,8 +1,9 @@
-import { and, asc, count, eq, ilike, or } from "drizzle-orm";
+import { and, asc, count, eq, ilike, or, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import {
   productCategories,
+  products,
   productSubcategories,
   productTitlePresets,
 } from "@/db/schema";
@@ -130,6 +131,11 @@ export async function GET(request: Request) {
       title: productTitlePresets.title,
       sourceLabel: productTitlePresets.sourceLabel,
       attributes: productTitlePresets.attributes,
+      created: sql<boolean>`exists (
+        select 1
+        from ${products}
+        where ${products.productTitlePresetId} = ${productTitlePresets.id}
+      )`,
     })
     .from(productTitlePresets)
     .where(
@@ -199,6 +205,11 @@ export async function POST(request: Request) {
       title: productTitlePresets.title,
       sourceLabel: productTitlePresets.sourceLabel,
       attributes: productTitlePresets.attributes,
+      created: sql<boolean>`exists (
+        select 1
+        from ${products}
+        where ${products.productTitlePresetId} = ${productTitlePresets.id}
+      )`,
     })
     .from(productTitlePresets)
     .where(
@@ -229,5 +240,8 @@ export async function POST(request: Request) {
       attributes: productTitlePresets.attributes,
     });
 
-  return NextResponse.json({ preset: created, existed: false }, { status: 201 });
+  return NextResponse.json(
+    { preset: { ...created, created: false }, existed: false },
+    { status: 201 }
+  );
 }

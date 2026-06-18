@@ -48,11 +48,11 @@ function Section({
 }) {
   return (
     <section className="overflow-hidden rounded-2xl border border-black/6 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-      <div className="flex items-center gap-2 border-b border-black/5 bg-[#F5F5F7]/70 px-4 py-3 sm:px-5">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-[#5B2D9B] shadow-sm ring-1 ring-black/5">
+      <div className="flex items-center gap-2 border-b border-black/5 bg-admin-bg/70 px-4 py-3 sm:px-5">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-admin-accent shadow-sm ring-1 ring-black/5">
           {icon}
         </span>
-        <h3 className="text-sm font-bold text-[#1a1a1a]">{title}</h3>
+        <h3 className="text-sm font-bold text-admin-ink">{title}</h3>
       </div>
       <div className="px-4 py-4 sm:px-5 sm:py-5">{children}</div>
     </section>
@@ -62,10 +62,10 @@ function Section({
 function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="grid gap-1 sm:grid-cols-[140px_minmax(0,1fr)] sm:items-start sm:gap-4">
-      <dt className="text-xs font-semibold uppercase tracking-wide text-[#1a1a1a]/45">
+      <dt className="text-xs font-semibold uppercase tracking-wide text-admin-ink/45">
         {label}
       </dt>
-      <dd className="text-sm text-[#1a1a1a] break-words">{value}</dd>
+      <dd className="text-sm text-admin-ink break-words">{value}</dd>
     </div>
   );
 }
@@ -167,7 +167,7 @@ export default function AdminProductViewPanel({ product }: { product: ProductRow
           <DetailRow
             label="Slug"
             value={
-              <code className="rounded-md bg-[#F5F5F7] px-2 py-1 font-mono text-xs text-[#1a1a1a]/80">
+              <code className="rounded-md bg-admin-bg px-2 py-1 font-mono text-xs text-admin-ink/80">
                 /{product.slug}
               </code>
             }
@@ -178,13 +178,13 @@ export default function AdminProductViewPanel({ product }: { product: ProductRow
               product.category ? (
                 <div className="flex flex-wrap items-center gap-2">
                   {categoryName ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[#5B2D9B]/10 px-3 py-1 text-xs font-semibold text-[#5B2D9B]">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-admin-accent/10 px-3 py-1 text-xs font-semibold text-admin-accent">
                       <Tag size={12} aria-hidden />
                       {categoryName}
                     </span>
                   ) : null}
                   {subCategoryName ? (
-                    <span className="inline-flex items-center rounded-full bg-[#F5F5F7] px-3 py-1 text-xs font-semibold text-[#1a1a1a]/70 ring-1 ring-black/8">
+                    <span className="inline-flex items-center rounded-full bg-admin-bg px-3 py-1 text-xs font-semibold text-admin-ink/70 ring-1 ring-black/8">
                       {subCategoryName}
                     </span>
                   ) : null}
@@ -243,7 +243,7 @@ export default function AdminProductViewPanel({ product }: { product: ProductRow
                 href={src}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative aspect-square overflow-hidden rounded-xl bg-[#F5F5F7] ring-1 ring-black/6 transition hover:ring-[#5B2D9B]/30"
+                className="group relative aspect-square overflow-hidden rounded-xl bg-admin-bg ring-1 ring-black/6 transition hover:ring-admin-accent/30"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -258,7 +258,7 @@ export default function AdminProductViewPanel({ product }: { product: ProductRow
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-black/10 py-10 text-center text-sm text-[#1a1a1a]/40">
+          <div className="rounded-xl border border-dashed border-black/10 py-10 text-center text-sm text-admin-ink/40">
             No gallery images uploaded.
           </div>
         )}
@@ -266,8 +266,8 @@ export default function AdminProductViewPanel({ product }: { product: ProductRow
 
       <Section icon={<Layers size={16} aria-hidden />} title="Category fields">
         {templateLoading ? (
-          <div className="flex items-center gap-2 text-sm text-[#1a1a1a]/50">
-            <Loader2 className="h-4 w-4 animate-spin text-[#5B2D9B]" aria-hidden />
+          <div className="flex items-center gap-2 text-sm text-admin-ink/50">
+            <Loader2 className="h-4 w-4 animate-spin text-admin-accent" aria-hidden />
             Loading field definitions…
           </div>
         ) : templateErr ? (
@@ -277,27 +277,27 @@ export default function AdminProductViewPanel({ product }: { product: ProductRow
             {[...templateRows, ...extraAttrRows].map((row) => (
               <div
                 key={row.key}
-                className="rounded-xl border border-black/5 bg-[#F5F5F7]/50 px-3.5 py-3"
+                className="rounded-xl border border-black/5 bg-admin-bg/50 px-3.5 py-3"
               >
-                <dt className="text-[11px] font-bold uppercase tracking-wide text-[#1a1a1a]/40">
+                <dt className="text-[11px] font-bold uppercase tracking-wide text-admin-ink/40">
                   {row.label}
                 </dt>
-                <dd className="mt-1 text-sm font-medium text-[#1a1a1a]">{row.value}</dd>
+                <dd className="mt-1 text-sm font-medium text-admin-ink">{row.value}</dd>
               </div>
             ))}
           </dl>
         ) : (
-          <p className="text-sm text-[#1a1a1a]/40">No category template fields for this product.</p>
+          <p className="text-sm text-admin-ink/40">No category template fields for this product.</p>
         )}
       </Section>
 
       <Section icon={<Package size={16} aria-hidden />} title="Description">
         {product.description ? (
-          <div className="prose prose-sm max-w-none rounded-xl border border-black/5 bg-[#F5F5F7]/40 p-4 text-sm leading-relaxed text-[#1a1a1a]/85 [&_img]:max-w-full [&_video]:max-w-full">
+          <div className="prose prose-sm max-w-none rounded-xl border border-black/5 bg-admin-bg/40 p-4 text-sm leading-relaxed text-admin-ink/85 [&_img]:max-w-full [&_video]:max-w-full">
             <div dangerouslySetInnerHTML={{ __html: product.description }} />
           </div>
         ) : (
-          <p className="text-sm text-[#1a1a1a]/40">No description provided.</p>
+          <p className="text-sm text-admin-ink/40">No description provided.</p>
         )}
       </Section>
 
@@ -306,7 +306,7 @@ export default function AdminProductViewPanel({ product }: { product: ProductRow
           <DetailRow
             label="Created"
             value={
-              <span className="inline-flex items-center gap-1.5 text-[#1a1a1a]/70">
+              <span className="inline-flex items-center gap-1.5 text-admin-ink/70">
                 <Calendar className="h-3.5 w-3.5" aria-hidden />
                 {formatWhen(product.createdAt)}
               </span>
@@ -315,7 +315,7 @@ export default function AdminProductViewPanel({ product }: { product: ProductRow
           <DetailRow
             label="Last updated"
             value={
-              <span className="inline-flex items-center gap-1.5 text-[#1a1a1a]/70">
+              <span className="inline-flex items-center gap-1.5 text-admin-ink/70">
                 <Clock className="h-3.5 w-3.5" aria-hidden />
                 {formatWhen(product.updatedAt)}
               </span>

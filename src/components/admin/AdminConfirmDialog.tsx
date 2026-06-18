@@ -57,17 +57,17 @@ export function AdminConfirmDialog({
       >
         <button
           type="button"
-          className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full text-[#1a1a1a]/45 hover:bg-black/[0.05]"
+          className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full text-admin-ink/45 hover:bg-black/[0.05]"
           aria-label="Close"
           onClick={onCancel}
         >
           <X className="h-5 w-5" />
         </button>
-        <h2 id="confirm-dialog-title" className="pr-8 text-lg font-bold text-[#1a1a1a]">
+        <h2 id="confirm-dialog-title" className="pr-8 text-lg font-bold text-admin-ink">
           {title}
         </h2>
         {highlight ? (
-          <p className="mt-2 line-clamp-2 text-sm font-semibold text-[#1a1a1a]/75">{highlight}</p>
+          <p className="mt-2 line-clamp-2 text-sm font-semibold text-admin-ink/75">{highlight}</p>
         ) : null}
         <p className={`mt-3 text-sm leading-relaxed ${admin.muted}`}>{message}</p>
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
