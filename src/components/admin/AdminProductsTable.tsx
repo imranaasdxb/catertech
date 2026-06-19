@@ -102,7 +102,7 @@ function Specifications({
   }
 
   return (
-    <div className="grid gap-x-4 gap-y-1 sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-y-1 xl:grid-cols-2 xl:gap-x-4">
       {entries.map(([key, value]) => (
         <p key={key} className="min-w-0 truncate text-xs leading-5 text-gray-600">
           <span className="font-semibold capitalize text-gray-400">{key.replace(/_/g, " ")}:</span>{" "}
@@ -134,7 +134,7 @@ function VisibilityToggle({
       aria-pressed={active}
       disabled={disabled}
       onClick={onClick}
-      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+      className={`inline-flex cursor-pointer items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 xl:gap-1.5 xl:px-2.5 xl:py-1.5 xl:text-xs ${
         active
           ? "border-purple-200 bg-purple-50 text-purple-700"
           : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50"
@@ -427,8 +427,10 @@ export default function AdminProductsTable({
       <AdminPanelModal
         open={Boolean(viewId)}
         title={viewProduct?.title ?? viewRowMeta?.title ?? "View product"}
-        subtitle="Full product record"
-        widthClass="max-w-[min(100%-1rem,52rem)]"
+        subtitle="Product overview"
+        widthClass="max-w-[min(100%-0.75rem,72rem)]"
+        maxHeightClass="max-h-[min(94vh,900px)]"
+        scrollable={false}
         onClose={closeView}
       >
         {viewLoading ? (
@@ -466,57 +468,54 @@ export default function AdminProductsTable({
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <div className="overflow-x-auto [scrollbar-color:rgba(26,26,26,0.22)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-black/20 [&::-webkit-scrollbar-track]:bg-transparent">
-          <table className="w-full min-w-[1380px] border-collapse">
+          <table className="w-full border-collapse lg:table-fixed xl:min-w-[1280px] xl:table-auto">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/80">
-                <th className="w-[56px] px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <th className="w-[48px] px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 xl:w-[56px] xl:px-4">
                   S.N
                 </th>
-                <th className="w-[68px] px-4 py-3 text-left">
+                <th className="w-[60px] px-3 py-3 text-left xl:w-[68px] xl:px-4">
                   <span className="sr-only">Image</span>
                 </th>
-                <th className="w-[250px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <th className="w-[180px] px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 xl:w-[250px] xl:px-4">
                   Product
                 </th>
-                <th className="w-[390px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <th className="w-[190px] px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 xl:w-[390px] xl:px-4">
                   Specifications
                 </th>
-                <th className="w-[290px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <th className="w-[210px] px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 xl:w-[290px] xl:px-4">
                   Visibility
                 </th>
-                <th className="w-[72px] px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
-                  Photos
-                </th>
-                <th className="w-[112px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <th className="hidden w-[112px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 xl:table-cell">
                   Updated
                 </th>
-                <th className="w-[132px] px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <th className="w-[108px] px-3 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 xl:w-[132px] xl:px-5">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredRows.map((r, index) => (
-                <tr key={r.id} className="h-[88px] align-top transition-colors hover:bg-gray-50/70">
-                  <td className="px-4 py-4 text-center text-xs font-semibold tabular-nums text-gray-400">
+                <tr key={r.id} className="min-h-[88px] align-top transition-colors hover:bg-gray-50/70">
+                  <td className="px-3 py-4 text-center text-xs font-semibold tabular-nums text-gray-400 xl:px-4">
                     {index + 1}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3 xl:px-4">
                     <Thumb url={r.thumbUrl} />
                   </td>
-                  <td className="px-4 py-3">
-                    <p className="max-w-[250px] truncate font-semibold text-gray-900">{r.title}</p>
-                    <p className="mt-0.5 text-xs text-gray-400">/{r.slug}</p>
+                  <td className="px-3 py-3 xl:px-4">
+                    <p className="max-w-[180px] truncate font-semibold text-gray-900 xl:max-w-[250px]">{r.title}</p>
+                    <p className="mt-0.5 truncate text-xs text-gray-400">/{r.slug}</p>
                     {r.category ? (
-                      <p className="mt-1 max-w-[250px] truncate text-xs font-medium text-gray-500">
+                      <p className="mt-1 max-w-[180px] truncate text-xs font-medium text-gray-500 xl:max-w-[250px]">
                         {r.category}
                       </p>
                     ) : null}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3 xl:px-4">
                     <Specifications attributes={r.attributes} />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3 xl:px-4">
                     <div className="flex flex-wrap gap-1.5">
                       <VisibilityToggle
                         active={r.published}
@@ -562,51 +561,54 @@ export default function AdminProductsTable({
                       />
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-purple-50 text-xs font-semibold text-purple-700">
-                      {r.galleryCount}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-xs font-medium text-gray-500">
+                  <td className="hidden px-4 py-3 text-xs font-medium text-gray-500 xl:table-cell">
                     {formatUpdatedAt(r.updatedAt)}
                   </td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center justify-end gap-1">
-                      <button
-                        type="button"
-                        className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-purple-100 hover:text-purple-700"
-                        title="Edit"
-                        aria-label={`Edit ${r.title}`}
-                        onClick={() => openEdit(r.id)}
-                      >
-                        <Pencil className="h-3.5 w-3.5" aria-hidden />
-                      </button>
-                      <button
-                        type="button"
-                        className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100"
-                        title="View"
-                        aria-label={`View ${r.title}`}
-                        onClick={() => openView(r.id)}
-                      >
-                        <Eye className="h-3.5 w-3.5" aria-hidden />
-                      </button>
-                      <button
-                        type="button"
-                        disabled={deletingId === r.id}
-                        className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
-                        title="Delete"
-                        aria-label={`Delete ${r.title}`}
-                        onClick={() => setDeleteTarget(r)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                      </button>
+                  <td className="px-3 py-3 xl:px-5">
+                    <div className="flex flex-col items-end gap-1.5">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-purple-100 hover:text-purple-700"
+                          title="Edit"
+                          aria-label={`Edit ${r.title}`}
+                          onClick={() => openEdit(r.id)}
+                        >
+                          <Pencil className="h-3.5 w-3.5" aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100"
+                          title="View"
+                          aria-label={`View ${r.title}`}
+                          onClick={() => openView(r.id)}
+                        >
+                          <Eye className="h-3.5 w-3.5" aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={deletingId === r.id}
+                          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+                          title="Delete"
+                          aria-label={`Delete ${r.title}`}
+                          onClick={() => setDeleteTarget(r)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                        </button>
+                      </div>
+                      <div className="text-right xl:hidden">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                          Updated
+                        </p>
+                        <p className="text-xs font-medium text-gray-500">{formatUpdatedAt(r.updatedAt)}</p>
+                      </div>
                     </div>
                   </td>
                 </tr>
               ))}
               {filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-16 text-center text-sm text-gray-400">
+                  <td colSpan={7} className="px-4 py-16 text-center text-sm text-gray-400">
                     {emptyMessage}
                   </td>
                 </tr>

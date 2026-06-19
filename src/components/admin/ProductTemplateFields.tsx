@@ -39,7 +39,6 @@ export function ProductTemplateFields({
   onAttributesChange,
 }: Props) {
   const [fields, setFields] = useState<TemplateFieldDef[]>([]);
-  const [availableFields, setAvailableFields] = useState<TemplateFieldDef[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
@@ -60,7 +59,6 @@ export function ProductTemplateFields({
             initialFieldKeys === undefined
               ? loaded
               : loaded.filter((field) => initialFieldKeys.includes(field.key));
-          setAvailableFields(loaded);
           setFields(visible);
           onFieldsLoaded?.(visible);
         }
@@ -77,10 +75,6 @@ export function ProductTemplateFields({
     };
   }, [categoryId, initialFieldKeys, onFieldsLoaded]);
 
-  const remainingFields = useMemo(() => {
-    const activeKeys = new Set(fields.map((field) => field.key));
-    return availableFields.filter((field) => !activeKeys.has(field.key));
-  }, [availableFields, fields]);
   const remainingSizeFields = useMemo(
     () => getAvailableManualSizeFields(fields),
     [fields]
@@ -96,14 +90,6 @@ export function ProductTemplateFields({
 
   function removeField(key: string) {
     updateFields(fields.filter((field) => field.key !== key));
-  }
-
-  function addField(key: string) {
-    const selected = availableFields.find((field) => field.key === key);
-    if (!selected) return;
-    updateFields(
-      [...fields, selected].sort((a, b) => a.sortOrder - b.sortOrder)
-    );
   }
 
   function addSizeField(key: string) {
@@ -170,25 +156,6 @@ export function ProductTemplateFields({
               ))}
             </select>
           </label>
-          {remainingFields.length ? (
-            <label className="relative inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-semibold text-admin-ink shadow-sm transition hover:border-black/20">
-              <Plus size={14} aria-hidden="true" />
-              Add field
-              <select
-                value=""
-                onChange={(event) => addField(event.target.value)}
-                className="absolute inset-0 cursor-pointer opacity-0"
-                aria-label="Add category field"
-              >
-                <option value="">Choose a field</option>
-                {remainingFields.map((field) => (
-                  <option key={field.key} value={field.key}>
-                    {field.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
         </div>
       </div>
 

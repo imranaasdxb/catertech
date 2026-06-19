@@ -39,6 +39,10 @@ type Props = {
   }) => void;
 };
 
+function normalizePresetTitle(value: string) {
+  return value.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
 export function ProductTitlePresetInput({
   categoryId,
   subCategoryId,
@@ -78,7 +82,7 @@ export function ProductTitlePresetInput({
     const params = new URLSearchParams({ categoryId });
     if (subCategoryId) params.set("subCategoryId", subCategoryId);
 
-    void fetch(`/api/admin/product-presets?${params}`)
+    void fetch(`/api/admin/product-presets?${params}`, { cache: "no-store" })
       .then(async (res) => {
         if (!res.ok) throw new Error("load failed");
         return (await res.json()) as { presets?: ProductPreset[] };
@@ -133,6 +137,18 @@ export function ProductTitlePresetInput({
     if (!query) return presets;
     return presets.filter((preset) =>
       `${preset.title} ${preset.sourceLabel}`.toLowerCase().includes(query)
+    );
+  }, [presets, title]);
+
+  const exactTitleMatch = useMemo(() => {
+    const normalizedTitle = normalizePresetTitle(title);
+    if (!normalizedTitle) return null;
+    return (
+      presets.find(
+        (preset) =>
+          normalizePresetTitle(preset.title) === normalizedTitle ||
+          normalizePresetTitle(preset.sourceLabel) === normalizedTitle
+      ) ?? null
     );
   }, [presets, title]);
 
@@ -444,21 +460,31 @@ export function ProductTitlePresetInput({
               </button>
             ))
           ) : (
-            <div className="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5">
-              <p className="min-w-0 text-sm text-admin-ink/50">
-                No matching preset.
-              </p>
-              <button
-                type="button"
-                disabled={!title.trim()}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={requestCustomPreset}
-                className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg bg-admin-accent px-3 text-xs font-bold text-white shadow-[0_6px_16px_rgba(248,121,65,0.22)] transition hover:bg-[#ec6326] disabled:cursor-not-allowed disabled:opacity-45"
-              >
-                Add this
-              </button>
-            </div>
+            <p className="rounded-lg px-3 py-2.5 text-sm text-admin-ink/50">
+              No matching preset.
+            </p>
           )}
+          {title.trim() ? (
+            exactTitleMatch ? (
+              <div className="mt-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs font-semibold text-amber-700">
+                This title already exists. Select it from the results above.
+              </div>
+            ) : (
+              <div className="mt-1 flex items-center justify-between gap-3 rounded-lg border-t border-black/6 px-3 py-2.5">
+                <p className="min-w-0 truncate text-xs text-admin-ink/50">
+                  Add “{title.trim()}” as a new title
+                </p>
+                <button
+                  type="button"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={requestCustomPreset}
+                  className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg bg-admin-accent px-3 text-xs font-bold text-white shadow-[0_6px_16px_rgba(248,121,65,0.22)] transition hover:bg-[#ec6326]"
+                >
+                  Add this
+                </button>
+              </div>
+            )
+          ) : null}
         </div>
       ) : null}
     </div>

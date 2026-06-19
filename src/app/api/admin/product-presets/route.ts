@@ -1,4 +1,4 @@
-import { and, asc, count, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, count, eq, ilike, isNotNull, or, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import {
@@ -125,30 +125,44 @@ export async function GET(request: Request) {
   }
 
   const { categoryId, subCategoryId } = parsed.data;
-  const rows = await db
-    .select({
-      id: productTitlePresets.id,
-      title: productTitlePresets.title,
-      sourceLabel: productTitlePresets.sourceLabel,
-      attributes: productTitlePresets.attributes,
-      created: sql<boolean>`exists (
-        select 1
-        from ${products}
-        where ${products.productTitlePresetId} = ${productTitlePresets.id}
-      )`,
-    })
-    .from(productTitlePresets)
-    .where(
-      subCategoryId
-        ? and(
-            eq(productTitlePresets.categoryId, categoryId),
-            eq(productTitlePresets.subCategoryId, subCategoryId)
-          )
-        : eq(productTitlePresets.categoryId, categoryId)
-    )
-    .orderBy(asc(productTitlePresets.sortOrder), asc(productTitlePresets.sourceLabel));
+  const [rows, createdRows] = await Promise.all([
+    db
+      .select({
+        id: productTitlePresets.id,
+        title: productTitlePresets.title,
+        sourceLabel: productTitlePresets.sourceLabel,
+        attributes: productTitlePresets.attributes,
+      })
+      .from(productTitlePresets)
+      .where(
+        subCategoryId
+          ? and(
+              eq(productTitlePresets.categoryId, categoryId),
+              eq(productTitlePresets.subCategoryId, subCategoryId)
+            )
+          : eq(productTitlePresets.categoryId, categoryId)
+      )
+      .orderBy(asc(productTitlePresets.sortOrder), asc(productTitlePresets.sourceLabel)),
+    db
+      .selectDistinct({ presetId: products.productTitlePresetId })
+      .from(products)
+      .where(
+        and(
+          eq(products.categoryId, categoryId),
+          isNotNull(products.productTitlePresetId)
+        )
+      ),
+  ]);
+  const createdPresetIds = new Set(createdRows.map((row) => row.presetId));
+  const presets = rows.map((row) => ({
+    ...row,
+    created: createdPresetIds.has(row.id),
+  }));
 
-  return NextResponse.json({ presets: rows });
+  return NextResponse.json(
+    { presets },
+    { headers: { "Cache-Control": "no-store" } }
+  );
 }
 
 export async function POST(request: Request) {
@@ -215,7 +229,7 @@ export async function POST(request: Request) {
     .where(
       and(
         eq(productTitlePresets.categoryId, parsed.data.categoryId),
-        eq(productTitlePresets.sourceLabel, title)
+        sql`lower(trim(${productTitlePresets.sourceLabel})) = ${title.toLowerCase()}`
       )
     )
     .limit(1);
