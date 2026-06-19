@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 
 const ROW_HEIGHT =
-  "min-h-[100px] sm:min-h-[112px] md:min-h-[124px] lg:min-h-[148px] xl:min-h-[164px] 2xl:min-h-[176px]";
+  "min-h-[100px] sm:min-h-[112px] md:min-h-[124px] lg:min-h-[118px] xl:min-h-[164px] 2xl:min-h-[176px]";
 
 const CARD_BASE =
   "relative overflow-hidden rounded-2xl border border-black/8 bg-white shadow-[0_4px_18px_rgba(27,43,75,0.1)]";
@@ -40,7 +40,7 @@ export default function HeroBentoGrid({ className }: HeroBentoGridProps) {
   return (
     <div
       className={cn(
-        "w-full max-w-[520px] sm:max-w-[560px] md:max-w-[600px] lg:max-w-[580px] xl:max-w-[640px] 2xl:max-w-[680px]",
+        "w-full max-w-[520px] sm:max-w-[560px] md:max-w-[600px] lg:max-w-[480px] xl:max-w-[640px] 2xl:max-w-[680px]",
         className,
       )}
     >
@@ -49,7 +49,7 @@ export default function HeroBentoGrid({ className }: HeroBentoGridProps) {
         <div
           className={cn(
             CARD_BASE,
-            "min-h-[120px] sm:min-h-[136px] md:min-h-[148px] lg:min-h-[192px] xl:min-h-[212px] 2xl:min-h-[228px]",
+            "min-h-[120px] sm:min-h-[136px] md:min-h-[148px] lg:min-h-[148px] xl:min-h-[212px] 2xl:min-h-[228px]",
           )}
         >
           <BentoVideo

@@ -81,7 +81,7 @@ function PartnerAside({ className }: { className?: string }) {
 
 export default function HeroShopCategories() {
   return (
-    <div className="bg-bg-warm/95 pt-4 pb-8 shadow-[inset_0_1px_0_rgba(27,43,75,0.08)] sm:pt-5 sm:pb-10 md:pb-12">
+    <div className="hero-shop-categories bg-bg-warm/95 pt-4 pb-8 shadow-[inset_0_1px_0_rgba(27,43,75,0.08)] sm:pt-5 sm:pb-10 md:pb-12 xl:pt-4">
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_300px] lg:grid-rows-[auto_auto] lg:items-start lg:gap-x-4 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="flex items-center justify-between gap-4 lg:col-start-1 lg:row-start-1">
           <div className="flex items-center gap-3">

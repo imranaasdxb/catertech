@@ -46,8 +46,8 @@ function PartnerLogo({ name, sub }: { name: string; sub?: string }) {
 
 export default function HeroSection() {
   return (
-    <section className="relative flex min-h-dvh flex-col overflow-hidden bg-bg-warm max-lg:h-auto lg:h-dvh lg:max-h-dvh lg:min-h-[620px]">
-      <div className="relative flex min-h-0 flex-1 flex-col max-lg:min-h-0">
+    <section className="hero-section relative flex min-h-dvh flex-col overflow-hidden bg-bg-warm max-lg:h-auto lg:min-h-[620px] xl:h-dvh xl:max-h-dvh">
+      <div className="hero-section__body relative flex min-h-0 flex-1 flex-col max-lg:min-h-0">
         <div className="pointer-events-none absolute inset-0 overflow-hidden max-md:min-h-[360px] md:max-lg:min-h-[300px]">
           {/* Mobile */}
           <Image
@@ -97,28 +97,28 @@ export default function HeroSection() {
           />
         </div>
 
-        <div className="relative z-10 flex min-h-0 flex-1 flex-col">
-          <div className="h-(--header-height) shrink-0" aria-hidden />
-          <Container className="flex min-h-0 flex-1 flex-col justify-center py-3 sm:py-4 md:py-5 lg:py-3">
-            <div className="grid grid-cols-1 items-center gap-4 sm:gap-5 md:grid-cols-[minmax(0,1fr)_minmax(260px,50%)] md:gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(480px,50%)] lg:gap-10 xl:gap-12">
-              <div className="relative z-10 max-w-4xl">
-                <p className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-accent-dark sm:text-[11px]">
+        <div className="hero-section__content relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="h-[var(--header-height)] shrink-0" aria-hidden />
+          <Container className="hero-section__container flex min-h-0 flex-1 flex-col justify-center py-3 sm:py-4 md:py-5 lg:justify-start lg:py-3 xl:justify-center">
+            <div className="hero-section__grid grid grid-cols-1 items-center gap-4 sm:gap-5 md:grid-cols-[minmax(0,1fr)_minmax(260px,50%)] md:gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,46%)] lg:items-start lg:gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(480px,50%)] xl:items-center xl:gap-10 2xl:gap-12">
+              <div className="hero-section__copy relative z-10 max-w-4xl">
+                <p className="hero-section__eyebrow flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-accent-dark sm:text-[11px]">
                   <span className="h-px w-8 bg-accent" aria-hidden />
                   Powering Hospitality Across the UAE
                 </p>
 
-                <h1 className="mt-2.5 font-display text-[clamp(1.65rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-tight text-ink md:mt-3">
+                <h1 className="hero-section__title mt-2.5 font-display text-[clamp(1.65rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-tight text-ink md:mt-3">
                   Powering Hospitality
                   <span className="block">for a New Era in the UAE</span>
                 </h1>
 
-                <p className="mt-3 max-w-md text-[13px] leading-relaxed text-body-muted sm:text-sm">
+                <p className="hero-section__lead mt-3 max-w-md text-[13px] leading-relaxed text-body-muted sm:text-sm">
                   Catertech supplies hotel, venue and F&amp;B teams with commercial-grade
                   buffetware, kitchen equipment and trade sourcing support across Dubai and
                   the UAE.
                 </p>
 
-                <div className="mt-4 flex flex-wrap items-center gap-3 sm:mt-5 sm:gap-4">
+                <div className="hero-section__cta mt-4 flex flex-wrap items-center gap-3 sm:mt-5 sm:gap-4">
                   <Link
                     href="/shop"
                     className="group inline-flex items-center gap-3 rounded-xl bg-primary py-2.5 pl-5 pr-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white shadow-[0_12px_30px_rgba(27,43,75,0.25)] transition-colors hover:bg-primary-dark sm:py-3 sm:pl-6 sm:pr-3 sm:text-[11px]"
@@ -140,7 +140,7 @@ export default function HeroSection() {
                   </Link>
                 </div>
 
-                <div className="mt-4 flex flex-nowrap items-center overflow-x-auto border-t border-primary/10 pt-3.5 [-ms-overflow-style:none] [scrollbar-width:none] sm:mt-5 sm:pt-4 [&::-webkit-scrollbar]:hidden">
+                <div className="hero-section__chips mt-4 flex flex-nowrap items-center overflow-x-auto border-t border-primary/10 pt-3.5 [-ms-overflow-style:none] [scrollbar-width:none] sm:mt-5 sm:pt-4 [&::-webkit-scrollbar]:hidden">
                   {HERO_CHIPS.map(({ icon: Icon, title, sub }, i) => (
                     <div key={title} className="flex shrink-0 items-center">
                       {i > 0 ? (
@@ -158,14 +158,14 @@ export default function HeroSection() {
                 </div>
               </div>
 
-              <div className="relative z-10 flex w-full justify-center max-md:mt-1 lg:py-10 xl:py-12">
+              <div className="hero-section__bento relative z-10 flex w-full justify-center max-md:mt-1 lg:py-2 xl:py-10 2xl:py-12">
                 <HeroBentoGrid className="mx-auto" />
               </div>
             </div>
           </Container>
         </div>
 
-        <div className="hero-partner-bar__shell relative z-10 flex min-h-[56px] w-full shrink-0 items-stretch sm:min-h-[62px] md:min-h-[70px]">
+        <div className="hero-partner-bar__shell relative z-20 mt-2 flex min-h-[56px] w-full shrink-0 items-stretch sm:min-h-[62px] sm:mt-3 md:min-h-[70px] xl:mt-0">
           <div className="hero-partner-side-panel hidden items-center border-r border-white/15 px-4 py-3 sm:flex sm:px-5 sm:py-4 md:px-6 lg:px-8">
             <p className="text-[8px] font-semibold uppercase leading-tight tracking-[0.18em] text-white/85 sm:text-[9px]">
               Trusted by leading
@@ -210,7 +210,7 @@ export default function HeroSection() {
         </div>
       </div>
 
-      <div className="relative z-10 shrink-0 bg-bg-warm pb-1 sm:pb-2">
+      <div className="hero-section__categories relative z-10 shrink-0 bg-bg-warm pb-1 sm:pb-2">
         <Container>
           <HeroShopCategories />
         </Container>
