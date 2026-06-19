@@ -7,6 +7,7 @@ import {
   type ProductAttributeValue,
   type TemplateFieldDef,
 } from "@/lib/category-template";
+import { getAvailableManualSizeFields } from "@/lib/manual-size-fields";
 import { Loader2, Plus, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -32,7 +33,6 @@ function readAttr(
 
 export function ProductTemplateFields({
   categoryId,
-  subCategoryId: _subCategoryId,
   initialAttributes,
   initialFieldKeys,
   onFieldsLoaded,
@@ -81,6 +81,10 @@ export function ProductTemplateFields({
     const activeKeys = new Set(fields.map((field) => field.key));
     return availableFields.filter((field) => !activeKeys.has(field.key));
   }, [availableFields, fields]);
+  const remainingSizeFields = useMemo(
+    () => getAvailableManualSizeFields(fields),
+    [fields]
+  );
 
   const updateFields = useCallback(
     (next: TemplateFieldDef[]) => {
@@ -96,6 +100,14 @@ export function ProductTemplateFields({
 
   function addField(key: string) {
     const selected = availableFields.find((field) => field.key === key);
+    if (!selected) return;
+    updateFields(
+      [...fields, selected].sort((a, b) => a.sortOrder - b.sortOrder)
+    );
+  }
+
+  function addSizeField(key: string) {
+    const selected = remainingSizeFields.find((field) => field.key === key);
     if (!selected) return;
     updateFields(
       [...fields, selected].sort((a, b) => a.sortOrder - b.sortOrder)
@@ -135,25 +147,49 @@ export function ProductTemplateFields({
             Preset values stay editable. Remove fields you do not need or add another field.
           </p>
         </div>
-        {remainingFields.length ? (
-          <label className="relative inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-semibold text-admin-ink shadow-sm transition hover:border-black/20">
+        <div className="flex flex-wrap items-center gap-2">
+          <label
+            className={`relative inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-semibold text-admin-ink shadow-sm transition hover:border-black/20 ${
+              remainingSizeFields.length ? "" : "cursor-not-allowed opacity-50"
+            }`}
+          >
             <Plus size={14} aria-hidden="true" />
-            Add field
+            Add size
             <select
               value=""
-              onChange={(event) => addField(event.target.value)}
-              className="absolute inset-0 cursor-pointer opacity-0"
-              aria-label="Add category field"
+              onChange={(event) => addSizeField(event.target.value)}
+              disabled={!remainingSizeFields.length}
+              className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
+              aria-label="Add size field"
             >
-              <option value="">Choose a field</option>
-              {remainingFields.map((field) => (
+              <option value="">Choose a size</option>
+              {remainingSizeFields.map((field) => (
                 <option key={field.key} value={field.key}>
                   {field.label}
                 </option>
               ))}
             </select>
           </label>
-        ) : null}
+          {remainingFields.length ? (
+            <label className="relative inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-semibold text-admin-ink shadow-sm transition hover:border-black/20">
+              <Plus size={14} aria-hidden="true" />
+              Add field
+              <select
+                value=""
+                onChange={(event) => addField(event.target.value)}
+                className="absolute inset-0 cursor-pointer opacity-0"
+                aria-label="Add category field"
+              >
+                <option value="">Choose a field</option>
+                {remainingFields.map((field) => (
+                  <option key={field.key} value={field.key}>
+                    {field.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+        </div>
       </div>
 
       {fields.length ? (

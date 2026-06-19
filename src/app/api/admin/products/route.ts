@@ -1,4 +1,4 @@
-import { count, desc, eq } from "drizzle-orm";
+import { count, desc, eq, like } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import {
@@ -11,6 +11,7 @@ import {
   validateSubcategoryForCategory,
 } from "@/lib/product-taxonomy";
 import { generateProductSeo } from "@/lib/product-seo";
+import { buildProductIdPrefix, reserveProductId } from "@/lib/product-id";
 import { slugify } from "@/lib/slug";
 import { z } from "zod";
 
@@ -97,6 +98,15 @@ export async function POST(request: Request) {
   }
 
   const categoryLabel = await buildCategoryDisplayLabel(db, catId, subId);
+  let productIdPrefix: string;
+  try {
+    productIdPrefix = buildProductIdPrefix(categoryLabel ?? "", d.title);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Unsupported product category" },
+      { status: 400 }
+    );
+  }
   const attributes = (d.attributes ?? {}) as Record<string, ProductAttributeValue>;
   const generatedSeo = generateProductSeo({
     title: d.title,
@@ -120,27 +130,47 @@ export async function POST(request: Request) {
     slug = `${base}-${n}`;
   }
 
-  const [row] = await db
-    .insert(products)
-    .values({
-      title: d.title,
-      slug,
-      description: d.description ?? null,
-      category: categoryLabel,
-      categoryId: catId,
-      subCategoryId: subId,
-      productTitlePresetId,
-      images: d.images ?? [],
-      isAvailable: d.isAvailable ?? true,
-      isFeatured: d.isFeatured ?? false,
-      published: d.published ?? false,
-      attributes,
-      seoTitle: d.seoTitle || generatedSeo.seoTitle,
-      seoDescription: d.seoDescription || generatedSeo.seoDescription,
-      searchKeywords: d.searchKeywords?.length ? d.searchKeywords : generatedSeo.searchKeywords,
-      canonicalProductId: d.canonicalProductId ?? null,
-    })
-    .returning({ id: products.id, slug: products.slug });
+  const row = await reserveProductId(
+    productIdPrefix,
+    async () => {
+      const existing = await db
+        .select({ productId: products.productId })
+        .from(products)
+        .where(like(products.productId, `${productIdPrefix}-%`));
+      return existing.map(({ productId }) => productId);
+    },
+    async (productId) => {
+      const [created] = await db
+        .insert(products)
+        .values({
+          productId,
+          title: d.title,
+          slug,
+          description: d.description ?? null,
+          category: categoryLabel,
+          categoryId: catId,
+          subCategoryId: subId,
+          productTitlePresetId,
+          images: d.images ?? [],
+          isAvailable: d.isAvailable ?? true,
+          isFeatured: d.isFeatured ?? false,
+          published: d.published ?? false,
+          attributes,
+          seoTitle: d.seoTitle || generatedSeo.seoTitle,
+          seoDescription: d.seoDescription || generatedSeo.seoDescription,
+          searchKeywords: d.searchKeywords?.length
+            ? d.searchKeywords
+            : generatedSeo.searchKeywords,
+          canonicalProductId: d.canonicalProductId ?? null,
+        })
+        .returning({
+          id: products.id,
+          productId: products.productId,
+          slug: products.slug,
+        });
+      return created;
+    }
+  );
 
   let presetProgressIncremented = false;
   if (productTitlePresetId) {
