@@ -9,6 +9,8 @@ type Props = {
   subtitle?: string;
   onClose: () => void;
   children: ReactNode;
+  /** Icons/actions rendered to the left of the close button. */
+  headerActions?: ReactNode;
   /** Default ~56rem wide, slightly shorter max height for compact admin lists. */
   widthClass?: string;
   /** When false, body does not scroll — content must fit the card. */
@@ -24,6 +26,7 @@ export function AdminPanelModal({
   subtitle,
   onClose,
   children,
+  headerActions,
   widthClass = "max-w-[min(100%-1rem,52rem)]",
   scrollable = true,
   maxHeightClass = "max-h-[min(90vh,820px)]",
@@ -56,14 +59,17 @@ export function AdminPanelModal({
               <p className="mt-1 text-sm leading-snug text-admin-ink/48">{subtitle}</p>
             ) : null}
           </div>
-          <button
-            type="button"
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-admin-ink/45 transition-colors hover:bg-black/[0.06] hover:text-admin-ink"
-            aria-label="Close"
-            onClick={onClose}
-          >
-            <X className="h-5 w-5" aria-hidden />
-          </button>
+          <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
+            {headerActions}
+            <button
+              type="button"
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-admin-ink/45 transition-colors hover:bg-black/6 hover:text-admin-ink"
+              aria-label="Close"
+              onClick={onClose}
+            >
+              <X className="h-5 w-5" aria-hidden />
+            </button>
+          </div>
         </header>
         <div
           className={`min-h-0 flex-1 bg-[#fafafa] px-3 py-3 sm:px-5 sm:py-4 ${

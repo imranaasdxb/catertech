@@ -3,7 +3,7 @@
 import { admin } from "@/components/admin/adminTheme";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Check, ChevronDown } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export type TaxonomyRow = {
   id: string;
@@ -113,6 +113,11 @@ export function ProductCategorySelects({
   const [loadErr, setLoadErr] = useState("");
   const [categoryId, setCategoryId] = useState(initialCategoryId ?? "");
   const [subCategoryId, setSubCategoryId] = useState(initialSubCategoryId ?? "");
+  const onSelectionChangeRef = useRef(onSelectionChange);
+
+  useEffect(() => {
+    onSelectionChangeRef.current = onSelectionChange;
+  }, [onSelectionChange]);
 
   const load = useCallback(async () => {
     setLoadErr("");
@@ -162,7 +167,7 @@ export function ProductCategorySelects({
     const category = taxonomy.find((x) => x.id === categoryId);
     const subCategory = subs.find((x) => x.id === subCategoryId);
     const hasSubcategories = subs.length > 0;
-    onSelectionChange?.({
+    onSelectionChangeRef.current?.({
       categoryId,
       subCategoryId,
       categoryName: category?.name ?? "",
@@ -170,7 +175,7 @@ export function ProductCategorySelects({
       hasSubcategories,
       subCategoryRequired: hasSubcategories,
     });
-  }, [categoryId, onSelectionChange, subCategoryId, subs, taxonomy]);
+  }, [categoryId, subCategoryId, subs, taxonomy]);
 
   const isRow = layout === "row";
   const fieldGrid = isRow

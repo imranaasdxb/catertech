@@ -23,6 +23,8 @@ type Props = {
   subCategoryId: string;
   categoryName?: string;
   subCategoryName?: string;
+  initialTitle?: string;
+  initialPresetId?: string | null;
   onPresetSelected: (attributes: Record<string, ProductAttributeValue>) => void;
   onTitleChange?: (title: string) => void;
   onPresetIdentityChange?: (presetId: string | null) => void;
@@ -48,6 +50,8 @@ export function ProductTitlePresetInput({
   subCategoryId,
   categoryName,
   subCategoryName,
+  initialTitle = "",
+  initialPresetId = null,
   onPresetSelected,
   onTitleChange,
   onPresetIdentityChange,
@@ -57,7 +61,13 @@ export function ProductTitlePresetInput({
   onCustomPresetSelectionChange,
 }: Props) {
   const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [title, setTitle] = useState("");
+  const categoryKeyRef = useRef(`${categoryId}:${subCategoryId}`);
+  const onPresetIdentityChangeRef = useRef(onPresetIdentityChange);
+
+  useEffect(() => {
+    onPresetIdentityChangeRef.current = onPresetIdentityChange;
+  }, [onPresetIdentityChange]);
+  const [title, setTitle] = useState(initialTitle);
   const [presets, setPresets] = useState<ProductPreset[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -68,6 +78,11 @@ export function ProductTitlePresetInput({
   const [saveStatus, setSaveStatus] = useState("");
   const [saveError, setSaveError] = useState("");
   const [customPresetOpen, setCustomPresetOpen] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTitle(initialTitle);
+  }, [initialPresetId, initialTitle]);
 
   useEffect(() => {
     if (!categoryId) {
@@ -124,13 +139,19 @@ export function ProductTitlePresetInput({
   }, []);
 
   useEffect(() => {
+    const nextKey = `${categoryId}:${subCategoryId}`;
+    const categoryChanged = categoryKeyRef.current !== nextKey;
+    categoryKeyRef.current = nextKey;
+
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPresetCategoryId(categoryId);
     setPresetSubCategoryId(subCategoryId);
     setSaveError("");
     setSaveStatus("");
-    onPresetIdentityChange?.(null);
-  }, [categoryId, onPresetIdentityChange, subCategoryId]);
+    if (categoryChanged) {
+      onPresetIdentityChangeRef.current?.(null);
+    }
+  }, [categoryId, subCategoryId]);
 
   const filtered = useMemo(() => {
     const query = title.trim().toLowerCase();

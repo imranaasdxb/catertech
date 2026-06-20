@@ -3,6 +3,7 @@
 import ProductEditClient from "@/app/admin/products/[id]/ProductEditClient";
 import { ADMIN_PURPLE, admin } from "@/components/admin/adminTheme";
 import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
+import AdminProductViewEditPanel from "@/components/admin/AdminProductViewEditPanel";
 import AdminProductViewPanel from "@/components/admin/AdminProductViewPanel";
 import { AdminPanelModal } from "@/components/admin/AdminPanelModal";
 import { AdminTypedDeleteDialog } from "@/components/admin/AdminTypedDeleteDialog";
@@ -102,11 +103,11 @@ function Specifications({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-y-1 xl:grid-cols-2 xl:gap-x-4">
+    <div className="flex flex-col gap-y-0.5">
       {entries.map(([key, value]) => (
-        <p key={key} className="min-w-0 truncate text-xs leading-5 text-gray-600">
+        <p key={key} className="min-w-0 text-xs leading-5 text-gray-600">
           <span className="font-semibold capitalize text-gray-400">{key.replace(/_/g, " ")}:</span>{" "}
-          <span>{formatAttribute(value)}</span>
+          <span className="whitespace-nowrap">{formatAttribute(value)}</span>
         </p>
       ))}
     </div>
@@ -134,15 +135,15 @@ function VisibilityToggle({
       aria-pressed={active}
       disabled={disabled}
       onClick={onClick}
-      className={`inline-flex cursor-pointer items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 xl:gap-1.5 xl:px-2.5 xl:py-1.5 xl:text-xs ${
+      className={`inline-flex cursor-pointer items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-xs ${
         active
-          ? "border-purple-200 bg-purple-50 text-purple-700"
-          : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50"
+          ? "border-admin-accent/35 bg-admin-accent/10 text-admin-ink"
+          : "border-admin-border bg-white text-admin-ink/50 hover:border-admin-border hover:bg-admin-bg"
       }`}
     >
       <span
         className={`inline-flex h-4 w-4 items-center justify-center rounded border ${
-          active ? "border-purple-500 bg-purple-500 text-white" : "border-gray-300 bg-white"
+          active ? "border-admin-accent bg-admin-accent text-white" : "border-admin-border bg-white"
         }`}
       >
         {active ? <Check className="h-2.5 w-2.5" strokeWidth={3} aria-hidden /> : null}
@@ -179,6 +180,7 @@ export default function AdminProductsTable({
   const [viewProduct, setViewProduct] = useState<ProductRow | null>(null);
   const [viewLoadErr, setViewLoadErr] = useState("");
   const [viewLoading, setViewLoading] = useState(false);
+  const [viewEditing, setViewEditing] = useState(false);
 
   useEffect(() => {
     // Refresh the optimistic table copy after a server navigation.
@@ -265,6 +267,7 @@ export default function AdminProductsTable({
     setViewProduct(null);
     setViewLoadErr("");
     setViewLoading(true);
+    setViewEditing(false);
     setViewId(id);
   }
 
@@ -273,6 +276,7 @@ export default function AdminProductsTable({
     setViewProduct(null);
     setViewLoadErr("");
     setViewLoading(false);
+    setViewEditing(false);
   }
 
   function handleSearchSubmit(e: React.FormEvent) {
@@ -347,14 +351,14 @@ export default function AdminProductsTable({
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search products…"
-            className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 outline-none ring-purple-500/30 placeholder:text-gray-400 focus:border-purple-300 focus:ring-2"
+            className="w-full rounded-lg border border-admin-border bg-white py-2.5 pl-9 pr-3 text-sm text-admin-ink outline-none placeholder:text-admin-ink/40 focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15"
             />
           </form>
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value as FilterKey)}
             aria-label="Filter products"
-            className="cursor-pointer rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 outline-none focus:border-purple-300 focus:ring-2 focus:ring-purple-500/30"
+            className="cursor-pointer rounded-lg border border-admin-border bg-white px-3 py-2.5 text-sm text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15"
           >
             <option value="all">All products</option>
             <option value="live">Live only</option>
@@ -427,10 +431,27 @@ export default function AdminProductsTable({
       <AdminPanelModal
         open={Boolean(viewId)}
         title={viewProduct?.title ?? viewRowMeta?.title ?? "View product"}
-        subtitle="Product overview"
+        subtitle={
+          viewEditing
+            ? "Editing product"
+            : viewProduct?.productId ?? "Product overview"
+        }
         widthClass="max-w-[min(100%-0.75rem,72rem)]"
         maxHeightClass="max-h-[min(94vh,900px)]"
-        scrollable={false}
+        scrollable
+        headerActions={
+          viewProduct && !viewLoading && !viewLoadErr && !viewEditing ? (
+            <button
+              type="button"
+              className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-admin-ink/45 transition-colors hover:bg-admin-accent/12 hover:text-admin-accent"
+              aria-label="Edit product"
+              title="Edit product"
+              onClick={() => setViewEditing(true)}
+            >
+              <Pencil className="h-4 w-4" aria-hidden />
+            </button>
+          ) : null
+        }
         onClose={closeView}
       >
         {viewLoading ? (
@@ -442,6 +463,36 @@ export default function AdminProductsTable({
           <div className="rounded-lg bg-red-50 px-4 py-8 text-center text-sm text-red-600">
             {viewLoadErr}
           </div>
+        ) : viewProduct && viewEditing ? (
+          <AdminProductViewEditPanel
+            key={`edit-${viewProduct.id}-${viewProduct.updatedAt}`}
+            product={viewProduct}
+            onCancel={() => setViewEditing(false)}
+            onSaved={(updated) => {
+              setViewProduct(updated);
+              setViewEditing(false);
+              setLocalRows((prev) =>
+                prev.map((r) =>
+                  r.id === updated.id
+                    ? {
+                        ...r,
+                        title: updated.title,
+                        slug: updated.slug,
+                        category: updated.category,
+                        galleryCount: updated.images?.length ?? 0,
+                        published: updated.published,
+                        isFeatured: updated.isFeatured,
+                        isAvailable: updated.isAvailable,
+                        attributes: (updated.attributes ?? {}) as Record<string, ProductAttributeValue>,
+                        updatedAt: updated.updatedAt,
+                        thumbUrl: updated.images?.[0] ?? null,
+                      }
+                    : r
+                )
+              );
+              router.refresh();
+            }}
+          />
         ) : viewProduct ? (
           <AdminProductViewPanel product={viewProduct} />
         ) : null}
@@ -466,57 +517,57 @@ export default function AdminProductsTable({
         }}
       />
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div className="overflow-x-auto [scrollbar-color:rgba(26,26,26,0.22)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-black/20 [&::-webkit-scrollbar-track]:bg-transparent">
-          <table className="w-full border-collapse lg:table-fixed xl:min-w-[1280px] xl:table-auto">
+      <div className="overflow-hidden rounded-xl border border-admin-border bg-white shadow-sm">
+        <div className="overflow-x-auto sm:overflow-x-hidden [scrollbar-color:rgba(26,26,26,0.22)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-black/20 [&::-webkit-scrollbar-track]:bg-transparent">
+          <table className="w-full table-fixed border-collapse max-sm:min-w-[580px]">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/80">
-                <th className="w-[48px] px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500 xl:w-[56px] xl:px-4">
+              <tr className="border-b border-admin-border bg-admin-accent-tint/75">
+                <th className="w-[44px] px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-admin-ink/55 sm:px-3">
                   S.N
                 </th>
-                <th className="w-[60px] px-3 py-3 text-left xl:w-[68px] xl:px-4">
+                <th className="w-[52px] px-2 py-3 text-left sm:px-3">
                   <span className="sr-only">Image</span>
                 </th>
-                <th className="w-[180px] px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 xl:w-[250px] xl:px-4">
+                <th className="w-[18%] px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-admin-ink/55 sm:px-3">
                   Product
                 </th>
-                <th className="w-[190px] px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 xl:w-[390px] xl:px-4">
+                <th className="w-[20%] px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-admin-ink/55 sm:px-3">
                   Specifications
                 </th>
-                <th className="w-[210px] px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 xl:w-[290px] xl:px-4">
+                <th className="w-[30%] px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-admin-ink/55 sm:px-3">
                   Visibility
                 </th>
-                <th className="hidden w-[112px] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 xl:table-cell">
-                  Updated
-                </th>
-                <th className="w-[108px] px-3 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 xl:w-[132px] xl:px-5">
+                <th className="w-[14%] min-w-[96px] px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-admin-ink/55 sm:px-3">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {filteredRows.map((r, index) => (
-                <tr key={r.id} className="min-h-[88px] align-top transition-colors hover:bg-gray-50/70">
-                  <td className="px-3 py-4 text-center text-xs font-semibold tabular-nums text-gray-400 xl:px-4">
+                <tr
+                  key={r.id}
+                  className={`min-h-[88px] align-top border-b border-admin-border/60 transition-colors last:border-b-0 ${
+                    index % 2 === 0 ? "bg-white" : "bg-admin-bg/90"
+                  } hover:bg-admin-accent/[0.07]`}
+                >
+                  <td className="px-2 py-4 text-center text-xs font-semibold tabular-nums text-gray-400 sm:px-3">
                     {index + 1}
                   </td>
-                  <td className="px-3 py-3 xl:px-4">
+                  <td className="px-2 py-3 sm:px-3">
                     <Thumb url={r.thumbUrl} />
                   </td>
-                  <td className="px-3 py-3 xl:px-4">
-                    <p className="max-w-[180px] truncate font-semibold text-gray-900 xl:max-w-[250px]">{r.title}</p>
+                  <td className="px-2 py-3 sm:px-3">
+                    <p className="truncate font-semibold text-gray-900">{r.title}</p>
                     <p className="mt-0.5 truncate text-xs text-gray-400">/{r.slug}</p>
                     {r.category ? (
-                      <p className="mt-1 max-w-[180px] truncate text-xs font-medium text-gray-500 xl:max-w-[250px]">
-                        {r.category}
-                      </p>
+                      <p className="mt-1 truncate text-xs font-medium text-gray-500">{r.category}</p>
                     ) : null}
                   </td>
-                  <td className="px-3 py-3 xl:px-4">
+                  <td className="px-2 py-3 sm:px-3">
                     <Specifications attributes={r.attributes} />
                   </td>
-                  <td className="px-3 py-3 xl:px-4">
-                    <div className="flex flex-wrap gap-1.5">
+                  <td className="px-2 py-3 sm:px-3">
+                    <div className="flex flex-wrap gap-1 sm:gap-1.5">
                       <VisibilityToggle
                         active={r.published}
                         label="Live"
@@ -561,15 +612,12 @@ export default function AdminProductsTable({
                       />
                     </div>
                   </td>
-                  <td className="hidden px-4 py-3 text-xs font-medium text-gray-500 xl:table-cell">
-                    {formatUpdatedAt(r.updatedAt)}
-                  </td>
-                  <td className="px-3 py-3 xl:px-5">
+                  <td className="px-2 py-3 sm:px-3">
                     <div className="flex flex-col items-end gap-1.5">
                       <div className="flex items-center justify-end gap-1">
                         <button
                           type="button"
-                          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-purple-100 hover:text-purple-700"
+                          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-admin-ink/45 transition-colors hover:bg-admin-accent/15 hover:text-admin-accent"
                           title="Edit"
                           aria-label={`Edit ${r.title}`}
                           onClick={() => openEdit(r.id)}
@@ -578,7 +626,7 @@ export default function AdminProductsTable({
                         </button>
                         <button
                           type="button"
-                          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100"
+                          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-admin-ink/45 transition-colors hover:bg-admin-bg hover:text-admin-ink"
                           title="View"
                           aria-label={`View ${r.title}`}
                           onClick={() => openView(r.id)}
@@ -588,7 +636,7 @@ export default function AdminProductsTable({
                         <button
                           type="button"
                           disabled={deletingId === r.id}
-                          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+                          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-admin-ink/35 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
                           title="Delete"
                           aria-label={`Delete ${r.title}`}
                           onClick={() => setDeleteTarget(r)}
@@ -596,11 +644,13 @@ export default function AdminProductsTable({
                           <Trash2 className="h-3.5 w-3.5" aria-hidden />
                         </button>
                       </div>
-                      <div className="text-right xl:hidden">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+                      <div className="text-right">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-admin-ink/40">
                           Updated
                         </p>
-                        <p className="text-xs font-medium text-gray-500">{formatUpdatedAt(r.updatedAt)}</p>
+                        <p className="whitespace-nowrap text-xs font-medium text-admin-ink/55">
+                          {formatUpdatedAt(r.updatedAt)}
+                        </p>
                       </div>
                     </div>
                   </td>
@@ -608,7 +658,7 @@ export default function AdminProductsTable({
               ))}
               {filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-16 text-center text-sm text-gray-400">
+                  <td colSpan={6} className="px-4 py-16 text-center text-sm text-gray-400">
                     {emptyMessage}
                   </td>
                 </tr>
