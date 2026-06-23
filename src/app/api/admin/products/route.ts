@@ -1,4 +1,4 @@
-import { count, desc, eq, like } from "drizzle-orm";
+import { and, count, desc, eq, like, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import {
@@ -31,6 +31,37 @@ const createSchema = z.object({
   canonicalProductId: z.union([z.string().uuid(), z.null()]).optional(),
   productTitlePresetId: z.union([z.string().uuid(), z.null()]).optional(),
 });
+
+function normalizeText(value: string) {
+  return value.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function normalizeAttributeValue(value: ProductAttributeValue | undefined) {
+  if (!value) return "";
+  if (typeof value === "string") return normalizeText(value);
+  return normalizeText(`${value.value ?? ""} ${value.unit ?? ""}`);
+}
+
+function attributesMatch(
+  productAttributes: Record<string, ProductAttributeValue>,
+  presetAttributes: Record<string, ProductAttributeValue>
+) {
+  const presetEntries = Object.entries(presetAttributes).filter(([, value]) =>
+    Boolean(normalizeAttributeValue(value))
+  );
+  if (!presetEntries.length) return false;
+
+  return presetEntries.every(([key, presetValue]) => {
+    const productValue = normalizeAttributeValue(productAttributes[key]);
+    const normalizedPresetValue = normalizeAttributeValue(presetValue);
+    return (
+      Boolean(productValue) &&
+      (productValue === normalizedPresetValue ||
+        productValue.includes(normalizedPresetValue) ||
+        normalizedPresetValue.includes(productValue))
+    );
+  });
+}
 
 export async function GET() {
   const db = getDb();
@@ -71,8 +102,43 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: subCheck.message }, { status: 400 });
   }
   if (!catId) subId = null;
+  const attributes = (d.attributes ?? {}) as Record<string, ProductAttributeValue>;
 
-  const productTitlePresetId = d.productTitlePresetId ?? null;
+  let productTitlePresetId = d.productTitlePresetId ?? null;
+  if (!productTitlePresetId && catId) {
+    const matchingPresets = await db
+      .select({
+        id: productTitlePresets.id,
+        subCategoryId: productTitlePresets.subCategoryId,
+        attributes: productTitlePresets.attributes,
+      })
+      .from(productTitlePresets)
+      .where(
+        and(
+          eq(productTitlePresets.categoryId, catId),
+          sql`(
+            lower(trim(${productTitlePresets.title})) = ${d.title.trim().toLowerCase()}
+            or lower(trim(${productTitlePresets.sourceLabel})) = ${d.title.trim().toLowerCase()}
+          )`
+        )
+      )
+      .limit(2);
+
+    const sameSubcategoryPresets = matchingPresets.filter(
+      (matchingPreset) => matchingPreset.subCategoryId === subId
+    );
+    const attributeMatches =
+      sameSubcategoryPresets.length > 1
+        ? sameSubcategoryPresets.filter((matchingPreset) =>
+            attributesMatch(attributes, matchingPreset.attributes)
+          )
+        : sameSubcategoryPresets;
+    const [matchingPreset] = attributeMatches;
+    if (attributeMatches.length === 1 && matchingPreset) {
+      productTitlePresetId = matchingPreset.id;
+    }
+  }
+
   if (productTitlePresetId) {
     const [preset] = await db
       .select({
@@ -107,7 +173,6 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
-  const attributes = (d.attributes ?? {}) as Record<string, ProductAttributeValue>;
   const generatedSeo = generateProductSeo({
     title: d.title,
     categoryName: categoryLabel?.split("›")[0]?.trim() ?? null,

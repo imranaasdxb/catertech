@@ -34,6 +34,7 @@ export type RichTextProps = {
   name: string;
   /** Initial HTML (e.g. when editing). */
   defaultHtml?: string;
+  onHtmlChange?: (html: string) => void;
   /** Full-width layout inside admin cards (no outer max-width / centered margin). */
   embed?: boolean;
   className?: string;
@@ -77,6 +78,7 @@ function escapeHtmlAttr(raw: string): string {
 export default function RichText({
   name,
   defaultHtml = "",
+  onHtmlChange,
   embed = true,
   className = "",
   editorMinHeight = 200,
@@ -98,8 +100,10 @@ export default function RichText({
   const syncFromEditor = useCallback(() => {
     const el = editorRef.current;
     if (!el) return;
-    setHtml(el.innerHTML);
-  }, []);
+    const nextHtml = el.innerHTML;
+    setHtml(nextHtml);
+    onHtmlChange?.(nextHtml);
+  }, [onHtmlChange]);
 
   useLayoutEffect(() => {
     const el = editorRef.current;
@@ -131,6 +135,7 @@ export default function RichText({
     if (el) {
       el.innerHTML = "";
       setHtml("");
+      onHtmlChange?.("");
     }
     setShowEraseModal(false);
     setActiveStyles({

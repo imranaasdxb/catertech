@@ -6,6 +6,7 @@ import {
   products,
   productSubcategories,
   productTitlePresets,
+  type ProductAttributeValue,
 } from "@/db/schema";
 import { z } from "zod";
 
@@ -27,6 +28,37 @@ const createSchema = z.object({
   categoryId: z.string().uuid(),
   subCategoryId: z.string().uuid().nullable().optional(),
 });
+
+function normalizeText(value: string) {
+  return value.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function normalizeAttributeValue(value: ProductAttributeValue | undefined) {
+  if (!value) return "";
+  if (typeof value === "string") return normalizeText(value);
+  return normalizeText(`${value.value ?? ""} ${value.unit ?? ""}`);
+}
+
+function attributesMatch(
+  productAttributes: Record<string, ProductAttributeValue>,
+  presetAttributes: Record<string, ProductAttributeValue>
+) {
+  const presetEntries = Object.entries(presetAttributes).filter(([, value]) =>
+    Boolean(normalizeAttributeValue(value))
+  );
+  if (!presetEntries.length) return false;
+
+  return presetEntries.every(([key, presetValue]) => {
+    const productValue = normalizeAttributeValue(productAttributes[key]);
+    const normalizedPresetValue = normalizeAttributeValue(presetValue);
+    return (
+      Boolean(productValue) &&
+      (productValue === normalizedPresetValue ||
+        productValue.includes(normalizedPresetValue) ||
+        normalizedPresetValue.includes(productValue))
+    );
+  });
+}
 
 export async function GET(request: Request) {
   const db = getDb();
@@ -125,7 +157,7 @@ export async function GET(request: Request) {
   }
 
   const { categoryId, subCategoryId } = parsed.data;
-  const [rows, createdRows] = await Promise.all([
+  const [rows, linkedRows, categoryProducts] = await Promise.all([
     db
       .select({
         id: productTitlePresets.id,
@@ -152,8 +184,35 @@ export async function GET(request: Request) {
           isNotNull(products.productTitlePresetId)
         )
       ),
+    db
+      .select({
+        title: products.title,
+        productTitlePresetId: products.productTitlePresetId,
+        attributes: products.attributes,
+      })
+      .from(products)
+      .where(eq(products.categoryId, categoryId)),
   ]);
-  const createdPresetIds = new Set(createdRows.map((row) => row.presetId));
+  const createdPresetIds = new Set(linkedRows.map((row) => row.presetId));
+  for (const product of categoryProducts) {
+    if (product.productTitlePresetId) continue;
+    const normalizedTitle = normalizeText(product.title);
+    const matches = rows.filter(
+      (preset) =>
+        normalizeText(preset.title) === normalizedTitle ||
+        normalizeText(preset.sourceLabel) === normalizedTitle
+    );
+    const attributeMatches =
+      matches.length > 1
+        ? matches.filter((preset) =>
+            attributesMatch(
+              product.attributes as Record<string, ProductAttributeValue>,
+              preset.attributes
+            )
+          )
+        : matches;
+    if (attributeMatches.length === 1) createdPresetIds.add(attributeMatches[0].id);
+  }
   const presets = rows.map((row) => ({
     ...row,
     created: createdPresetIds.has(row.id),

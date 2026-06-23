@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { products, type ProductAttributeValue } from "@/db/schema";
@@ -108,8 +108,22 @@ export async function PUT(
     (d.subCategoryId !== undefined && d.subCategoryId !== row.subCategoryId);
   const productTitlePresetId =
     presetLinkageChanged ? null : row.productTitlePresetId;
-  const nextSlug =
-    d.title !== undefined ? slugify(d.title) : row.slug;
+  let nextSlug = row.slug;
+  if (d.title !== undefined && d.title !== row.title) {
+    const base = slugify(d.title);
+    nextSlug = base;
+    let n = 0;
+    while (n < 20) {
+      const clash = await db
+        .select({ id: products.id })
+        .from(products)
+        .where(and(eq(products.slug, nextSlug), ne(products.id, id)))
+        .limit(1);
+      if (!clash.length) break;
+      n += 1;
+      nextSlug = `${base}-${n}`;
+    }
+  }
   const nextAttributes =
     d.attributes !== undefined
       ? (d.attributes as Record<string, ProductAttributeValue>)

@@ -8,7 +8,7 @@ import {
 } from "@/components/admin/ProductCategorySelects";
 import type { ProductAttributeValue } from "@/lib/category-template";
 import { Check, ChevronDown, Loader2, Plus, RotateCcw, Search } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type ProductPreset = {
   id: string;
@@ -67,6 +67,7 @@ export function ProductTitlePresetInput({
   useEffect(() => {
     onPresetIdentityChangeRef.current = onPresetIdentityChange;
   }, [onPresetIdentityChange]);
+
   const [title, setTitle] = useState(initialTitle);
   const [presets, setPresets] = useState<ProductPreset[]>([]);
   const [open, setOpen] = useState(false);
@@ -78,10 +79,38 @@ export function ProductTitlePresetInput({
   const [saveStatus, setSaveStatus] = useState("");
   const [saveError, setSaveError] = useState("");
   const [customPresetOpen, setCustomPresetOpen] = useState(false);
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(initialPresetId);
+
+  const loadPresets = useCallback(
+    async (
+      nextCategoryId: string,
+      nextSubCategoryId: string,
+      onLoaded: (nextPresets: ProductPreset[]) => void
+    ) => {
+      if (!nextCategoryId) {
+        onLoaded([]);
+        return;
+      }
+
+      const params = new URLSearchParams({ categoryId: nextCategoryId });
+      if (nextSubCategoryId) params.set("subCategoryId", nextSubCategoryId);
+
+      try {
+        const res = await fetch(`/api/admin/product-presets?${params}`, { cache: "no-store" });
+        if (!res.ok) throw new Error("load failed");
+        const data = (await res.json()) as { presets?: ProductPreset[] };
+        onLoaded(data.presets ?? []);
+      } catch {
+        onLoaded([]);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setTitle(initialTitle);
+    setSelectedPresetId(initialPresetId);
   }, [initialPresetId, initialTitle]);
 
   useEffect(() => {
@@ -94,28 +123,33 @@ export function ProductTitlePresetInput({
 
     let cancelled = false;
     setLoading(true);
-    const params = new URLSearchParams({ categoryId });
-    if (subCategoryId) params.set("subCategoryId", subCategoryId);
-
-    void fetch(`/api/admin/product-presets?${params}`, { cache: "no-store" })
-      .then(async (res) => {
-        if (!res.ok) throw new Error("load failed");
-        return (await res.json()) as { presets?: ProductPreset[] };
-      })
-      .then((data) => {
-        if (!cancelled) setPresets(data.presets ?? []);
-      })
-      .catch(() => {
-        if (!cancelled) setPresets([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+    void loadPresets(categoryId, subCategoryId, (nextPresets) => {
+      if (!cancelled) setPresets(nextPresets);
+    }).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
 
     return () => {
       cancelled = true;
     };
-  }, [categoryId, subCategoryId]);
+  }, [categoryId, loadPresets, subCategoryId]);
+
+  useEffect(() => {
+    if (!categoryId) return;
+
+    let cancelled = false;
+    const refreshPresets = () => {
+      void loadPresets(categoryId, subCategoryId, (nextPresets) => {
+        if (!cancelled) setPresets(nextPresets);
+      });
+    };
+
+    window.addEventListener("ct-product-taxonomy-updated", refreshPresets);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("ct-product-taxonomy-updated", refreshPresets);
+    };
+  }, [categoryId, loadPresets, subCategoryId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -149,6 +183,7 @@ export function ProductTitlePresetInput({
     setSaveError("");
     setSaveStatus("");
     if (categoryChanged) {
+      setSelectedPresetId(null);
       onPresetIdentityChangeRef.current?.(null);
     }
   }, [categoryId, subCategoryId]);
@@ -162,16 +197,19 @@ export function ProductTitlePresetInput({
   }, [presets, title]);
 
   const exactTitleMatch = useMemo(() => {
+    if (selectedPresetId) {
+      return presets.find((preset) => preset.id === selectedPresetId) ?? null;
+    }
+
     const normalizedTitle = normalizePresetTitle(title);
     if (!normalizedTitle) return null;
-    return (
-      presets.find(
-        (preset) =>
-          normalizePresetTitle(preset.title) === normalizedTitle ||
-          normalizePresetTitle(preset.sourceLabel) === normalizedTitle
-      ) ?? null
+    const matches = presets.filter(
+      (preset) =>
+        normalizePresetTitle(preset.title) === normalizedTitle ||
+        normalizePresetTitle(preset.sourceLabel) === normalizedTitle
     );
-  }, [presets, title]);
+    return matches.length === 1 ? matches[0] : null;
+  }, [presets, selectedPresetId, title]);
 
   const presetSubcategories = useMemo(() => {
     return taxonomy.find((row) => row.id === presetCategoryId)?.subcategories ?? [];
@@ -228,6 +266,7 @@ export function ProductTitlePresetInput({
     onTitleChange?.(preset.title);
     setOpen(false);
     setCustomPresetOpen(false);
+    setSelectedPresetId(preset.id);
     onPresetIdentityChange?.(preset.id);
     onPresetSelected(preset.attributes);
   }
@@ -240,6 +279,7 @@ export function ProductTitlePresetInput({
     setPresetSubCategoryId("");
     setSaveError("");
     setSaveStatus("");
+    setSelectedPresetId(null);
     onPresetIdentityChange?.(null);
     onAddCustomRequested?.();
   }
@@ -280,6 +320,7 @@ export function ProductTitlePresetInput({
         const exists = current.some((preset) => preset.id === data.preset!.id);
         return exists ? current : [data.preset!, ...current];
       });
+      setSelectedPresetId(data.preset.id);
       onPresetIdentityChange?.(data.preset.id);
     }
     if (!data.existed) incrementProductTaxonomyPresetCount(presetCategoryId);
@@ -332,6 +373,7 @@ export function ProductTitlePresetInput({
               onChange={(event) => {
                 setTitle(event.target.value);
                 onTitleChange?.(event.target.value);
+                setSelectedPresetId(null);
                 onPresetIdentityChange?.(null);
                 setOpen(true);
                 setSaveError("");

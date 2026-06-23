@@ -105,58 +105,67 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
-
-    setBlockingOpen(true);
-    setBlockingTitle("Uploading images…");
-    setBlockingSubtitle("Sending any new files to CaterTech storage.");
-    const commit = await galleryRef.current!.commitPendingUploads();
-    if (!commit.ok) {
-      setBlockingOpen(false);
-      setError(commit.message);
-      return;
-    }
-
-    setBlockingTitle("Saving product…");
-    setBlockingSubtitle("Updating your catalogue entry.");
-
-    const fd = new FormData(e.currentTarget);
-    const payload = {
-      title: String(fd.get("title") || ""),
-      description: String(fd.get("description") || "") || null,
-      categoryId: selectedTaxonomy.categoryId || null,
-      subCategoryId: selectedTaxonomy.subCategoryId || null,
-      images: commit.urls,
-      published: fd.get("published") === "on",
-      isFeatured: fd.get("isFeatured") === "on",
-      isAvailable: fd.get("isAvailable") === "on",
-      attributes: parseProductAttributes(fd, templateFields),
-      seoTitle: seoTitleValue,
-      seoDescription: seoDescriptionValue,
-      searchKeywords: searchKeywordsValue
-        .split(",")
-        .map((keyword) => keyword.trim())
-        .filter(Boolean),
-    };
+    const form = e.currentTarget;
 
     setLoading(true);
-    const res = await fetch(`/api/admin/products/${product.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    setLoading(false);
-    setBlockingOpen(false);
+    setBlockingOpen(true);
+    try {
+      setBlockingTitle("Uploading images...");
+      setBlockingSubtitle("Sending any new files to CaterTech storage.");
+      const commit = await galleryRef.current?.commitPendingUploads();
+      if (!commit) {
+        setError("Gallery is still loading. Please try again.");
+        return;
+      }
+      if (!commit.ok) {
+        setError(commit.message);
+        return;
+      }
 
-    if (!res.ok) {
-      const data = (await res.json().catch(() => ({}))) as { error?: unknown };
-      setError(typeof data.error === "string" ? data.error : "Save failed");
-      return;
+      setBlockingTitle("Saving product...");
+      setBlockingSubtitle("Updating your catalogue entry.");
+
+      const fd = new FormData(form);
+      const payload = {
+        title: String(fd.get("title") || ""),
+        description: String(fd.get("description") || "") || null,
+        categoryId: selectedTaxonomy.categoryId || null,
+        subCategoryId: selectedTaxonomy.subCategoryId || null,
+        images: commit.urls,
+        published: fd.get("published") === "on",
+        isFeatured: fd.get("isFeatured") === "on",
+        isAvailable: fd.get("isAvailable") === "on",
+        attributes: parseProductAttributes(fd, templateFields),
+        seoTitle: seoTitleValue,
+        seoDescription: seoDescriptionValue,
+        searchKeywords: searchKeywordsValue
+          .split(",")
+          .map((keyword) => keyword.trim())
+          .filter(Boolean),
+      };
+
+      const res = await fetch(`/api/admin/products/${product.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: unknown };
+        setError(typeof data.error === "string" ? data.error : "Save failed");
+        return;
+      }
+
+      const updated = (await res.json()) as ProductRow;
+      notifyProductTaxonomyChanged();
+      setSavedRow(updated);
+      setShowSaved(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setLoading(false);
+      setBlockingOpen(false);
     }
-
-    const updated = (await res.json()) as ProductRow;
-    notifyProductTaxonomyChanged();
-    setSavedRow(updated);
-    setShowSaved(true);
   }
 
   return (

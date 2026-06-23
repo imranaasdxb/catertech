@@ -1,6 +1,6 @@
 "use client";
 
-import RichText from "@/app/admin/ui/Richtext";
+import RichText, { isRichTextBodyEmpty } from "@/app/admin/ui/Richtext";
 import AdminGalleryUpload, {
   type AdminGalleryUploadHandle,
 } from "@/components/admin/AdminGalleryUpload";
@@ -11,6 +11,7 @@ import {
 } from "@/components/admin/ProductTemplateFields";
 import {
   incrementProductTaxonomyCreatedPresetCount,
+  notifyProductTaxonomyChanged,
   ProductCategorySelects,
 } from "@/components/admin/ProductCategorySelects";
 import { ProductTitlePresetInput } from "@/components/admin/ProductTitlePresetInput";
@@ -62,6 +63,9 @@ export default function NewProductPage() {
   const [templateFields, setTemplateFields] = useState<TemplateFieldDef[]>([]);
   const [liveTitle, setLiveTitle] = useState("");
   const [liveAttributes, setLiveAttributes] = useState<Record<string, ProductAttributeValue>>({});
+  const [descriptionHtml, setDescriptionHtml] = useState("");
+  const [isPublished, setIsPublished] = useState(false);
+  const [isAvailableForQuote, setIsAvailableForQuote] = useState(true);
   const [seoTitleOverride, setSeoTitleOverride] = useState<string | null>(null);
   const [seoDescriptionOverride, setSeoDescriptionOverride] = useState<string | null>(null);
   const [searchKeywordsOverride, setSearchKeywordsOverride] = useState<string | null>(null);
@@ -90,6 +94,9 @@ export default function NewProductPage() {
     setTemplateFields([]);
     setLiveTitle("");
     setLiveAttributes({});
+    setDescriptionHtml("");
+    setIsPublished(false);
+    setIsAvailableForQuote(true);
     setSeoTitleOverride(null);
     setSeoDescriptionOverride(null);
     setSearchKeywordsOverride(null);
@@ -149,62 +156,100 @@ export default function NewProductPage() {
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
-    const fd = new FormData(e.currentTarget);
-
-    setBlockingOpen(true);
-    setBlockingTitle("Uploading images...");
-    setBlockingSubtitle("Sending files to CaterTech storage.");
-    const commit = await galleryRef.current!.commitPendingUploads();
-    if (!commit.ok) {
-      setBlockingOpen(false);
-      setError(commit.message);
+    const form = e.currentTarget;
+    if (!form.checkValidity()) {
+      setError("Fill all required fields before saving.");
+      form.reportValidity();
       return;
     }
+    const fd = new FormData(form);
+    const title = String(fd.get("title") || "").trim();
+    const description = String(fd.get("description") || "");
 
-    setBlockingTitle("Creating product...");
-    setBlockingSubtitle("Saving catalogue entry.");
-    const payload = {
-      title: String(fd.get("title") || ""),
-      description: String(fd.get("description") || "") || undefined,
-      categoryId: selectedTaxonomy.categoryId || null,
-      subCategoryId: selectedTaxonomy.subCategoryId || null,
-      images: commit.urls,
-      published: fd.get("published") === "on",
-      isFeatured: fd.get("isFeatured") === "on",
-      isAvailable: fd.get("isAvailable") === "on",
-      attributes: parseProductAttributes(fd, templateFields),
-      seoTitle: String(fd.get("seoTitle") || ""),
-      seoDescription: String(fd.get("seoDescription") || ""),
-      searchKeywords: String(fd.get("searchKeywords") || "")
-        .split(",")
-        .map((keyword) => keyword.trim())
-        .filter(Boolean),
-      canonicalProductId: canonicalProductId.trim() || null,
-      productTitlePresetId: selectedProductTitlePresetId,
-    };
+    if (!selectedTaxonomy.categoryId) {
+      setError("Choose a product category before saving.");
+      return;
+    }
+    if (!title) {
+      setError("Enter or choose a product title before saving.");
+      return;
+    }
+    if (isRichTextBodyEmpty(description)) {
+      setError("Add a product description before saving.");
+      return;
+    }
+    if (fd.get("published") !== "on") {
+      setError("Tick Live on website before saving.");
+      return;
+    }
+    if (fd.get("isAvailable") !== "on") {
+      setError("Tick Available for quote before saving.");
+      return;
+    }
+    if (!galleryRef.current?.getImageCount()) {
+      setError("Add at least one product image before saving.");
+      return;
+    }
 
     setLoading(true);
-    const res = await fetch("/api/admin/products", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    setLoading(false);
-    setBlockingOpen(false);
-    if (!res.ok) {
-      const data = (await res.json().catch(() => ({}))) as { error?: unknown };
-      setError(JSON.stringify(data.error ?? "Save failed"));
-      return;
+    setBlockingOpen(true);
+    try {
+      setBlockingTitle("Uploading images...");
+      setBlockingSubtitle("Uploading images in parallel to CaterTech storage.");
+      const commit = await galleryRef.current.commitPendingUploads();
+      if (!commit.ok || commit.urls.length === 0) {
+        setError(commit.ok ? "Add at least one product image before saving." : commit.message);
+        return;
+      }
+
+      setBlockingTitle("Creating product...");
+      setBlockingSubtitle("Saving catalogue entry.");
+      const payload = {
+        title,
+        description,
+        categoryId: selectedTaxonomy.categoryId || null,
+        subCategoryId: selectedTaxonomy.subCategoryId || null,
+        images: commit.urls,
+        published: fd.get("published") === "on",
+        isFeatured: fd.get("isFeatured") === "on",
+        isAvailable: fd.get("isAvailable") === "on",
+        attributes: parseProductAttributes(fd, templateFields),
+        seoTitle: String(fd.get("seoTitle") || ""),
+        seoDescription: String(fd.get("seoDescription") || ""),
+        searchKeywords: String(fd.get("searchKeywords") || "")
+          .split(",")
+          .map((keyword) => keyword.trim())
+          .filter(Boolean),
+        canonicalProductId: canonicalProductId.trim() || null,
+        productTitlePresetId: selectedProductTitlePresetId,
+      };
+
+      const res = await fetch("/api/admin/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: unknown };
+        setError(JSON.stringify(data.error ?? "Save failed"));
+        return;
+      }
+      const row = (await res.json()) as {
+        id: string;
+        presetProgressIncremented?: boolean;
+      };
+      if (row.presetProgressIncremented && selectedTaxonomy.categoryId) {
+        incrementProductTaxonomyCreatedPresetCount(selectedTaxonomy.categoryId);
+      }
+      notifyProductTaxonomyChanged();
+      resetCreateForm();
+      setCreatedId(row.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setLoading(false);
+      setBlockingOpen(false);
     }
-    const row = (await res.json()) as {
-      id: string;
-      presetProgressIncremented?: boolean;
-    };
-    if (row.presetProgressIncremented && selectedTaxonomy.categoryId) {
-      incrementProductTaxonomyCreatedPresetCount(selectedTaxonomy.categoryId);
-    }
-    resetCreateForm();
-    setCreatedId(row.id);
   }
 
   function goToProductsTable() {
@@ -222,6 +267,15 @@ export default function NewProductPage() {
   const seoDescriptionValue = seoDescriptionOverride ?? generatedSeo.seoDescription;
   const searchKeywordsValue =
     searchKeywordsOverride ?? generatedSeo.searchKeywords.join(", ");
+  const isDescriptionReady = !isRichTextBodyEmpty(descriptionHtml);
+  const requiredOptionWarning = !isDescriptionReady
+    ? "Add a product description before saving."
+    : !isPublished
+      ? "Tick Live on website before saving."
+      : !isAvailableForQuote
+        ? "Tick Available for quote before saving."
+        : "";
+  const isCreateDisabled = loading || blockingOpen || Boolean(requiredOptionWarning);
 
   return (
     <>
@@ -255,6 +309,7 @@ export default function NewProductPage() {
           <form
             key={formKey}
             onSubmit={onSubmit}
+            noValidate
             className="overflow-hidden rounded-[28px] border border-black/6 bg-white shadow-[0px_24px_80px_rgba(0,0,0,0.06)]"
           >
             <div className="border-b border-black/6 bg-admin-bg/60 px-5 py-4 md:px-7">
@@ -416,14 +471,26 @@ export default function NewProductPage() {
 
                       <section>
                         <label className={admin.labelModern}>Description</label>
-                        <RichText name="description" defaultHtml="" embed editorMinHeight={220} />
+                        <RichText
+                          name="description"
+                          defaultHtml=""
+                          onHtmlChange={setDescriptionHtml}
+                          embed
+                          editorMinHeight={220}
+                        />
                       </section>
 
                       <section>
                         <label className={admin.labelModern}>Options</label>
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                           <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-black/8 bg-admin-bg/70 px-4 py-3 text-sm font-semibold text-admin-ink">
-                            <input type="checkbox" name="published" className={admin.checkbox} />
+                            <input
+                              type="checkbox"
+                              name="published"
+                              checked={isPublished}
+                              onChange={(event) => setIsPublished(event.target.checked)}
+                              className={admin.checkbox}
+                            />
                             Live on website
                           </label>
                           <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-black/8 bg-admin-bg/70 px-4 py-3 text-sm font-semibold text-admin-ink">
@@ -434,7 +501,8 @@ export default function NewProductPage() {
                             <input
                               type="checkbox"
                               name="isAvailable"
-                              defaultChecked
+                              checked={isAvailableForQuote}
+                              onChange={(event) => setIsAvailableForQuote(event.target.checked)}
                               className={admin.checkbox}
                             />
                             Available for quote
@@ -464,7 +532,7 @@ export default function NewProductPage() {
                 {canShowProductFields ? (
                   <button
                     type="submit"
-                    disabled={loading || blockingOpen}
+                    disabled={isCreateDisabled}
                     className={`${admin.primaryBtn} w-full min-w-[140px] justify-center gap-2 sm:w-auto`}
                   >
                     <Save size={16} aria-hidden="true" />
@@ -472,6 +540,11 @@ export default function NewProductPage() {
                   </button>
                 ) : null}
               </div>
+              {canShowProductFields && requiredOptionWarning ? (
+                <p className="mt-2 text-right text-xs font-semibold text-red-600">
+                  {requiredOptionWarning}
+                </p>
+              ) : null}
             </div>
           </form>
         </div>

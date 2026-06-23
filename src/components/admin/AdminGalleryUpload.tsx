@@ -20,6 +20,7 @@ export type GalleryCommitResult =
 
 export type AdminGalleryUploadHandle = {
   commitPendingUploads: () => Promise<GalleryCommitResult>;
+  getImageCount: () => number;
 };
 
 type GalleryItem =
@@ -224,6 +225,9 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
     );
 
     useImperativeHandle(ref, () => ({
+      getImageCount() {
+        return itemsRef.current.length;
+      },
       async commitPendingUploads() {
         setLastError("");
         const order = [...itemsRef.current];
@@ -238,22 +242,19 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
 
         setCommitting(true);
         const revokeAfter: string[] = [];
-        const out: string[] = [];
 
         try {
-          for (const row of order) {
-            if (row.kind === "remote") out.push(row.url);
-            else {
+          const out = await Promise.all(
+            order.map(async (row) => {
+              if (row.kind === "remote") return row.url;
               const up = await uploadMediaPublicUrl(row.file);
               if (!up.ok) {
-                setLastError(up.message);
-                setCommitting(false);
-                return { ok: false as const, message: up.message };
+                throw new Error(up.message);
               }
               revokeAfter.push(row.previewUrl);
-              out.push(up.url);
-            }
-          }
+              return up.url;
+            })
+          );
           for (const u of revokeAfter) URL.revokeObjectURL(u);
           const nextRows: GalleryItem[] = out.map((url) => ({
             id: newId(),
@@ -262,9 +263,12 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
           }));
           setItems(nextRows);
           return { ok: true as const, urls: out };
-        } catch {
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : "Something went wrong while uploading images.";
+          setLastError(message);
           setCommitting(false);
-          return { ok: false as const, message: "Something went wrong while uploading images." };
+          return { ok: false as const, message };
         } finally {
           setCommitting(false);
         }
