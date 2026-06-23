@@ -232,13 +232,12 @@ export default function ProductEquipmentDetail({
     const seen = new Set<string>();
     const uniq: string[] = [];
     for (const u of merged) {
-      if (!seen.has(u)) {
+      if (u && !seen.has(u)) {
         seen.add(u);
         uniq.push(u);
       }
     }
-    while (uniq.length < 4) uniq.push(product.image);
-    return uniq.slice(0, 4);
+    return uniq.length ? uniq : [""];
   }, [product.image, product.galleryImages]);
 
   const mainSrc = thumbSources[activeThumb] ?? product.image;
@@ -342,14 +341,14 @@ export default function ProductEquipmentDetail({
           {/* LEFT — Gallery */}
           <div className="lg:sticky lg:top-28 lg:self-start space-y-3">
             {/* Main image */}
-            <div className="relative aspect-4/3 rounded-2xl overflow-hidden border border-border shadow-[0_4px_32px_rgba(26,31,46,0.07)]">
+            <div className="relative aspect-4/3 rounded-2xl overflow-hidden border border-border bg-[#FEFEFE] shadow-[0_4px_32px_rgba(26,31,46,0.07)]">
               {mainSrc ? (
                 <Image
                   src={mainSrc}
                   alt={product.name}
                   fill
                   unoptimized
-                  className="object-cover"
+                  className="object-contain object-center p-4 sm:p-6 md:p-8"
                   priority
                   sizes="(max-width: 1024px) 100vw, 55vw"
                 />
@@ -402,13 +401,13 @@ export default function ProductEquipmentDetail({
             </div>
 
             {/* Thumbnails */}
-            <div className="grid grid-cols-4 gap-2.5">
+            <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-5">
               {thumbSources.map((src, i) => (
                 <button
                   key={`${src}-${i}`}
                   type="button"
                   onClick={() => setActiveThumb(i)}
-                  className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-200 ${
+                  className={`relative aspect-square rounded-xl overflow-hidden border-2 bg-[#FEFEFE] transition-all duration-200 ${
                     activeThumb === i
                       ? "border-sand shadow-[0_0_0_1px_#c21722]"
                       : "border-border hover:border-sand/40"
@@ -419,7 +418,7 @@ export default function ProductEquipmentDetail({
                       src={src}
                       alt={`${product.name} view ${i + 1}`}
                       fill
-                      className="object-cover"
+                      className="object-contain object-center p-1.5"
                       sizes="96px"
                     />
                   ) : (

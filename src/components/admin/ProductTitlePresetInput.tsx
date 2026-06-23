@@ -222,6 +222,7 @@ export function ProductTitlePresetInput({
   const canSavePreset = Boolean(title.trim() && presetCategoryId && !savingPreset);
 
   function selectPreset(preset: ProductPreset) {
+    if (preset.created && preset.id !== initialPresetId) return;
     if (blurTimer.current) clearTimeout(blurTimer.current);
     setTitle(preset.title);
     onTitleChange?.(preset.title);
@@ -446,13 +447,20 @@ export function ProductTitlePresetInput({
       {open && !loading ? (
         <div className="absolute z-30 mt-2 max-h-72 w-full overflow-y-auto rounded-xl border border-black/10 bg-white p-1.5 shadow-[0_18px_48px_rgba(0,0,0,0.14)] xl:max-w-[calc(100%-410px)]">
           {filtered.length ? (
-            filtered.map((preset) => (
+            filtered.map((preset) => {
+              const isCreatedLocked = preset.created && preset.id !== initialPresetId;
+              return (
               <button
                 key={preset.id}
                 type="button"
+                disabled={isCreatedLocked}
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => selectPreset(preset)}
-                className="flex w-full items-center justify-between gap-4 rounded-lg px-3 py-2.5 text-left transition hover:bg-admin-bg"
+                className={`flex w-full items-center justify-between gap-4 rounded-lg px-3 py-2.5 text-left transition ${
+                  isCreatedLocked
+                    ? "cursor-not-allowed opacity-55"
+                    : "hover:bg-admin-bg"
+                }`}
               >
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-semibold text-admin-ink">
@@ -479,7 +487,8 @@ export function ProductTitlePresetInput({
                   {preset.created ? "Created" : "Not created"}
                 </span>
               </button>
-            ))
+            );
+            })
           ) : (
             <p className="rounded-lg px-3 py-2.5 text-sm text-admin-ink/50">
               No matching preset.
@@ -487,9 +496,15 @@ export function ProductTitlePresetInput({
           )}
           {title.trim() ? (
             exactTitleMatch ? (
-              <div className="mt-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs font-semibold text-amber-700">
-                This title already exists. Select it from the results above.
-              </div>
+              exactTitleMatch.created && exactTitleMatch.id !== initialPresetId ? (
+                <div className="mt-1 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs font-semibold text-emerald-700">
+                  This title already has a product. Choose a different title or preset.
+                </div>
+              ) : (
+                <div className="mt-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs font-semibold text-amber-700">
+                  This title already exists. Select it from the results above.
+                </div>
+              )
             ) : (
               <div className="mt-1 flex items-center justify-between gap-3 rounded-lg border-t border-black/6 px-3 py-2.5">
                 <p className="min-w-0 truncate text-xs text-admin-ink/50">

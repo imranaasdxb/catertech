@@ -1,5 +1,6 @@
 "use client";
 
+import { admin } from "@/components/admin/adminTheme";
 import { AdminPanelModal } from "@/components/admin/AdminPanelModal";
 import { rfqEventTypes } from "@/lib/validations/forms";
 import type { LucideIcon } from "lucide-react";
@@ -311,31 +312,27 @@ export default function AdminRfqClient({ dbConfigured }: { dbConfigured: boolean
 
   return (
     <>
-      <div className="space-y-8">
-        <div>
-          <h1 className="font-serif text-3xl text-charcoal tracking-tight">Events RFQ enquiry</h1>
-          <p className="text-muted text-sm mt-2 max-w-full leading-snug sm:whitespace-nowrap sm:overflow-hidden sm:text-ellipsis">
-            Submissions from /trade/rfq — search by name, reference, event, venue, company, or contact.
-          </p>
+      <div className="mx-auto w-full max-w-[1560px] px-1 sm:px-2 lg:px-4">
+        <div className={admin.headerRow}>
+          <div className={admin.headerLead}>
+            <h1 className={admin.h1}>Events RFQ enquiry</h1>
+            <p className={`${admin.muted} mt-1`}>
+              Submissions from /trade/rfq — search by name, reference, event, venue, company, or contact.
+            </p>
+          </div>
         </div>
 
         {error ? (
-          <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">{error}</p>
+          <p className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
+            {error}
+          </p>
         ) : null}
 
-        <div className="flex flex-col xl:flex-row gap-3 xl:items-end xl:justify-between">
-          <div className="w-full xl:max-w-lg">
-            <label
-              htmlFor="rfq-search"
-              className="block text-[10px] font-bold uppercase tracking-widest text-charcoal mb-2"
-            >
-              Search
-            </label>
-            <div className="relative">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="relative min-w-0 w-full sm:max-w-xs sm:flex-1 sm:w-auto">
               <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
-                size={18}
-                strokeWidth={2}
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
                 aria-hidden
               />
               <input
@@ -343,137 +340,162 @@ export default function AdminRfqClient({ dbConfigured }: { dbConfigured: boolean
                 type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Name, reference, event, venue, company, email, phone…"
-                className="w-full border border-border rounded-xl pl-10 pr-4 py-3 text-sm text-charcoal placeholder:text-muted/60 bg-white outline-none focus:border-sand transition-colors"
+                placeholder="Name, reference, event, venue, company…"
+                className="w-full rounded-lg border border-admin-border bg-white py-2.5 pl-9 pr-3 text-sm text-admin-ink outline-none placeholder:text-admin-ink/40 focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15"
                 autoComplete="off"
               />
             </div>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <div>
-              <label htmlFor="rfq-status" className="block text-[10px] font-bold uppercase tracking-widest text-charcoal mb-2">
-                Status
-              </label>
-              <select
-                id="rfq-status"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="border border-border rounded-xl px-4 py-3 text-sm text-charcoal bg-white min-w-[140px] outline-none focus:border-sand"
-              >
-                <option value="all">All statuses</option>
-                {statusOptions.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="rfq-type" className="block text-[10px] font-bold uppercase tracking-widest text-charcoal mb-2">
-                Event type
-              </label>
-              <select
-                id="rfq-type"
-                value={eventTypeFilter}
-                onChange={(e) => setEventTypeFilter(e.target.value)}
-                className="border border-border rounded-xl px-4 py-3 text-sm text-charcoal bg-white min-w-[180px] outline-none focus:border-sand max-w-[220px]"
-              >
-                <option value="all">All event types</option>
-                {rfqEventTypes.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="rfq-emirate" className="block text-[10px] font-bold uppercase tracking-widest text-charcoal mb-2">
-                Emirate
-              </label>
-              <select
-                id="rfq-emirate"
-                value={emirateFilter}
-                onChange={(e) => setEmirateFilter(e.target.value)}
-                className="border border-border rounded-xl px-4 py-3 text-sm text-charcoal bg-white min-w-[180px] outline-none focus:border-sand"
-              >
-                <option value="all">All emirates</option>
-                {UAE_EMIRATES.map((e) => (
-                  <option key={e} value={e}>
-                    {e}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <select
+              id="rfq-status"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              aria-label="Filter by status"
+              className="cursor-pointer rounded-lg border border-admin-border bg-white px-3 py-2.5 text-sm text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15"
+            >
+              <option value="all">All statuses</option>
+              {statusOptions.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+            <select
+              id="rfq-type"
+              value={eventTypeFilter}
+              onChange={(e) => setEventTypeFilter(e.target.value)}
+              aria-label="Filter by event type"
+              className="cursor-pointer rounded-lg border border-admin-border bg-white px-3 py-2.5 text-sm text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15"
+            >
+              <option value="all">All event types</option>
+              {rfqEventTypes.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+            <select
+              id="rfq-emirate"
+              value={emirateFilter}
+              onChange={(e) => setEmirateFilter(e.target.value)}
+              aria-label="Filter by emirate"
+              className="cursor-pointer rounded-lg border border-admin-border bg-white px-3 py-2.5 text-sm text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15"
+            >
+              <option value="all">All emirates</option>
+              {UAE_EMIRATES.map((e) => (
+                <option key={e} value={e}>
+                  {e}
+                </option>
+              ))}
+            </select>
+            <p className="shrink-0 text-sm text-gray-500">
+              <span className="font-semibold text-gray-800">{filtered.length}</span>
+              {filtered.length === 1 ? " submission" : " submissions"}
+            </p>
           </div>
         </div>
 
-        {loading && rows.length === 0 ? (
-          <p className="text-muted text-sm py-12 text-center border border-dashed border-border rounded-2xl bg-white">
-            Loading events RFQ submissions…
-          </p>
-        ) : rows.length === 0 ? (
-          <p className="text-muted text-sm py-12 text-center border border-dashed border-border rounded-2xl bg-white">
-            No events RFQ submissions yet. They will appear here when customers submit the form.
-          </p>
-        ) : filtered.length === 0 ? (
-          <p className="text-muted text-sm py-12 text-center border border-dashed border-border rounded-2xl bg-offwhite">
-            No rows match your filters. Try clearing search or filters.
-          </p>
-        ) : (
-          <div className="rounded-2xl border border-border bg-white overflow-hidden shadow-[0_4px_24px_rgba(26,31,46,0.06)]">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left min-w-[1100px]">
-                <thead>
-                  <tr className="bg-navy text-white text-[10px] uppercase tracking-wider">
-                    <th className="px-4 py-3 font-bold w-14">S.No</th>
-                    <th className="px-4 py-3 font-bold min-w-[160px]">Full name</th>
-                    <th className="px-4 py-3 font-bold whitespace-nowrap">Ref no</th>
-                    <th className="px-4 py-3 font-bold min-w-[140px]">Company</th>
-                    <th className="px-4 py-3 font-bold whitespace-nowrap">Event date</th>
-                    <th className="px-4 py-3 font-bold min-w-[140px]">Event name</th>
-                    <th className="px-4 py-3 font-bold min-w-[120px]">Event type</th>
-                    <th className="px-4 py-3 font-bold w-16 text-center">View</th>
+        <div className="overflow-hidden rounded-xl border border-admin-border bg-white shadow-sm">
+          <div className="overflow-x-auto sm:overflow-x-hidden [scrollbar-color:rgba(26,26,26,0.22)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-black/20 [&::-webkit-scrollbar-track]:bg-transparent">
+            <table className="w-full table-fixed border-collapse max-sm:min-w-[680px]">
+              <thead>
+                <tr className="border-b border-admin-border bg-admin-accent-tint/75">
+                  <th className="w-[44px] px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-admin-ink/55 sm:px-3">
+                    S.N
+                  </th>
+                  <th className="w-[20%] px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-admin-ink/55 sm:px-3">
+                    Full name
+                  </th>
+                  <th className="w-[14%] px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-admin-ink/55 sm:px-3">
+                    Ref no
+                  </th>
+                  <th className="w-[13%] px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-admin-ink/55 sm:px-3">
+                    Company
+                  </th>
+                  <th className="w-[11%] px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-admin-ink/55 sm:px-3">
+                    Event date
+                  </th>
+                  <th className="w-[17%] px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-admin-ink/55 sm:px-3">
+                    Event name
+                  </th>
+                  <th className="w-[14%] px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-admin-ink/55 sm:px-3">
+                    Event type
+                  </th>
+                  <th className="w-[72px] px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-admin-ink/55 sm:px-3">
+                    View
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading && rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-12 text-center text-sm text-admin-ink/45">
+                      Loading events RFQ submissions…
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((r, index) => (
+                ) : rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-12 text-center text-sm text-admin-ink/45">
+                      No events RFQ submissions yet. They will appear here when customers submit the form.
+                    </td>
+                  </tr>
+                ) : filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-12 text-center text-sm text-admin-ink/45">
+                      No rows match your filters. Try clearing search or filters.
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((r, index) => (
                     <tr
                       key={r.id}
-                      className="border-t border-border bg-white hover:bg-offwhite/80 transition-colors align-top"
+                      className={`min-h-[72px] align-top border-b border-admin-border/60 transition-colors last:border-b-0 ${
+                        index % 2 === 0 ? "bg-white" : "bg-admin-bg/90"
+                      } hover:bg-admin-accent/[0.07]`}
                     >
-                      <td className="px-4 py-3 text-muted tabular-nums">{index + 1}</td>
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-charcoal">{r.contactPerson}</p>
-                        <p className="mt-0.5 text-xs text-muted break-all">{r.email}</p>
+                      <td className="px-2 py-3 align-top text-center text-xs font-semibold tabular-nums leading-snug text-gray-400 sm:px-3">
+                        {index + 1}
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex rounded-lg bg-offwhite border border-border px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-charcoal whitespace-nowrap">
+                      <td className="px-2 py-3 align-top sm:px-3">
+                        <p className="truncate text-sm font-semibold leading-snug text-gray-900">{r.contactPerson}</p>
+                        <p className="mt-0.5 truncate text-xs leading-snug text-gray-400">{r.email}</p>
+                      </td>
+                      <td className="px-2 py-3 align-top sm:px-3">
+                        <span className="inline-block max-w-full rounded-md bg-admin-accent/10 px-2 py-1 text-[9px] font-semibold leading-snug text-admin-accent ring-1 ring-admin-accent/20 break-all uppercase tracking-wide">
                           {r.referenceNo}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-charcoal">{r.companyName}</td>
-                      <td className="px-4 py-3 text-muted tabular-nums whitespace-nowrap text-xs">
+                      <td className="px-2 py-3 align-top sm:px-3">
+                        <p className="truncate text-sm leading-snug text-gray-700">{r.companyName}</p>
+                      </td>
+                      <td className="px-2 py-3 align-top text-xs tabular-nums leading-snug text-gray-500 sm:px-3">
                         {formatDate(r.eventDate)}
                       </td>
-                      <td className="px-4 py-3 text-charcoal">{r.eventName}</td>
-                      <td className="px-4 py-3 text-muted">{r.eventType}</td>
-                      <td className="px-4 py-3 text-center">
-                        <button
-                          type="button"
-                          onClick={() => setSelected(r)}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white text-navy transition-colors hover:border-sand hover:bg-offwhite"
-                          aria-label={`View ${r.referenceNo}`}
-                        >
-                          <Eye className="h-4 w-4" strokeWidth={1.75} />
-                        </button>
+                      <td className="px-2 py-3 align-top sm:px-3">
+                        <p className="truncate text-sm leading-snug text-gray-800">{r.eventName}</p>
+                      </td>
+                      <td className="px-2 py-3 align-top sm:px-3">
+                        <p className="truncate text-xs leading-snug text-gray-500">{r.eventType}</p>
+                      </td>
+                      <td className="px-2 py-3 align-top sm:px-3">
+                        <div className="flex justify-end pt-0.5">
+                          <button
+                            type="button"
+                            onClick={() => setSelected(r)}
+                            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-admin-ink/45 transition-colors hover:bg-admin-accent/15 hover:text-admin-accent"
+                            aria-label={`View ${r.referenceNo}`}
+                            title="View details"
+                          >
+                            <Eye className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />
+                          </button>
+                        </div>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-        )}
+        </div>
       </div>
 
       <AdminPanelModal

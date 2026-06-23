@@ -49,7 +49,6 @@ export default function AdminContactsDirectoryClient({
   const [sourceFilter, setSourceFilter] = useState<ContactDirectoryRow["source"] | "all">(
     "all"
   );
-  const [lastFetchedAt, setLastFetchedAt] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     if (!dbConfigured) {
@@ -78,7 +77,6 @@ export default function AdminContactsDirectoryClient({
               : new Date(String(r.createdAt)).toISOString(),
         }))
       );
-      setLastFetchedAt(Date.now());
     } catch {
       setError("Network error while loading contacts.");
       setRows([]);
@@ -117,14 +115,6 @@ export default function AdminContactsDirectoryClient({
     };
   }, [rows]);
 
-  const ageLabel = useMemo(() => {
-    if (lastFetchedAt == null) return null;
-    const sec = Math.max(0, Math.floor((Date.now() - lastFetchedAt) / 1000));
-    if (sec < 60) return `${sec}s ago`;
-    const min = Math.floor(sec / 60);
-    return `${min}m ago`;
-  }, [lastFetchedAt]);
-
   if (!dbConfigured) {
     return (
       <p className="text-muted text-sm">
@@ -143,31 +133,6 @@ export default function AdminContactsDirectoryClient({
           <p className="text-muted text-sm mt-2 max-w-2xl leading-relaxed">
             Unified directory from quick enquiries, trade RFQs, cart quotation requests,
             and contact form submissions. Refreshes automatically every few seconds.
-          </p>
-          <p className="text-[11px] text-muted mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span
-              className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/12 px-2.5 py-0.5 font-semibold text-emerald-800"
-              aria-live="polite"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-600" />
-              </span>
-              Live data
-            </span>
-            {ageLabel ? (
-              <span>
-                Updated <span className="tabular-nums">{ageLabel}</span>
-              </span>
-            ) : null}
-            <button
-              type="button"
-              onClick={() => void load()}
-              disabled={loading}
-              className="text-charcoal underline underline-offset-2 hover:text-navy disabled:opacity-50"
-            >
-              Refresh now
-            </button>
           </p>
         </div>
       </div>

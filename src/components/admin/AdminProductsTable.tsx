@@ -1,6 +1,5 @@
 "use client";
 
-import ProductEditClient from "@/app/admin/products/[id]/ProductEditClient";
 import { ADMIN_PURPLE, admin } from "@/components/admin/adminTheme";
 import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import AdminProductViewEditPanel from "@/components/admin/AdminProductViewEditPanel";
@@ -166,16 +165,11 @@ export default function AdminProductsTable({
   const [localRows, setLocalRows] = useState(rows);
   const [searchInput, setSearchInput] = useState(initialSearch);
   const [filter, setFilter] = useState<FilterKey>("all");
-  const [editId, setEditId] = useState<string | null>(null);
   const [viewId, setViewId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminProductListRow | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [toggleAction, setToggleAction] = useState<ToggleAction | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
-
-  const [editProduct, setEditProduct] = useState<ProductRow | null>(null);
-  const [editLoadErr, setEditLoadErr] = useState("");
-  const [editLoading, setEditLoading] = useState(false);
 
   const [viewProduct, setViewProduct] = useState<ProductRow | null>(null);
   const [viewLoadErr, setViewLoadErr] = useState("");
@@ -204,28 +198,6 @@ export default function AdminProductsTable({
   }, [localRows, filter]);
 
   useEffect(() => {
-    if (!editId) return;
-    let cancelled = false;
-    fetch(`/api/admin/products/${editId}`)
-      .then((r) => {
-        if (!r.ok) throw new Error();
-        return r.json();
-      })
-      .then((data: ProductRow) => {
-        if (!cancelled) setEditProduct(data);
-      })
-      .catch(() => {
-        if (!cancelled) setEditLoadErr("Unable to load this product.");
-      })
-      .finally(() => {
-        if (!cancelled) setEditLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [editId]);
-
-  useEffect(() => {
     if (!viewId) return;
     let cancelled = false;
     fetch(`/api/admin/products/${viewId}`)
@@ -249,25 +221,11 @@ export default function AdminProductsTable({
 
   const viewRowMeta = localRows.find((r) => r.id === viewId);
 
-  function openEdit(id: string) {
-    setEditProduct(null);
-    setEditLoadErr("");
-    setEditLoading(true);
-    setEditId(id);
-  }
-
-  function closeEdit() {
-    setEditId(null);
-    setEditProduct(null);
-    setEditLoadErr("");
-    setEditLoading(false);
-  }
-
-  function openView(id: string) {
+  function openView(id: string, startEditing = false) {
     setViewProduct(null);
     setViewLoadErr("");
     setViewLoading(true);
-    setViewEditing(false);
+    setViewEditing(startEditing);
     setViewId(id);
   }
 
@@ -401,32 +359,6 @@ export default function AdminProductsTable({
           await applyToggle(toggleAction);
         }}
       />
-
-      <AdminPanelModal
-        open={Boolean(editId)}
-        title="Edit product"
-        subtitle="Gallery uploads when you save."
-        widthClass="max-w-[min(100%-1rem,46rem)]"
-        onClose={closeEdit}
-      >
-        {editLoading ? (
-          <div className="flex flex-col items-center gap-3 py-20 text-admin-ink/50">
-            <Loader2 className="h-8 w-8 animate-spin text-admin-accent" aria-hidden />
-            <p className="text-sm">Loading editor…</p>
-          </div>
-        ) : editLoadErr ? (
-          <p className={`${admin.error} py-8 text-center`}>{editLoadErr}</p>
-        ) : editProduct ? (
-          <ProductEditClient
-            variant="modal"
-            product={editProduct}
-            onDeleted={() => {
-              closeEdit();
-              void router.refresh();
-            }}
-          />
-        ) : null}
-      </AdminPanelModal>
 
       <AdminPanelModal
         open={Boolean(viewId)}
@@ -620,7 +552,7 @@ export default function AdminProductsTable({
                           className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-admin-ink/45 transition-colors hover:bg-admin-accent/15 hover:text-admin-accent"
                           title="Edit"
                           aria-label={`Edit ${r.title}`}
-                          onClick={() => openEdit(r.id)}
+                          onClick={() => openView(r.id, true)}
                         >
                           <Pencil className="h-3.5 w-3.5" aria-hidden />
                         </button>

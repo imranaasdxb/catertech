@@ -2,7 +2,7 @@
 
 import { admin } from "@/components/admin/adminTheme";
 import { uploadMediaPublicUrl } from "@/lib/upload-media-client";
-import { ImagePlus, Loader2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ImagePlus, Loader2, X } from "lucide-react";
 import {
   forwardRef,
   useCallback,
@@ -82,6 +82,25 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
         const rm = prev[index];
         const next = prev.filter((_, j) => j !== index);
         if (rm?.kind === "local") URL.revokeObjectURL(rm.previewUrl);
+        return next;
+      });
+    }, []);
+
+    const moveItem = useCallback((fromIndex: number, toIndex: number) => {
+      setItems((prev) => {
+        if (
+          fromIndex < 0 ||
+          toIndex < 0 ||
+          fromIndex >= prev.length ||
+          toIndex >= prev.length ||
+          fromIndex === toIndex
+        ) {
+          return prev;
+        }
+
+        const next = [...prev];
+        const [moved] = next.splice(fromIndex, 1);
+        next.splice(toIndex, 0, moved);
         return next;
       });
     }, []);
@@ -292,6 +311,9 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
             )}
             {pickingBusy ? "Adding…" : "Choose images"}
           </label>
+          <p className="text-[11px] text-admin-ink/40">
+            Upload, drag and drop, or paste multiple images. Use the arrows to set image order.
+          </p>
         </div>
 
         {showHint ? <p className={admin.hint}>{hint}</p> : null}
@@ -350,6 +372,12 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
                 role="listitem"
                 className="relative w-[7.5rem] shrink-0 overflow-hidden rounded-xl border border-black/[0.06] bg-[#fff6f1] shadow-sm"
               >
+                <span
+                  aria-label={`Image position ${idx + 1}`}
+                  className="absolute left-1.5 top-1.5 z-10 flex h-6 min-w-6 items-center justify-center rounded-full bg-admin-accent px-1.5 text-[11px] font-bold text-white shadow"
+                >
+                  {idx + 1}
+                </span>
                 <button
                   type="button"
                   aria-label={`Remove image ${idx + 1}`}
@@ -367,15 +395,35 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
                     loading="lazy"
                   />
                 </div>
-                {idx === 0 ? (
-                  <p className="border-t border-black/[0.04] px-2 py-1 text-center text-[10px] font-semibold uppercase tracking-wide text-admin-accent/90">
-                    Primary
+                <div className="flex items-center justify-between gap-1 border-t border-black/[0.04] px-1.5 py-1">
+                  <button
+                    type="button"
+                    aria-label={`Move image ${idx + 1} earlier`}
+                    title="Move earlier"
+                    onClick={() => moveItem(idx, idx - 1)}
+                    disabled={committing || idx === 0}
+                    className="rounded p-1 text-admin-ink/50 hover:bg-white hover:text-admin-accent disabled:pointer-events-none disabled:opacity-20"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
+                  </button>
+                  <p
+                    className={`text-center text-[9px] font-semibold uppercase tracking-wide ${
+                      idx === 0 ? "text-admin-accent/90" : "text-admin-ink/45"
+                    }`}
+                  >
+                    {idx === 0 ? "Main" : `Image ${idx + 1}`}
                   </p>
-                ) : (
-                  <p className="border-t border-black/[0.04] px-2 py-1 text-center text-[10px] text-admin-ink/40">
-                    &nbsp;
-                  </p>
-                )}
+                  <button
+                    type="button"
+                    aria-label={`Move image ${idx + 1} later`}
+                    title="Move later"
+                    onClick={() => moveItem(idx, idx + 1)}
+                    disabled={committing || idx === items.length - 1}
+                    className="rounded p-1 text-admin-ink/50 hover:bg-white hover:text-admin-accent disabled:pointer-events-none disabled:opacity-20"
+                  >
+                    <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                  </button>
+                </div>
               </article>
             ))}
           </div>

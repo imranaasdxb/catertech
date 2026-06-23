@@ -52,8 +52,31 @@ function norm(s: string) {
 }
 
 function formatAttributeValue(value: ProductAttributeValue) {
-  if (typeof value === "string") return value;
+  if (typeof value === "string") return value.trim();
   return `${value.value}${value.unit ? ` ${value.unit}` : ""}`.trim();
+}
+
+/** All size/dimension attributes for card title context, in display order. */
+const SIZE_ATTRIBUTE_KEYS = [
+  "dimensions",
+  "size",
+  "length",
+  "width",
+  "height",
+  "diameter",
+] as const;
+
+function getProductSizeSummary(
+  attributes: Record<string, ProductAttributeValue>,
+): string | null {
+  const parts: string[] = [];
+  for (const key of SIZE_ATTRIBUTE_KEYS) {
+    const raw = attributes[key];
+    if (raw == null || raw === "") continue;
+    const formatted = formatAttributeValue(raw);
+    if (formatted) parts.push(formatted);
+  }
+  return parts.length ? parts.join(" · ") : null;
 }
 
 const EQUIPMENT_PREVIEW_COUNT = 10;
@@ -101,6 +124,15 @@ function StorefrontProductCard({
   shopCompact?: boolean;
 }) {
   const productHref = `/shop/${product.slug}`;
+  const sizeSummary = getProductSizeSummary(product.attributes);
+  const cardTitleClass = `font-sans !font-normal tracking-normal text-[#1a1a1a] ${
+    shopCompact ? "text-sm lg:text-lg xl:text-xl" : "text-lg sm:text-xl"
+  }`;
+  const cardDescClass = `font-sans !font-normal tracking-normal text-[#666666] ${
+    shopCompact
+      ? "text-[10px] leading-snug lg:text-[13px] lg:leading-[1.6]"
+      : "text-[13px] leading-[1.6]"
+  }`;
 
   return (
     <article
@@ -163,23 +195,24 @@ function StorefrontProductCard({
           {product.category || "Catering equipment"}
         </p>
 
-        <Link href={productHref} className="block min-w-0">
-          <h1
-            className={`line-clamp-2 font-bold leading-tight text-[#1a1a1a] ${
-              shopCompact ? "text-sm lg:text-lg xl:text-xl" : "text-lg sm:text-xl"
-            }`}
-          >
-            {product.name}
-          </h1>
-        </Link>
+        <div className="flex min-w-0 items-start justify-between gap-2">
+          <Link href={productHref} className="min-w-0 flex-1">
+            <h1 className={`line-clamp-2 leading-tight ${cardTitleClass}`}>
+              {product.name}
+            </h1>
+          </Link>
+          {sizeSummary ? (
+            <p
+              className={`max-w-[46%] shrink-0 pt-0.5 text-right font-sans font-normal leading-snug text-[#888888] ${
+                shopCompact ? "text-[9px] lg:text-[11px]" : "text-[11px]"
+              }`}
+            >
+              {sizeSummary}
+            </p>
+          ) : null}
+        </div>
 
-        <h2
-          className={`line-clamp-2 text-[#666666] ${
-            shopCompact
-              ? "text-[10px] leading-snug lg:text-[13px] lg:leading-[1.6]"
-              : "text-[13px] leading-[1.6]"
-          }`}
-        >
+        <h2 className={`line-clamp-2 ${cardDescClass}`}>
           {product.description || "Product details available on request."}
         </h2>
 
