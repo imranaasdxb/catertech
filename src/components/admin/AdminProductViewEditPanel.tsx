@@ -5,7 +5,7 @@ import AdminGalleryUpload, {
   type AdminGalleryUploadHandle,
 } from "@/components/admin/AdminGalleryUpload";
 import { AdminBlockingOverlay, AdminSuccessModal } from "@/components/admin/AdminFormOverlays";
-import { ADMIN_PURPLE, admin } from "@/components/admin/adminTheme";
+import { admin } from "@/components/admin/adminTheme";
 import {
   notifyProductTaxonomyChanged,
   ProductCategorySelects,
@@ -71,10 +71,6 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
   const [searchKeywordsOverride, setSearchKeywordsOverride] = useState<string | null>(
     product.searchKeywords?.join(", ") ?? null
   );
-  const [publishIntent, setPublishIntent] = useState<"draft" | "live">(
-    product.published ? "live" : "draft"
-  );
-
   const canShowFields = Boolean(selectedTaxonomy.categoryId);
 
   const handleTaxonomySelection = useCallback((selection: TaxonomySelection) => {
@@ -130,7 +126,7 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
       categoryId: selectedTaxonomy.categoryId || null,
       subCategoryId: selectedTaxonomy.subCategoryId || null,
       images: commit.urls,
-      published: publishIntent === "live",
+      published: fd.get("published") === "on",
       isFeatured: fd.get("isFeatured") === "on",
       isAvailable: fd.get("isAvailable") === "on",
       attributes: parseProductAttributes(fd, templateFields),
@@ -213,6 +209,15 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
             )}
             <div className={`${admin.checkRow} flex-wrap gap-4`}>
               <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-admin-ink">
+                <input
+                  type="checkbox"
+                  name="published"
+                  defaultChecked={product.published}
+                  className={admin.checkbox}
+                />
+                Live
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-admin-ink">
                 <input type="checkbox" name="isFeatured" defaultChecked={product.isFeatured} className={admin.checkbox} />
                 Featured
               </label>
@@ -267,19 +272,9 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
             <button
               type="submit"
               disabled={loading || blockingOpen || !canShowFields}
-              onClick={() => setPublishIntent("draft")}
-              className={`${admin.secondaryBtn} cursor-pointer px-4 py-2 text-xs disabled:opacity-50`}
-            >
-              {loading && publishIntent === "draft" ? "Saving…" : "Save draft"}
-            </button>
-            <button
-              type="submit"
-              disabled={loading || blockingOpen || !canShowFields}
-              onClick={() => setPublishIntent("live")}
               className={`${admin.primaryBtn} cursor-pointer px-4 py-2 text-xs disabled:opacity-50`}
-              style={{ backgroundColor: ADMIN_PURPLE }}
             >
-              {loading && publishIntent === "live" ? "Publishing…" : "Publish live"}
+              {loading ? "Saving..." : "Save changes"}
             </button>
           </div>
         </div>

@@ -14,13 +14,13 @@ import {
   ProductCategorySelects,
 } from "@/components/admin/ProductCategorySelects";
 import { ProductTitlePresetInput } from "@/components/admin/ProductTitlePresetInput";
-import { ADMIN_PURPLE, admin } from "@/components/admin/adminTheme";
+import { admin } from "@/components/admin/adminTheme";
 import type {
   ProductAttributeValue,
   TemplateFieldDef,
 } from "@/lib/category-template";
 import { generateProductSeo } from "@/lib/product-seo";
-import { ArrowLeft, ImagePlus, Save, Tag, Upload } from "lucide-react";
+import { ArrowLeft, ImagePlus, Save, Tag } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useRef, useState } from "react";
@@ -73,7 +73,6 @@ export default function NewProductPage() {
     undefined
   );
   const [presetRevision, setPresetRevision] = useState(0);
-  const [publishIntent, setPublishIntent] = useState<"draft" | "live">("draft");
 
   const canShowProductFields = Boolean(selectedTaxonomy.categoryId);
   const canShowTitleSection = canShowProductFields || customPresetMode;
@@ -98,7 +97,6 @@ export default function NewProductPage() {
     setSelectedProductTitlePresetId(null);
     setPresetFieldKeys(undefined);
     setPresetRevision(0);
-    setPublishIntent("draft");
   }, []);
 
   const handleTaxonomySelection = useCallback((selection: TaxonomySelection) => {
@@ -171,7 +169,7 @@ export default function NewProductPage() {
       categoryId: selectedTaxonomy.categoryId || null,
       subCategoryId: selectedTaxonomy.subCategoryId || null,
       images: commit.urls,
-      published: publishIntent === "live",
+      published: fd.get("published") === "on",
       isFeatured: fd.get("isFeatured") === "on",
       isAvailable: fd.get("isAvailable") === "on",
       attributes: parseProductAttributes(fd, templateFields),
@@ -423,7 +421,11 @@ export default function NewProductPage() {
 
                       <section>
                         <label className={admin.labelModern}>Options</label>
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                          <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-black/8 bg-admin-bg/70 px-4 py-3 text-sm font-semibold text-admin-ink">
+                            <input type="checkbox" name="published" className={admin.checkbox} />
+                            Live on website
+                          </label>
                           <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-black/8 bg-admin-bg/70 px-4 py-3 text-sm font-semibold text-admin-ink">
                             <input type="checkbox" name="isFeatured" className={admin.checkbox} />
                             Featured on homepage
@@ -457,25 +459,14 @@ export default function NewProductPage() {
                     </Link>
                     {canShowProductFields ? (
                       <>
-                    <button
-                      type="submit"
-                      disabled={loading || blockingOpen}
-                      onClick={() => setPublishIntent("draft")}
-                      className={`${admin.secondaryBtn} w-full min-w-[140px] justify-center gap-2 sm:w-auto`}
-                    >
-                      <Save size={16} aria-hidden="true" />
-                      {loading && publishIntent === "draft" ? "Saving…" : "Save as draft"}
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={loading || blockingOpen}
-                      onClick={() => setPublishIntent("live")}
-                      className={`${admin.primaryBtn} w-full min-w-[160px] justify-center gap-2 shadow-[0_8px_24px_rgba(248,121,65,0.25)] sm:w-auto`}
-                      style={{ backgroundColor: ADMIN_PURPLE }}
-                    >
-                      <Upload size={16} aria-hidden="true" />
-                      {loading && publishIntent === "live" ? "Publishing…" : "Publish live"}
-                    </button>
+                        <button
+                          type="submit"
+                          disabled={loading || blockingOpen}
+                          className={`${admin.primaryBtn} w-full min-w-[140px] justify-center gap-2 sm:w-auto`}
+                        >
+                          <Save size={16} aria-hidden="true" />
+                          {loading ? "Saving..." : "Save product"}
+                        </button>
                       </>
                     ) : null}
                   </div>
