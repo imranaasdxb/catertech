@@ -19,7 +19,7 @@ import { products } from "@/db/schema";
 import type { ProductAttributeValue, TemplateFieldDef } from "@/lib/category-template";
 import { generateProductSeo } from "@/lib/product-seo";
 import type { InferSelectModel } from "drizzle-orm";
-import { ImageIcon, Package } from "lucide-react";
+import { ImageIcon } from "lucide-react";
 import { FormEvent, useCallback, useRef, useState } from "react";
 
 type ProductRow = InferSelectModel<typeof products>;
@@ -250,35 +250,6 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
           />
         </div>
 
-        {/* Product ID + save actions */}
-        <div className="flex flex-col justify-between gap-3 rounded-xl border border-black/[0.07] bg-white p-3 sm:p-3.5 lg:col-span-7">
-          <div>
-            <p className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-admin-ink/55">
-              <Package className="h-3.5 w-3.5 text-admin-accent" aria-hidden />
-              Product reference
-            </p>
-            <p className="break-all font-mono text-xs font-semibold text-admin-ink">{product.productId}</p>
-            <p className="mt-1 font-mono text-[11px] text-admin-ink/40">/{product.slug}</p>
-          </div>
-          {error ? <p className={`${admin.error} text-xs`}>{error}</p> : null}
-          <div className="flex flex-wrap gap-2 pt-1">
-            <button
-              type="button"
-              onClick={onCancel}
-              className={`${admin.secondaryBtn} cursor-pointer px-4 py-2 text-xs`}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading || blockingOpen || !canShowFields}
-              className={`${admin.primaryBtn} cursor-pointer px-4 py-2 text-xs disabled:opacity-50`}
-            >
-              {loading ? "Saving..." : "Save changes"}
-            </button>
-          </div>
-        </div>
-
         {/* Left: specs + description */}
         <div className="flex h-full flex-col gap-3 sm:gap-3.5 lg:col-span-7 lg:min-w-0">
           <div className="rounded-xl border border-black/[0.07] bg-white p-3 sm:p-3.5">
@@ -363,6 +334,27 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
                 className={`${admin.fieldModern} py-2 text-xs`}
               />
             </div>
+          </div>
+        </div>
+
+        {/* Sticky save bar — always visible at bottom of modal scroll area */}
+        <div className="sticky bottom-0 z-10 -mx-3 border-t border-black/8 bg-[#fafafa]/95 px-3 py-3 backdrop-blur-sm sm:-mx-5 sm:px-5 lg:col-span-12">
+          {error ? <p className={`${admin.error} mb-2 text-xs`}>{error}</p> : null}
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={onCancel}
+              className={`${admin.secondaryBtn} cursor-pointer px-4 py-2 text-xs`}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading || blockingOpen || !canShowFields}
+              className={`${admin.primaryBtn} cursor-pointer px-5 py-2 text-xs`}
+            >
+              {loading ? "Saving..." : "Save changes"}
+            </button>
           </div>
         </div>
       </form>

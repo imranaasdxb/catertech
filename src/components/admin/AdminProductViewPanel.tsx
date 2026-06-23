@@ -1,6 +1,6 @@
 "use client";
 
-import { ADMIN_PURPLE } from "@/components/admin/adminTheme";
+import { ADMIN_PURPLE, admin } from "@/components/admin/adminTheme";
 import { products } from "@/db/schema";
 import type { ProductAttributeValue, TemplateFieldDef } from "@/lib/category-template";
 import type { InferSelectModel } from "drizzle-orm";
@@ -13,6 +13,7 @@ import {
   ImageIcon,
   Loader2,
   Package,
+  Pencil,
   Search,
   Sparkles,
   Tag,
@@ -92,7 +93,13 @@ function Cell({ label, value, mono }: { label: string; value: React.ReactNode; m
   );
 }
 
-export default function AdminProductViewPanel({ product }: { product: ProductRow }) {
+export default function AdminProductViewPanel({
+  product,
+  onEdit,
+}: {
+  product: ProductRow;
+  onEdit?: () => void;
+}) {
   const [templateFields, setTemplateFields] = useState<TemplateFieldDef[]>([]);
   const [templateLoading, setTemplateLoading] = useState(Boolean(product.categoryId));
   const [templateErr, setTemplateErr] = useState("");
@@ -363,6 +370,21 @@ export default function AdminProductViewPanel({ product }: { product: ProductRow
           </div>
         </div>
       </div>
+
+      {onEdit ? (
+        <div className="sticky bottom-0 z-10 -mx-3 border-t border-black/8 bg-[#fafafa]/95 px-3 py-3 backdrop-blur-sm sm:-mx-5 sm:px-5 lg:col-span-12">
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={onEdit}
+              className={`${admin.primaryBtn} cursor-pointer gap-2 px-5 py-2 text-xs`}
+            >
+              <Pencil className="h-3.5 w-3.5" aria-hidden />
+              Edit product
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

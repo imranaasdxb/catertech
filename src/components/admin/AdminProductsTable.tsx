@@ -426,7 +426,7 @@ export default function AdminProductsTable({
             }}
           />
         ) : viewProduct ? (
-          <AdminProductViewPanel product={viewProduct} />
+          <AdminProductViewPanel product={viewProduct} onEdit={() => setViewEditing(true)} />
         ) : null}
       </AdminPanelModal>
 

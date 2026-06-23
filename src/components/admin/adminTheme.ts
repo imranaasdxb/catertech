@@ -18,7 +18,7 @@ export const admin = {
   /** Title + subtitle cluster; keeps CTA on the same row without squishing the table width */
   headerLead: "min-w-0 flex-1 pr-2 sm:pr-4",
   primaryBtn:
-    "inline-flex items-center justify-center rounded-full text-sm font-semibold text-white px-6 py-3.5 transition-opacity hover:opacity-95 active:opacity-90 disabled:opacity-50 disabled:pointer-events-none",
+    "inline-flex items-center justify-center rounded-full bg-admin-accent text-sm font-semibold text-white px-6 py-3.5 transition-colors hover:bg-admin-accent-strong active:opacity-90 disabled:opacity-50 disabled:pointer-events-none",
   secondaryBtn:
     "inline-flex items-center justify-center rounded-full text-sm font-semibold text-admin-ink px-6 py-3.5 border border-admin-border bg-admin-bg hover:bg-admin-border transition-colors",
   dangerBtn:

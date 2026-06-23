@@ -449,29 +449,29 @@ export default function NewProductPage() {
                       {error}
                     </p>
                   ) : null}
-
-                  <div className="flex flex-col-reverse gap-3 border-t border-black/6 pt-6 sm:flex-row sm:items-center sm:justify-end">
-                    <Link
-                      href="/admin/products"
-                      className={`${admin.secondaryBtn} w-full justify-center sm:w-auto`}
-                    >
-                      Cancel
-                    </Link>
-                    {canShowProductFields ? (
-                      <>
-                        <button
-                          type="submit"
-                          disabled={loading || blockingOpen}
-                          className={`${admin.primaryBtn} w-full min-w-[140px] justify-center gap-2 sm:w-auto`}
-                        >
-                          <Save size={16} aria-hidden="true" />
-                          {loading ? "Saving..." : "Save product"}
-                        </button>
-                      </>
-                    ) : null}
-                  </div>
                 </div>
               )}
+            </div>
+
+            <div className="sticky bottom-0 z-10 border-t border-black/6 bg-white/95 px-5 py-4 backdrop-blur-sm md:px-7 lg:px-8">
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
+                <Link
+                  href="/admin/products"
+                  className={`${admin.secondaryBtn} w-full justify-center sm:w-auto`}
+                >
+                  Cancel
+                </Link>
+                {canShowProductFields ? (
+                  <button
+                    type="submit"
+                    disabled={loading || blockingOpen}
+                    className={`${admin.primaryBtn} w-full min-w-[140px] justify-center gap-2 sm:w-auto`}
+                  >
+                    <Save size={16} aria-hidden="true" />
+                    {loading ? "Saving..." : "Save product"}
+                  </button>
+                ) : null}
+              </div>
             </div>
           </form>
         </div>
