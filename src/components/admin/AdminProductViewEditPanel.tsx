@@ -177,7 +177,7 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
         }}
       />
 
-      <form onSubmit={(e) => void onSubmit(e)} className="grid items-start gap-3 sm:gap-3.5 lg:grid-cols-12 lg:items-stretch lg:gap-4">
+      <form onSubmit={(e) => void onSubmit(e)} className="grid items-start gap-3 sm:gap-3.5 lg:grid-cols-12 lg:gap-4">
         {/* Category + title band */}
         <div className="overflow-hidden rounded-xl border border-black/[0.07] bg-white lg:col-span-12">
           <div className="border-b border-black/6 bg-admin-bg/50 px-3 py-3 sm:px-4">
@@ -235,23 +235,73 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
           </div>
         </div>
 
-        {/* Gallery */}
-        <div className="rounded-xl border border-black/[0.07] bg-white p-3 sm:p-3.5 lg:col-span-5">
-          <p className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-admin-ink/55">
-            <ImageIcon className="h-3.5 w-3.5 text-admin-accent" aria-hidden />
-            Gallery
-          </p>
-          <AdminGalleryUpload
-            key={`edit-gallery-${product.id}`}
-            ref={galleryRef}
-            id={`view-edit-gallery-${product.id}`}
-            defaultUrls={product.images}
-            hint="Drag & drop or click to add images."
-          />
+        {/* Left column: gallery + SEO stacked */}
+        <div className="flex flex-col gap-3 sm:gap-3.5 lg:col-span-5 lg:min-w-0">
+          <div className="rounded-xl border border-black/[0.07] bg-white p-3 sm:p-3.5">
+            <p className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-admin-ink/55">
+              <ImageIcon className="h-3.5 w-3.5 text-admin-accent" aria-hidden />
+              Gallery
+            </p>
+            <AdminGalleryUpload
+              key={`edit-gallery-${product.id}`}
+              ref={galleryRef}
+              id={`view-edit-gallery-${product.id}`}
+              defaultUrls={product.images}
+              hint="Drag & drop or click to add images."
+            />
+          </div>
+
+          <div className="flex flex-col rounded-xl border border-black/[0.07] bg-white p-3 sm:p-3.5">
+            <p className="mb-3 text-[11px] font-bold uppercase tracking-wide text-admin-ink/55">
+              SEO &amp; search
+            </p>
+            <div className="space-y-3">
+              <div>
+                <label htmlFor="view-edit-seo-title" className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-admin-ink/40">
+                  SEO title
+                </label>
+                <input
+                  id="view-edit-seo-title"
+                  name="seoTitle"
+                  value={seoTitleValue}
+                  onChange={(event) => setSeoTitleOverride(event.target.value)}
+                  maxLength={80}
+                  className={`${admin.fieldModern} py-2 text-xs`}
+                />
+              </div>
+              <div>
+                <label htmlFor="view-edit-seo-desc" className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-admin-ink/40">
+                  SEO description
+                </label>
+                <textarea
+                  id="view-edit-seo-desc"
+                  name="seoDescription"
+                  value={seoDescriptionValue}
+                  onChange={(event) => setSeoDescriptionOverride(event.target.value)}
+                  maxLength={180}
+                  rows={3}
+                  className={`${admin.fieldModern} py-2 text-xs`}
+                />
+              </div>
+              <div>
+                <label htmlFor="view-edit-keywords" className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-admin-ink/40">
+                  Search keywords
+                </label>
+                <textarea
+                  id="view-edit-keywords"
+                  name="searchKeywords"
+                  value={searchKeywordsValue}
+                  onChange={(event) => setSearchKeywordsOverride(event.target.value)}
+                  rows={3}
+                  className={`${admin.fieldModern} py-2 text-xs`}
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Left: specs + description */}
-        <div className="flex h-full flex-col gap-3 sm:gap-3.5 lg:col-span-7 lg:min-w-0">
+        {/* Right column: specs + description */}
+        <div className="flex flex-col gap-3 sm:gap-3.5 lg:col-span-7 lg:min-w-0">
           <div className="rounded-xl border border-black/[0.07] bg-white p-3 sm:p-3.5">
             <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-admin-ink/55">
               Specifications
@@ -285,55 +335,6 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
             ) : (
               <p className="text-xs text-admin-ink/40">Choose a category to edit description.</p>
             )}
-          </div>
-        </div>
-
-        {/* Right: SEO */}
-        <div className="flex h-full flex-col rounded-xl border border-black/[0.07] bg-white p-3 sm:p-3.5 lg:col-span-5">
-          <p className="mb-3 text-[11px] font-bold uppercase tracking-wide text-admin-ink/55">
-            SEO &amp; search
-          </p>
-          <div className="space-y-3">
-            <div>
-              <label htmlFor="view-edit-seo-title" className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-admin-ink/40">
-                SEO title
-              </label>
-              <input
-                id="view-edit-seo-title"
-                name="seoTitle"
-                value={seoTitleValue}
-                onChange={(event) => setSeoTitleOverride(event.target.value)}
-                maxLength={80}
-                className={`${admin.fieldModern} py-2 text-xs`}
-              />
-            </div>
-            <div>
-              <label htmlFor="view-edit-seo-desc" className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-admin-ink/40">
-                SEO description
-              </label>
-              <textarea
-                id="view-edit-seo-desc"
-                name="seoDescription"
-                value={seoDescriptionValue}
-                onChange={(event) => setSeoDescriptionOverride(event.target.value)}
-                maxLength={180}
-                rows={3}
-                className={`${admin.fieldModern} py-2 text-xs`}
-              />
-            </div>
-            <div>
-              <label htmlFor="view-edit-keywords" className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-admin-ink/40">
-                Search keywords
-              </label>
-              <textarea
-                id="view-edit-keywords"
-                name="searchKeywords"
-                value={searchKeywordsValue}
-                onChange={(event) => setSearchKeywordsOverride(event.target.value)}
-                rows={3}
-                className={`${admin.fieldModern} py-2 text-xs`}
-              />
-            </div>
           </div>
         </div>
 

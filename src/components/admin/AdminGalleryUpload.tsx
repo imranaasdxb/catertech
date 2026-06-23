@@ -328,11 +328,11 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
         ) : null}
 
         {committing ? (
-          <div className="flex gap-3 overflow-x-auto pb-1 pt-0.5 [scrollbar-width:thin]">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-3">
             {items.map(({ id }) => (
               <div
                 key={id}
-                className="relative h-[7.5rem] w-[7.5rem] shrink-0 animate-pulse overflow-hidden rounded-xl border border-black/[0.06] bg-[#eae8f2]"
+                className="relative aspect-square w-full shrink-0 animate-pulse overflow-hidden rounded-xl border border-black/[0.06] bg-[#eae8f2]"
               >
                 <div className="absolute inset-0 flex items-center justify-center bg-[#fff6f1]/90">
                   <Loader2 className="h-6 w-6 animate-spin text-admin-accent" aria-hidden />
@@ -362,7 +362,7 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
         ) : (
           <div
             role="list"
-            className={`relative flex gap-3 overflow-x-auto pb-1 pt-0.5 [scrollbar-width:thin] rounded-xl border border-dashed border-transparent transition-colors ${
+            className={`grid grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-3 rounded-xl border border-dashed border-transparent transition-colors ${
               dragOver ? "border-admin-accent/35 bg-[#fff6f1]/60" : ""
             }`}
           >
@@ -370,7 +370,7 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
               <article
                 key={it.id}
                 role="listitem"
-                className="relative w-[7.5rem] shrink-0 overflow-hidden rounded-xl border border-black/[0.06] bg-[#fff6f1] shadow-sm"
+                className="relative w-full shrink-0 overflow-hidden rounded-xl border border-black/[0.06] bg-[#fff6f1] shadow-sm"
               >
                 <span
                   aria-label={`Image position ${idx + 1}`}
@@ -387,7 +387,7 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
                 >
                   <X className="h-4 w-4" />
                 </button>
-                <div className="relative aspect-square w-[7.5rem] bg-neutral-100">
+                <div className="relative aspect-square w-full bg-neutral-100">
                   <img
                     src={it.kind === "remote" ? it.url : it.previewUrl}
                     alt=""
