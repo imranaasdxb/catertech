@@ -221,6 +221,7 @@ export default function ProductEquipmentDetail({
   const [colorId, setColorId] = useState(product.colors[0]?.id ?? "");
   const [sizeId, setSizeId] = useState(product.sizes[0]?.id ?? "");
   const [qty, setQty] = useState(1);
+  const [qtyInput, setQtyInput] = useState("1");
   const [wishlist, setWishlist] = useState(false);
   const [activeThumb, setActiveThumb] = useState(0);
   const [openSection, setOpenSection] = useState<AccordionKey>("description");
@@ -255,6 +256,26 @@ export default function ProductEquipmentDetail({
   }, [product.id, product.category, product.familyId, collectionSiblings]);
 
   const collectionMeta = getFamilyMeta(product.familyId);
+
+  const isChairsProduct = useMemo(() => {
+    const haystack = [
+      product.category,
+      product.name,
+      product.cardSubtitle ?? "",
+      ...product.equipmentFilters,
+    ]
+      .join(" ")
+      .toLowerCase();
+    return /chair|seating/.test(haystack);
+  }, [product.category, product.name, product.cardSubtitle, product.equipmentFilters]);
+
+  const CHAIR_RENTAL_STOCK = 11_000;
+
+  const syncQty = (next: number) => {
+    const safe = Math.max(1, Math.floor(next));
+    setQty(safe);
+    setQtyInput(String(safe));
+  };
 
   const selectedColor = product.colors.find((c) => c.id === colorId);
 
@@ -427,32 +448,6 @@ export default function ProductEquipmentDetail({
                 </button>
               ))}
             </div>
-
-            {/* Share / Report row */}
-            <div className="flex items-center justify-between pt-1 px-1">
-              <button
-                type="button"
-                className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted hover:text-sand transition-colors"
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="18" cy="5" r="3" />
-                  <circle cx="6" cy="12" r="3" />
-                  <circle cx="18" cy="19" r="3" />
-                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                  <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-                </svg>
-                Share
-              </button>
-              <button
-                type="button"
-                className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted hover:text-red-500 transition-colors"
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2">
-                  <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                </svg>
-                Report
-              </button>
-            </div>
           </div>
 
           {/* RIGHT — Purchase Panel */}
@@ -566,12 +561,12 @@ export default function ProductEquipmentDetail({
             )}
 
             {/* Quantity + Add to Cart */}
-            <div className="flex gap-3 mb-4">
+            <div className="flex gap-3 mb-2">
               {/* Qty */}
               <div className="flex items-center border border-border rounded-xl bg-white overflow-hidden shrink-0">
                 <button
                   type="button"
-                  onClick={() => setQty((q) => Math.max(1, q - 1))}
+                  onClick={() => syncQty(qty - 1)}
                   aria-label="Decrease quantity"
                   className="w-10 h-12 flex items-center justify-center text-muted hover:text-sand hover:bg-cream transition-colors"
                 >
@@ -580,19 +575,28 @@ export default function ProductEquipmentDetail({
                   </svg>
                 </button>
                 <input
-                  type="number"
-                  min={1}
-                  value={qty}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={qtyInput}
                   onChange={(e) => {
-                    const v = parseInt(e.target.value, 10);
-                    if (!isNaN(v) && v >= 1) setQty(v);
+                    const raw = e.target.value.replace(/\D/g, "");
+                    setQtyInput(raw);
+                    if (raw !== "") {
+                      const parsed = parseInt(raw, 10);
+                      if (!Number.isNaN(parsed) && parsed >= 1) setQty(parsed);
+                    }
                   }}
-                  className="w-12 text-center text-sm font-bold text-charcoal tabular-nums bg-transparent outline-none border-none [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  onBlur={() => {
+                    const parsed = parseInt(qtyInput, 10);
+                    syncQty(Number.isNaN(parsed) || parsed < 1 ? 1 : parsed);
+                  }}
+                  className="h-10 w-14 rounded-md border border-border bg-offwhite px-1 text-center text-sm font-bold text-charcoal tabular-nums outline-none focus:border-sand focus:ring-2 focus:ring-sand/20 [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   aria-label="Quantity"
                 />
                 <button
                   type="button"
-                  onClick={() => setQty((q) => q + 1)}
+                  onClick={() => syncQty(qty + 1)}
                   aria-label="Increase quantity"
                   className="w-10 h-12 flex items-center justify-center text-muted hover:text-sand hover:bg-cream transition-colors"
                 >
@@ -631,6 +635,15 @@ export default function ProductEquipmentDetail({
                 )}
               </button>
             </div>
+
+            {isChairsProduct ? (
+              <p className="mb-4 rounded-xl border border-sand/25 bg-sand/8 px-4 py-3 text-[12px] leading-relaxed text-muted">
+                <span className="font-semibold text-charcoal">
+                  {CHAIR_RENTAL_STOCK.toLocaleString()} chairs
+                </span>{" "}
+                available for rent — type your required quantity in the box above or use + / −.
+              </p>
+            ) : null}
 
             {cartAdded && (
               <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 mb-4">
