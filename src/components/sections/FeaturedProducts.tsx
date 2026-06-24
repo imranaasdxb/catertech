@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getCatalogueProductData } from "@/lib/catalogue-presets";
 import FeaturedProductsClient, {
   type CategoryRow,
@@ -7,10 +8,12 @@ import FeaturedProductsClient, {
 export default async function FeaturedProducts() {
   const data = await getCatalogueProductData({ featuredOnly: true });
   return (
-    <FeaturedProductsClient
-      categories={data.categories as CategoryRow[]}
-      products={data.products as ProductRow[]}
-      catalogError={data.catalogError}
-    />
+    <Suspense fallback={<div className="min-h-[32rem] bg-offwhite" aria-hidden />}>
+      <FeaturedProductsClient
+        categories={data.categories as CategoryRow[]}
+        products={data.products as ProductRow[]}
+        catalogError={data.catalogError}
+      />
+    </Suspense>
   );
 }
