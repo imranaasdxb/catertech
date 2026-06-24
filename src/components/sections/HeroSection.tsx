@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Fragment } from "react";
 import { ArrowRight, BadgeCheck, Globe2, Handshake, Truck } from "lucide-react";
 import Container from "@/components/Container";
 import HeroBentoGrid from "@/components/sections/HeroBentoGrid";
@@ -140,20 +141,30 @@ export default function HeroSection() {
                   </Link>
                 </div>
 
-                <div className="hero-section__chips mt-4 flex flex-nowrap items-center overflow-x-auto border-t border-primary/10 pt-3.5 [-ms-overflow-style:none] [scrollbar-width:none] sm:mt-5 sm:pt-4 [&::-webkit-scrollbar]:hidden">
+                <div className="hero-section__chips mt-4 grid grid-cols-4 items-start gap-x-0.5 overflow-hidden border-t border-primary/10 pt-3.5 sm:mt-5 sm:flex sm:flex-nowrap sm:items-center sm:gap-0 sm:overflow-x-auto sm:pt-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {HERO_CHIPS.map(({ icon: Icon, title, sub }, i) => (
-                    <div key={title} className="flex shrink-0 items-center">
+                    <Fragment key={title}>
                       {i > 0 ? (
-                        <span className="mx-3 h-7 w-px shrink-0 bg-primary/15 sm:mx-4" aria-hidden />
+                        <span
+                          className="mx-3 hidden h-7 w-px shrink-0 bg-primary/15 sm:mx-4 sm:block"
+                          aria-hidden
+                        />
                       ) : null}
-                      <div className="flex items-center gap-2">
-                        <Icon className="h-4 w-4 shrink-0 text-accent" strokeWidth={1.8} />
-                        <div className="whitespace-nowrap text-[10px] leading-tight">
+                      <div
+                        className={`flex min-w-0 items-start gap-0.5 sm:shrink-0 sm:items-center sm:gap-2 ${
+                          i > 0 ? "border-l border-primary/15 pl-1 sm:border-l-0 sm:pl-0" : ""
+                        }`}
+                      >
+                        <Icon
+                          className="mt-px h-3 w-3 shrink-0 text-accent sm:mt-0 sm:h-4 sm:w-4"
+                          strokeWidth={1.8}
+                        />
+                        <div className="min-w-0 text-[7px] leading-[1.2] sm:whitespace-nowrap sm:text-[10px] sm:leading-tight">
                           <p className="font-semibold text-ink">{title}</p>
                           <p className="text-body-muted">{sub}</p>
                         </div>
                       </div>
-                    </div>
+                    </Fragment>
                   ))}
                 </div>
               </div>

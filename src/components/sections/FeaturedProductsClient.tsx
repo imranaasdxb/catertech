@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import Container from "@/components/Container";
 import SectionHeader from "@/components/ui/SectionHeader";
 import WaterRiseCta from "@/components/ui/WaterRiseCta";
+import { slugify } from "@/lib/slug";
 import type { ProductAttributeValue } from "@/lib/category-template";
 
 const ALL_TAB = "all";
@@ -15,6 +17,7 @@ type HighlightFilter = "all" | "Popular" | "New";
 export type CategoryRow = {
   id: string;
   name: string;
+  slug: string;
   subcategories: {
     id: string;
     name: string;
@@ -195,15 +198,15 @@ function StorefrontProductCard({
           {product.category || "Catering equipment"}
         </p>
 
-        <div className="flex min-w-0 items-start justify-between gap-2">
+        <div className="flex min-w-0 flex-col gap-0.5 sm:flex-row sm:items-start sm:justify-between sm:gap-2">
           <Link href={productHref} className="min-w-0 flex-1">
-            <h1 className={`line-clamp-2 leading-tight ${cardTitleClass}`}>
+            <h1 className={`line-clamp-1 sm:line-clamp-2 leading-tight ${cardTitleClass}`}>
               {product.name}
             </h1>
           </Link>
           {sizeSummary ? (
             <p
-              className={`max-w-[46%] shrink-0 pt-0.5 text-right font-sans font-normal leading-snug text-[#888888] ${
+              className={`min-w-0 truncate font-sans font-normal leading-snug text-[#888888] sm:max-w-[46%] sm:shrink-0 sm:pt-0.5 sm:text-right ${
                 shopCompact ? "text-[9px] lg:text-[11px]" : "text-[11px]"
               }`}
             >
@@ -212,19 +215,15 @@ function StorefrontProductCard({
           ) : null}
         </div>
 
-        <h2 className={`line-clamp-2 ${cardDescClass}`}>
+        <h2 className={`line-clamp-1 sm:line-clamp-2 ${cardDescClass}`}>
           {product.description || "Product details available on request."}
         </h2>
 
-        <div
-          className={`mt-auto flex pt-1 lg:pt-2 ${
-            shopCompact ? "justify-stretch lg:justify-end" : "justify-end"
-          }`}
-        >
+        <div className="mt-auto flex justify-end pt-1 lg:pt-2">
           <WaterRiseCta
             href={productHref}
             size="xs"
-            className={shopCompact ? "w-full justify-center lg:w-fit" : "w-fit"}
+            className="ml-auto w-fit shrink-0 whitespace-nowrap px-2 py-0.5 [&_.btn-brand__content]:shrink-0 [&_.btn-brand__content]:whitespace-nowrap max-sm:[&_.btn-brand__content]:gap-0.5 max-sm:[&_.btn-brand__content]:text-[7px] max-sm:[&_.btn-brand__content]:tracking-normal max-sm:[&_.btn-brand__arrow]:size-4"
           >
             View &amp; quote
           </WaterRiseCta>
@@ -288,10 +287,29 @@ export default function FeaturedProductsClient({
   const [highlight, setHighlight] = useState<HighlightFilter>("all");
   const [selectedEquipment, setSelectedEquipment] = useState<Set<string>>(() => new Set());
   const [equipmentExpanded, setEquipmentExpanded] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [carouselStart, setCarouselStart] = useState(0);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const isShopCatalogue = compactTop;
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const categoryParam = searchParams.get("category");
+    if (!categoryParam || categories.length === 0) return;
+
+    const normalized = categoryParam.toLowerCase();
+    const match = categories.find(
+      (category) =>
+        category.slug.toLowerCase() === normalized || slugify(category.name) === normalized,
+    );
+
+    if (match) {
+      setActiveTab(match.id);
+      setSelectedEquipment(new Set());
+      setEquipmentExpanded(false);
+    }
+  }, [categories, searchParams]);
 
   const activeCategory = useMemo(
     () => categories.find((category) => category.id === activeTab),
@@ -476,6 +494,27 @@ export default function FeaturedProductsClient({
     activeTab !== ALL_TAB ||
     selectedEquipment.size > 0;
 
+  const mobileFilterCount =
+    (highlight !== "all" ? 1 : 0) + selectedEquipment.size;
+
+  useEffect(() => {
+    if (!mobileFiltersOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileFiltersOpen]);
+
+  function closeMobileFilters() {
+    setMobileFiltersOpen(false);
+  }
+
+  function clearFiltersAndCloseMobile() {
+    clearFilters();
+    closeMobileFilters();
+  }
+
   const tabs = [
     { id: ALL_TAB, name: "All" },
     ...categories.map((category) => ({ id: category.id, name: category.name })),
@@ -546,6 +585,111 @@ export default function FeaturedProductsClient({
     );
   }
 
+  function renderFilterPanel({
+    showHeading = true,
+    showClearAction = true,
+    equipmentScrollClass = "max-h-[200px]",
+  }: {
+    showHeading?: boolean;
+    showClearAction?: boolean;
+    equipmentScrollClass?: string;
+  } = {}) {
+    return (
+      <div className="space-y-6">
+        {showHeading ? (
+          <h3 className="text-[15px] font-semibold text-charcoal tracking-tight">Filter by</h3>
+        ) : null}
+
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-charcoal pb-2 mb-3 border-b border-charcoal/25">
+            {activeCategory ? `${activeCategory.name} types` : "Category types"}
+          </p>
+          {visibleEquipmentOptions.length ? (
+            <ul
+              className={
+                equipmentExpanded && hiddenEquipmentCount > 0
+                  ? `${equipmentScrollClass} space-y-2.5 overflow-y-auto pr-1 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-ink/20 [&::-webkit-scrollbar-track]:bg-transparent`
+                  : "space-y-2.5"
+              }
+            >
+              {visibleEquipmentOptions.map((opt) => {
+                const id = `eq-${activeTab}-${opt.replace(/\s+/g, "-").slice(0, 48)}`;
+                return (
+                  <li key={opt}>
+                    <label
+                      htmlFor={id}
+                      className="flex items-start gap-2.5 cursor-pointer group text-left"
+                    >
+                      <input
+                        id={id}
+                        type="checkbox"
+                        checked={selectedEquipment.has(opt)}
+                        onChange={() => toggleEquipment(opt)}
+                        className="mt-0.5 size-[15px] shrink-0 rounded border-border text-ink accent-ink focus:ring-ink/20 focus:ring-offset-0 cursor-pointer"
+                      />
+                      <span className="text-[13px] text-charcoal leading-snug group-hover:text-ink transition-colors">
+                        {opt}
+                      </span>
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="text-[13px] leading-relaxed text-muted">No sub-category filters yet.</p>
+          )}
+          {hiddenEquipmentCount > 0 ? (
+            <button
+              type="button"
+              onClick={() => setEquipmentExpanded((expanded) => !expanded)}
+              className="mt-4 text-[13px] font-semibold text-ink/70 hover:text-ink underline underline-offset-2 transition-colors"
+            >
+              {equipmentExpanded ? "Show less" : `See ${hiddenEquipmentCount} more`}
+            </button>
+          ) : null}
+        </div>
+
+        <div className="h-px bg-border" />
+
+        <div>
+          <p className="text-[11px] font-semibold text-charcoal mb-2.5">Highlights</p>
+          <div className="flex flex-wrap gap-2">
+            {(
+              [
+                ["all", "All items"],
+                ["Popular", "Popular"],
+                ["New", "New in"],
+              ] as const
+            ).map(([val, label]) => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => selectHighlight(val)}
+                className={`rounded-full px-3 py-1.5 text-[11px] font-semibold tracking-wide border transition-colors ${
+                  highlight === val
+                    ? "border-[#322b81] bg-[#322b81] text-white"
+                    : "border-border bg-[#f6f6f6] text-muted hover:border-border hover:text-charcoal"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {showClearAction && hasActiveFilters ? (
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="text-[11px] font-semibold text-ink/70 hover:text-ink underline underline-offset-2"
+          >
+            Clear all filters
+          </button>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <section className={`bg-offwhite pb-24 ${compactTop ? "pt-0" : "pt-24"}`}>
       <Container>
@@ -557,11 +701,7 @@ export default function FeaturedProductsClient({
             eyebrow="Shop Our Range"
             title="Featured Equipment"
             subtitle="Open any item to choose size, finish and quantity - then add it to your quote basket."
-            subtitleClassName={
-              isShopCatalogue
-                ? "max-w-xl text-sm leading-snug sm:text-base"
-                : "max-w-none whitespace-nowrap text-[clamp(0.72rem,2.8vw,1.125rem)] leading-snug"
-            }
+            subtitleClassName="max-w-xl text-sm leading-snug sm:text-base"
           />
         </div>
 
@@ -617,12 +757,14 @@ export default function FeaturedProductsClient({
               );
             })}
           </div>
-          <Link
-            href="/shop"
-            className="mb-2.5 flex shrink-0 items-center gap-2 text-sm font-medium tracking-wider text-ink/70 transition-colors hover:text-ink"
-          >
-            View All -&gt;
-          </Link>
+          <div className="relative shrink-0 before:pointer-events-none before:absolute before:-left-5 before:top-0 before:h-full before:w-6 before:bg-gradient-to-r before:from-transparent before:to-offwhite sm:before:-left-6 sm:before:w-8">
+            <Link
+              href="/shop"
+              className="relative z-10 mb-2.5 flex items-center gap-2 bg-offwhite pl-2 text-sm font-medium tracking-wider text-ink/70 transition-colors hover:text-ink sm:pl-3"
+            >
+              View All -&gt;
+            </Link>
+          </div>
           </div>
         </div>
         )}
@@ -633,7 +775,7 @@ export default function FeaturedProductsClient({
           }`}
         >
           <aside
-            className={`w-full shrink-0 space-y-5 lg:w-[252px] xl:w-[260px] ${
+            className={`w-full shrink-0 space-y-3 lg:w-[252px] lg:space-y-5 xl:w-[260px] ${
               isShopCatalogue
                 ? "lg:sticky lg:top-[calc(var(--header-height)+3.25rem)] lg:z-10 lg:self-start lg:bg-offwhite"
                 : "lg:sticky lg:top-28 lg:self-start"
@@ -662,100 +804,99 @@ export default function FeaturedProductsClient({
               </div>
             </div>
 
-            <div className="rounded-xl border border-border/60 bg-[#FEFEFE] p-4 md:p-5 shadow-[0_2px_12px_rgba(26,31,46,0.04)] space-y-6">
-              <h3 className="text-[15px] font-semibold text-charcoal tracking-tight">
-                Filter by
-              </h3>
-
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-charcoal pb-2 mb-3 border-b border-charcoal/25">
-                  {activeCategory ? `${activeCategory.name} types` : "Category types"}
-                </p>
-                {visibleEquipmentOptions.length ? (
-                  <ul
-                    className={
-                      equipmentExpanded && hiddenEquipmentCount > 0
-                        ? "max-h-[200px] space-y-2.5 overflow-y-auto pr-1 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-ink/20 [&::-webkit-scrollbar-track]:bg-transparent"
-                        : "space-y-2.5"
-                    }
-                  >
-                    {visibleEquipmentOptions.map((opt) => {
-                      const id = `eq-${activeTab}-${opt.replace(/\s+/g, "-").slice(0, 48)}`;
-                      return (
-                        <li key={opt}>
-                          <label
-                            htmlFor={id}
-                            className="flex items-start gap-2.5 cursor-pointer group text-left"
-                          >
-                            <input
-                              id={id}
-                              type="checkbox"
-                              checked={selectedEquipment.has(opt)}
-                              onChange={() => toggleEquipment(opt)}
-                              className="mt-0.5 size-[15px] shrink-0 rounded border-border text-ink accent-ink focus:ring-ink/20 focus:ring-offset-0 cursor-pointer"
-                            />
-                            <span className="text-[13px] text-charcoal leading-snug group-hover:text-ink transition-colors">
-                              {opt}
-                            </span>
-                          </label>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                ) : (
-                  <p className="text-[13px] leading-relaxed text-muted">
-                    No sub-category filters yet.
-                  </p>
-                )}
-                {hiddenEquipmentCount > 0 ? (
-                  <button
-                    type="button"
-                    onClick={() => setEquipmentExpanded((e) => !e)}
-                    className="mt-4 text-[13px] font-semibold text-ink/70 hover:text-ink underline underline-offset-2 transition-colors"
-                  >
-                    {equipmentExpanded ? "Show less" : `See ${hiddenEquipmentCount} more`}
-                  </button>
+            <div className="flex items-center gap-2 lg:hidden">
+              <button
+                type="button"
+                onClick={() => setMobileFiltersOpen(true)}
+                className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-[#FEFEFE] px-4 py-2.5 text-sm font-semibold text-charcoal shadow-[0_2px_12px_rgba(26,31,46,0.04)] transition-colors hover:border-ink/20"
+                aria-expanded={mobileFiltersOpen}
+                aria-controls="featured-mobile-filters"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path d="M4 6h16M7 12h10M10 18h4" strokeLinecap="round" />
+                </svg>
+                Filters
+                {mobileFilterCount > 0 ? (
+                  <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-[#322b81] px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
+                    {mobileFilterCount}
+                  </span>
                 ) : null}
-              </div>
-
-              <div className="h-px bg-border" />
-
-              <div>
-                <p className="text-[11px] font-semibold text-charcoal mb-2.5">Highlights</p>
-                <div className="flex flex-wrap gap-2">
-                  {(
-                    [
-                      ["all", "All items"],
-                      ["Popular", "Popular"],
-                      ["New", "New in"],
-                    ] as const
-                  ).map(([val, label]) => (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() => selectHighlight(val)}
-                      className={`rounded-full px-3 py-1.5 text-[11px] font-semibold tracking-wide border transition-colors ${
-                        highlight === val
-                          ? "border-[#322b81] bg-[#322b81] text-white"
-                          : "border-border bg-[#f6f6f6] text-muted hover:border-border hover:text-charcoal"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
+              </button>
               {hasActiveFilters ? (
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="text-[11px] font-semibold text-ink/70 hover:text-ink underline underline-offset-2"
+                  className="shrink-0 rounded-xl border border-border bg-[#FEFEFE] px-3 py-2.5 text-xs font-semibold text-ink/70 transition-colors hover:border-ink/20 hover:text-ink"
                 >
-                  Clear all filters
+                  Clear
                 </button>
               ) : null}
             </div>
+
+            <div className="hidden lg:block rounded-xl border border-border/60 bg-[#FEFEFE] p-4 md:p-5 shadow-[0_2px_12px_rgba(26,31,46,0.04)]">
+              {renderFilterPanel()}
+            </div>
+
+            {mobileFiltersOpen ? (
+              <div className="lg:hidden">
+                <button
+                  type="button"
+                  aria-label="Close filters"
+                  className="fixed inset-0 z-[60] bg-black/45"
+                  onClick={closeMobileFilters}
+                />
+                <div
+                  id="featured-mobile-filters"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="featured-mobile-filters-title"
+                  className="fixed inset-x-0 bottom-0 z-[70] flex max-h-[min(88vh,720px)] flex-col rounded-t-2xl border-t border-border bg-[#FEFEFE] shadow-[0_-10px_40px_rgba(26,31,46,0.14)]"
+                >
+                  <div className="flex items-center justify-between border-b border-border px-4 py-3.5">
+                    <h3 id="featured-mobile-filters-title" className="text-base font-semibold text-charcoal">
+                      Filters
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={closeMobileFilters}
+                      aria-label="Close filters"
+                      className="inline-flex size-9 items-center justify-center rounded-full text-charcoal transition-colors hover:bg-black/5"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                        <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto px-4 py-4">
+                    {renderFilterPanel({
+                      showHeading: false,
+                      showClearAction: false,
+                      equipmentScrollClass: "max-h-[min(42vh,320px)]",
+                    })}
+                  </div>
+
+                  <div className="flex gap-2 border-t border-border bg-[#FEFEFE] p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                    {hasActiveFilters ? (
+                      <button
+                        type="button"
+                        onClick={clearFiltersAndCloseMobile}
+                        className="min-h-11 flex-1 rounded-xl border border-border bg-white px-4 text-sm font-semibold text-charcoal transition-colors hover:border-ink/20"
+                      >
+                        Clear all
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={closeMobileFilters}
+                      className="min-h-11 flex-1 rounded-xl bg-[#322b81] px-4 text-sm font-semibold text-white transition-opacity hover:opacity-95"
+                    >
+                      Show {displayed.length} {displayed.length === 1 ? "item" : "items"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
 
             {isShopCatalogue && displayed.length > PAGE_SIZE ? (
               <ShopPagination className="hidden lg:flex lg:flex-col" layout="stack" />
@@ -776,7 +917,7 @@ export default function FeaturedProductsClient({
                   [0, 1].map((rowIndex) => (
                     <div
                       key={rowIndex}
-                      className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6"
+                      className="grid min-w-0 grid-cols-2 gap-2.5 sm:gap-3.5 md:gap-4 lg:grid-cols-4 lg:gap-6"
                     >
                       {Array.from({ length: CARDS_PER_ROW }, (_, index) => (
                         <ProductCardSkeleton key={index} />
@@ -824,7 +965,7 @@ export default function FeaturedProductsClient({
                   return (
                     <div
                       key={rowIndex}
-                      className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6"
+                      className="grid min-w-0 grid-cols-2 gap-2.5 sm:gap-3.5 md:gap-4 lg:grid-cols-4 lg:gap-6"
                     >
                       {slots.map((product, slotIndex) =>
                         product ? (
@@ -845,7 +986,7 @@ export default function FeaturedProductsClient({
 
         {!compactTop ? (
           <div className="text-center mt-12">
-            <WaterRiseCta href="/shop" size="lg">
+            <WaterRiseCta href="/shop" size="lg" className="whitespace-nowrap max-sm:px-5">
               Browse Full Catalogue
             </WaterRiseCta>
           </div>

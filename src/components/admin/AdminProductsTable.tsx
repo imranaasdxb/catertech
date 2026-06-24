@@ -9,7 +9,7 @@ import { AdminTypedDeleteDialog } from "@/components/admin/AdminTypedDeleteDialo
 import { notifyProductTaxonomyChanged } from "@/components/admin/ProductCategorySelects";
 import { products, type ProductAttributeValue } from "@/db/schema";
 import type { InferSelectModel } from "drizzle-orm";
-import { Check, Eye, Loader2, Pencil, Search, Trash2 } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Eye, Loader2, Pencil, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -38,6 +38,8 @@ type ToggleAction = {
   field: "published" | "isFeatured" | "isAvailable";
   nextValue: boolean;
 };
+
+const PAGE_SIZE = 10;
 
 function Thumb({ url }: { url: string | null }) {
   if (!url) {
@@ -170,6 +172,7 @@ export default function AdminProductsTable({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [toggleAction, setToggleAction] = useState<ToggleAction | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const [viewProduct, setViewProduct] = useState<ProductRow | null>(null);
   const [viewLoadErr, setViewLoadErr] = useState("");
@@ -196,6 +199,25 @@ export default function AdminProductsTable({
       return true;
     });
   }, [localRows, filter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageStart = (currentPage - 1) * PAGE_SIZE;
+  const paginatedRows = filteredRows.slice(pageStart, pageStart + PAGE_SIZE);
+  const showingFrom = filteredRows.length === 0 ? 0 : pageStart + 1;
+  const showingTo = Math.min(pageStart + PAGE_SIZE, filteredRows.length);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPage(1);
+  }, [filter, initialSearch, rows.length]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
 
   useEffect(() => {
     if (!viewId) return;
@@ -475,7 +497,7 @@ export default function AdminProductsTable({
               </tr>
             </thead>
             <tbody>
-              {filteredRows.map((r, index) => (
+              {paginatedRows.map((r, index) => (
                 <tr
                   key={r.id}
                   className={`min-h-[88px] align-top border-b border-admin-border/60 transition-colors last:border-b-0 ${
@@ -483,7 +505,7 @@ export default function AdminProductsTable({
                   } hover:bg-admin-accent/[0.07]`}
                 >
                   <td className="px-2 py-4 text-center text-xs font-semibold tabular-nums text-gray-400 sm:px-3">
-                    {index + 1}
+                    {pageStart + index + 1}
                   </td>
                   <td className="px-2 py-3 sm:px-3">
                     <Thumb url={r.thumbUrl} />
@@ -598,6 +620,42 @@ export default function AdminProductsTable({
             </tbody>
           </table>
         </div>
+
+        {filteredRows.length > 0 ? (
+          <div className="flex flex-col gap-3 border-t border-admin-border px-4 py-3 sm:flex-row sm:items-center sm:justify-end sm:gap-4">
+            <p className="text-right text-sm text-gray-500">
+              Showing{" "}
+              <span className="font-semibold tabular-nums text-gray-800">
+                {showingFrom}-{showingTo}
+              </span>{" "}
+              of{" "}
+              <span className="font-semibold tabular-nums text-gray-800">{filteredRows.length}</span>
+            </p>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                disabled={currentPage <= 1}
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-admin-border bg-white px-3 py-2 text-sm font-medium text-admin-ink transition-colors hover:bg-admin-bg disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <ChevronLeft className="h-4 w-4" aria-hidden />
+                Back
+              </button>
+              <span className="min-w-[5.5rem] text-center text-xs font-medium tabular-nums text-gray-500">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                disabled={currentPage >= totalPages}
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-admin-border bg-white px-3 py-2 text-sm font-medium text-admin-ink transition-colors hover:bg-admin-bg disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" aria-hidden />
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

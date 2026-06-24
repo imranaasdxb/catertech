@@ -10,6 +10,7 @@ import type { ProductAttributeValue } from "@/lib/category-template";
 export type CatalogueCategoryRow = {
   id: string;
   name: string;
+  slug: string;
   subcategories: {
     id: string;
     name: string;
@@ -104,6 +105,7 @@ export async function getCatalogueProductData({
       categories: categories.map((category) => ({
         id: category.id,
         name: category.name,
+        slug: category.slug,
         subcategories: subcategories
           .filter((subcategory) => subcategory.categoryId === category.id)
           .map((subcategory) => ({

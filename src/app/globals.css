@@ -180,6 +180,40 @@ h3 {
   }
 }
 
+@keyframes hero-shop-categories-scroll {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(var(--hero-categories-scroll, 0px));
+  }
+}
+
+.hero-shop-categories-marquee {
+  will-change: transform;
+}
+
+.hero-shop-categories-marquee--active {
+  animation: hero-shop-categories-scroll 28s ease-in-out infinite alternate;
+}
+
+.hero-shop-categories-marquee--active:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-shop-categories-marquee--active {
+    animation: none;
+  }
+}
+
+@media (max-width: 1023px) {
+  .hero-shop-categories-marquee--active {
+    animation-duration: 24s;
+  }
+}
+
 @keyframes process-progress-fill {
   from {
     width: 0%;

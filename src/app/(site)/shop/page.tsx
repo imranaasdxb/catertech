@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import shopBgDesktop from "@/assets/shopbg2.png";
 import shopBgMobile from "@/assets/shopbgmobile.png";
 import shopBgTablet from "@/assets/shopbgtablet.png";
@@ -71,7 +72,9 @@ export default async function ShopPage() {
         </div>
       </section>
 
-      <ShopCatalogueClient {...catalogueData} />
+      <Suspense fallback={<div className="min-h-[40vh] bg-offwhite" aria-hidden />}>
+        <ShopCatalogueClient {...catalogueData} />
+      </Suspense>
     </>
   );
 }

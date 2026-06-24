@@ -1,48 +1,35 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useRef } from "react";
+import Image, { type StaticImageData } from "next/image";
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, CircleDollarSign, PackageCheck, UsersRound } from "lucide-react";
+import furnitureImg from "@/assets/categories/furniture.png";
+import glasswareImg from "@/assets/categories/glassware.png";
+import ceramicwareImg from "@/assets/categories/ceramicware.png";
+import stainlessSteelImg from "@/assets/categories/stainless steel.png";
+import diningCutleryImg from "@/assets/categories/dinig cutlery.png";
+import buffetEquipmentImg from "@/assets/categories/buffet equipment.png";
+import kitchenEquipmentImg from "@/assets/categories/kitchen equipment.png";
+import outdoorEquipmentImg from "@/assets/categories/outdoor equipment.png";
+import kitchenUtensilsImg from "@/assets/categories/kitchen utensils.png";
 
-const CATEGORIES = [
-  {
-    name: "Buffet & Display Supplies",
-    image:
-      "https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=800&q=85",
-  },
-  {
-    name: "Cooking Equipment",
-    image:
-      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&q=85",
-  },
-  {
-    name: "Refrigeration & Storage",
-    image:
-      "https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?auto=format&fit=crop&w=800&q=85",
-  },
-  {
-    name: "Warewashing Solutions",
-    image:
-      "https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?auto=format&fit=crop&w=800&q=85",
-  },
-  {
-    name: "Tabletop & Service",
-    image:
-      "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=800&q=85",
-  },
-  {
-    name: "Kitchen Tools",
-    image:
-      "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=85",
-  },
-  {
-    name: "Bar & Cafe Equipment",
-    image:
-      "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=800&q=85",
-  },
-  {
-    name: "Storage & Shelving",
-    image:
-      "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=85",
-  },
+type CategoryItem = {
+  name: string;
+  slug: string;
+  image: string | StaticImageData;
+};
+
+const CATEGORIES: CategoryItem[] = [
+  { name: "Furniture", slug: "furniture", image: furnitureImg },
+  { name: "Glass Ware", slug: "glass-ware", image: glasswareImg },
+  { name: "Ceramic Ware", slug: "ceramic-ware", image: ceramicwareImg },
+  { name: "Stainless Steel Ware", slug: "stainless-steel-ware", image: stainlessSteelImg },
+  { name: "Dining Cutlery", slug: "dining-cutlery", image: diningCutleryImg },
+  { name: "Buffet Equipment", slug: "buffet-equipment", image: buffetEquipmentImg },
+  { name: "Kitchen Equipment", slug: "kitchen-equipment", image: kitchenEquipmentImg },
+  { name: "Outdoor Equipment", slug: "outdoor-equipment", image: outdoorEquipmentImg },
+  { name: "Kitchen Utensil", slug: "kitchen-utensil", image: kitchenUtensilsImg },
 ];
 
 const REASONS = [
@@ -79,10 +66,74 @@ function PartnerAside({ className }: { className?: string }) {
   );
 }
 
+function CategoryCard({ category }: { category: CategoryItem }) {
+  return (
+    <Link
+      href={`/shop?category=${category.slug}`}
+      className="group flex w-[128px] shrink-0 flex-col overflow-hidden rounded-xl border border-primary/8 bg-white shadow-[0_10px_30px_rgba(27,43,75,0.08)] transition-transform duration-300 hover:-translate-y-0.5 sm:w-[140px] md:w-[148px] lg:w-full lg:min-w-0 lg:min-h-[196px]"
+    >
+      <div className="relative h-[92px] shrink-0 bg-white sm:h-[98px] lg:h-[108px]">
+        <div className="absolute inset-1 sm:inset-1.5 lg:inset-1">
+          <Image
+            src={category.image}
+            alt={category.name}
+            fill
+            className="object-contain object-center transition-transform duration-500 group-hover:scale-[1.06]"
+            sizes="(max-width: 640px) 128px, (max-width: 1280px) 148px, 12vw"
+          />
+        </div>
+      </div>
+      <div className="relative flex flex-1 flex-col px-2.5 pb-2.5 pt-4 sm:px-3 sm:pb-3 sm:pt-4 lg:px-2.5 lg:pb-2.5 lg:pt-4 xl:px-3">
+        <p className="line-clamp-2 text-[11px] font-semibold leading-snug text-primary sm:text-xs lg:text-[11px] xl:text-xs">
+          {category.name}
+        </p>
+        <span className="mt-2 ml-auto flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border border-accent/50 text-accent transition-colors group-hover:bg-accent group-hover:text-primary lg:h-6 lg:w-6">
+          <ArrowRight className="h-2.5 w-2.5 sm:h-3 sm:w-3" strokeWidth={2.25} />
+        </span>
+      </div>
+    </Link>
+  );
+}
+
 export default function HeroShopCategories() {
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    const track = trackRef.current;
+    if (!viewport || !track) return;
+
+    const syncMarquee = () => {
+      const overflow = track.scrollWidth - viewport.clientWidth;
+      const useDesktopGrid = viewport.clientWidth >= 1024;
+
+      if (useDesktopGrid || overflow <= 4) {
+        track.style.setProperty("--hero-categories-scroll", "0px");
+        track.classList.remove("hero-shop-categories-marquee--active");
+        return;
+      }
+
+      track.style.setProperty("--hero-categories-scroll", `-${overflow}px`);
+      track.classList.add("hero-shop-categories-marquee--active");
+    };
+
+    syncMarquee();
+
+    const observer = new ResizeObserver(syncMarquee);
+    observer.observe(viewport);
+    observer.observe(track);
+    window.addEventListener("resize", syncMarquee);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", syncMarquee);
+    };
+  }, []);
+
   return (
     <div className="hero-shop-categories bg-bg-warm/95 pt-4 pb-8 shadow-[inset_0_1px_0_rgba(27,43,75,0.08)] sm:pt-5 sm:pb-10 md:pb-12 xl:pt-4">
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_300px] lg:grid-rows-[auto_auto] lg:items-start lg:gap-x-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_300px] lg:grid-rows-[auto_auto] lg:items-start lg:gap-x-3 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-x-3">
         <div className="flex items-center justify-between gap-4 lg:col-start-1 lg:row-start-1">
           <div className="flex items-center gap-3">
             <h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
@@ -102,31 +153,19 @@ export default function HeroShopCategories() {
           </Link>
         </div>
 
-        <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] lg:col-start-1 lg:row-start-2 lg:grid lg:grid-cols-8 lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden">
-          {CATEGORIES.map((category) => (
-            <Link
-              key={category.name}
-              href="/shop"
-              className="group flex w-[42vw] max-w-[168px] shrink-0 snap-start flex-col overflow-hidden rounded-xl border border-primary/8 bg-white shadow-[0_10px_30px_rgba(27,43,75,0.08)] transition-transform duration-300 hover:-translate-y-0.5 sm:w-[36vw] sm:max-w-[176px] md:max-w-[184px] lg:w-auto lg:max-w-none lg:min-h-[178px] lg:shrink"
-            >
-              <div className="relative h-[72px] shrink-0 bg-white sm:h-20">
-                <Image
-                  src={category.image}
-                  alt={category.name}
-                  fill
-                  className="object-contain p-2.5 transition-transform duration-500 group-hover:scale-[1.04]"
-                  sizes="(max-width: 1024px) 42vw, 10vw"
-                />
-              </div>
-              <div className="flex flex-1 items-end justify-between gap-2 px-3 pb-2.5 pt-1">
-                <p className="text-[10px] font-semibold leading-tight text-primary">{category.name}</p>
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-accent/50 text-accent transition-colors group-hover:bg-accent group-hover:text-primary">
-                  <ArrowRight className="h-3 w-3" strokeWidth={2.25} />
-                </span>
-              </div>
-            </Link>
-          ))}
-          <div aria-hidden className="w-1 shrink-0 lg:hidden" />
+        <div
+          ref={viewportRef}
+          className="min-w-0 overflow-hidden lg:col-start-1 lg:row-start-2 lg:overflow-visible"
+          aria-label="Shop by category"
+        >
+          <div
+            ref={trackRef}
+            className="hero-shop-categories-marquee flex w-max gap-2 sm:gap-2.5 lg:grid lg:w-full lg:grid-cols-9 lg:gap-2"
+          >
+            {CATEGORIES.map((category) => (
+              <CategoryCard key={category.slug} category={category} />
+            ))}
+          </div>
         </div>
 
         <PartnerAside className="hidden flex-col rounded-2xl bg-[rgba(27,43,75,0.9)] px-5 py-6 text-white shadow-[0_16px_40px_rgba(27,43,75,0.22)] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:flex lg:self-start" />
