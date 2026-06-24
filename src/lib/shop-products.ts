@@ -32,6 +32,8 @@ export type ProductSize = {
 };
 
 export type ShopProductDetail = ShopProductCard & {
+  /** Storefront slug — set for live catalogue products */
+  slug?: string;
   shortDescription: string;
   longDescription: string;
   compareAtPrice?: string;

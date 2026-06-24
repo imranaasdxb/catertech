@@ -2,14 +2,18 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import {
   type ShopProductDetail,
   type ShopProductCard,
   getCollectionSiblings,
-  getCrossSellProducts,
   getFamilyMeta,
 } from "@/lib/shop-products";
+import StorefrontProductCard, {
+  getProductSizeSummary,
+  type StorefrontProductCardData,
+} from "@/components/shop/StorefrontProductCard";
+import type { ProductTitleVariant } from "@/lib/storefront-product";
 import { useCart } from "@/lib/cart-context";
 
 type AccordionKey = "description";
@@ -172,6 +176,143 @@ function VariantPickCard({
   );
 }
 
+function similarProductsPageSize(width: number) {
+  if (width < 640) return 2;
+  if (width < 768) return 3;
+  if (width < 1280) return 4;
+  return 5;
+}
+
+function SimilarProductsCarousel({
+  products,
+}: {
+  products: StorefrontProductCardData[];
+}) {
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(4);
+
+  useEffect(() => {
+    const update = () => setPageSize(similarProductsPageSize(window.innerWidth));
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  useEffect(() => {
+    setPage(0);
+  }, [products, pageSize]);
+
+  const totalPages = Math.max(1, Math.ceil(products.length / pageSize));
+  const safePage = Math.min(page, totalPages - 1);
+  const visible = products.slice(safePage * pageSize, safePage * pageSize + pageSize);
+
+  return (
+    <div>
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:gap-4 xl:grid-cols-5">
+        {visible.map((p) => (
+          <div key={p.id} className="min-w-0">
+            <StorefrontProductCard product={p} shopCompact lazyImage />
+          </div>
+        ))}
+      </div>
+      {totalPages > 1 ? (
+        <div className="mt-4 flex justify-end gap-2 px-5 md:px-8">
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={safePage === 0}
+            aria-label="Previous similar products"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white text-charcoal transition-colors hover:border-sand hover:text-sand disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+            disabled={safePage >= totalPages - 1}
+            aria-label="Next similar products"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white text-charcoal transition-colors hover:border-sand hover:text-sand disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function getVariantTileLabel(variant: ProductTitleVariant) {
+  const sizeSummary = getProductSizeSummary(variant.card.attributes);
+  const colorRaw = variant.card.attributes.color;
+  const color =
+    typeof colorRaw === "string"
+      ? colorRaw.trim()
+      : colorRaw && typeof colorRaw === "object" && "value" in colorRaw
+        ? String(colorRaw.value).trim()
+        : "";
+  const materialRaw = variant.card.attributes.material;
+  const material =
+    typeof materialRaw === "string"
+      ? materialRaw.trim()
+      : materialRaw && typeof materialRaw === "object" && "value" in materialRaw
+        ? String(materialRaw.value).trim()
+        : "";
+
+  const parts = [sizeSummary, color, material].filter(Boolean);
+  if (parts.length) return parts.join(" · ");
+  return variant.card.name;
+}
+
+function ProductTitleVariantTile({
+  variant,
+  selected,
+  onSelect,
+}: {
+  variant: ProductTitleVariant;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const label = getVariantTileLabel(variant);
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      aria-label={`View ${variant.card.name}`}
+      className={[
+        "shrink-0 w-[92px] sm:w-[108px] text-left rounded-xl border overflow-hidden bg-white transition-all duration-200",
+        selected
+          ? "border-sand ring-2 ring-sand/35 shadow-[0_8px_24px_rgba(196,162,101,0.16)]"
+          : "border-border hover:border-sand/45 hover:shadow-md",
+      ].join(" ")}
+    >
+      <div className="relative aspect-square bg-[#FEFEFE]">
+        {variant.card.image ? (
+          <Image
+            src={variant.card.image}
+            alt=""
+            fill
+            className="object-contain object-center p-1.5"
+            sizes="108px"
+          />
+        ) : (
+          <ImgPlaceholder label={label} active={selected} />
+        )}
+      </div>
+      <div className="px-2 py-1.5">
+        <p className="text-[9px] sm:text-[10px] font-semibold text-charcoal leading-snug line-clamp-2">
+          {label}
+        </p>
+      </div>
+    </button>
+  );
+}
+
 function RelatedTile({ p }: { p: ShopProductCard }) {
   return (
     <Link
@@ -213,11 +354,24 @@ function RelatedTile({ p }: { p: ShopProductCard }) {
 
 /* ─── Main Component ───────────────────────────────────────────────── */
 export default function ProductEquipmentDetail({
-  product,
+  product: initialProduct,
+  productSlug = "",
+  titleVariants = [],
+  similarProducts = [],
+  categorySlug = null,
 }: {
   product: ShopProductDetail;
+  productSlug?: string;
+  titleVariants?: ProductTitleVariant[];
+  similarProducts?: StorefrontProductCardData[];
+  categorySlug?: string | null;
 }) {
   const { addItem } = useCart();
+  const [activeSlug, setActiveSlug] = useState(productSlug || initialProduct.slug || "");
+  const product = useMemo(() => {
+    const match = titleVariants.find((variant) => variant.slug === activeSlug);
+    return match?.detail ?? initialProduct;
+  }, [activeSlug, titleVariants, initialProduct]);
   const [colorId, setColorId] = useState(product.colors[0]?.id ?? "");
   const [sizeId, setSizeId] = useState(product.sizes[0]?.id ?? "");
   const [qty, setQty] = useState(1);
@@ -226,6 +380,28 @@ export default function ProductEquipmentDetail({
   const [activeThumb, setActiveThumb] = useState(0);
   const [openSection, setOpenSection] = useState<AccordionKey>("description");
   const [cartAdded, setCartAdded] = useState(false);
+
+  useEffect(() => {
+    setActiveSlug(productSlug || initialProduct.slug || "");
+  }, [productSlug, initialProduct.slug]);
+
+  useEffect(() => {
+    setColorId(product.colors[0]?.id ?? "");
+    setSizeId(product.sizes[0]?.id ?? "");
+    setActiveThumb(0);
+    setQty(1);
+    setQtyInput("1");
+    setCartAdded(false);
+    if (typeof document !== "undefined") {
+      document.title = `${product.name} | Catertech Shop`;
+    }
+  }, [product]);
+
+  const selectTitleVariant = (slug: string) => {
+    if (slug === activeSlug) return;
+    setActiveSlug(slug);
+    window.history.replaceState(null, "", `/shop/${slug}`);
+  };
 
   const thumbSources = useMemo(() => {
     const extras = product.galleryImages ?? [];
@@ -247,13 +423,6 @@ export default function ProductEquipmentDetail({
     () => getCollectionSiblings(product.id, product.familyId),
     [product.id, product.familyId]
   );
-
-  const crossSell = useMemo(() => {
-    const sid = new Set(collectionSiblings.map((s) => s.id));
-    return getCrossSellProducts(product.id, product.category, product.familyId)
-      .filter((p) => !sid.has(p.id))
-      .slice(0, 12);
-  }, [product.id, product.category, product.familyId, collectionSiblings]);
 
   const collectionMeta = getFamilyMeta(product.familyId);
 
@@ -448,6 +617,24 @@ export default function ProductEquipmentDetail({
                 </button>
               ))}
             </div>
+
+            {titleVariants.length >= 2 ? (
+              <div className="pt-1">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-sand">
+                  Other sizes &amp; variants
+                </p>
+                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+                  {titleVariants.map((variant) => (
+                    <ProductTitleVariantTile
+                      key={variant.slug}
+                      variant={variant}
+                      selected={variant.slug === activeSlug}
+                      onSelect={() => selectTitleVariant(variant.slug)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
 
           {/* RIGHT — Purchase Panel */}
@@ -910,28 +1097,25 @@ export default function ProductEquipmentDetail({
           </section>
         ) : null}
 
-        {crossSell.length > 0 ? (
-          <section className="mt-12">
-            <div className="mb-5 px-1">
-              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-sand mb-1">
+        {similarProducts.length > 0 ? (
+          <section className="mt-12 -mx-5 md:-mx-8">
+            <div className="mb-5 flex flex-col gap-3 px-5 md:px-8 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-sand">
                 More you may need
               </p>
-              <p className="text-[13px] text-muted leading-snug max-w-3xl">
-                Popular picks from the same department — open any tile to configure quantity and finishes.
-              </p>
+              {categorySlug ? (
+                <Link
+                  href={`/shop?category=${categorySlug}`}
+                  className="inline-flex shrink-0 items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-sand transition-colors hover:text-navy"
+                >
+                  View all in {product.category}
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              ) : null}
             </div>
-            <ProductMarqueeTrack
-              durationSec={Math.min(95, Math.max(32, crossSell.length * 9))}
-            >
-              <>
-                {crossSell.map((p) => (
-                  <RelatedTile key={`x1-${p.id}`} p={p} />
-                ))}
-                {crossSell.map((p) => (
-                  <RelatedTile key={`x2-${p.id}`} p={p} />
-                ))}
-              </>
-            </ProductMarqueeTrack>
+            <SimilarProductsCarousel products={similarProducts} />
           </section>
         ) : null}
 
