@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -44,6 +44,7 @@ type ProductCard = {
   slug: string;
   name: string;
   category: string;
+  categoryId: string | null;
   subCategoryName: string | null;
   description: string;
   attributes: Record<string, ProductAttributeValue>;
@@ -64,6 +65,10 @@ const EQUIPMENT_PREVIEW_COUNT = 10;
 const CARDS_PER_ROW = 4;
 const ROW_COUNT = 2;
 const PAGE_SIZE = CARDS_PER_ROW * ROW_COUNT;
+const SHOP_INITIAL_ROWS = 3;
+const SHOP_LOAD_MORE_ROWS = 2;
+const SHOP_INITIAL_VISIBLE = CARDS_PER_ROW * SHOP_INITIAL_ROWS;
+const SHOP_LOAD_MORE_STEP = CARDS_PER_ROW * SHOP_LOAD_MORE_ROWS;
 
 function ProductCardSkeleton({ shopCompact = false }: { shopCompact?: boolean }) {
   return (
@@ -95,41 +100,88 @@ function ProductCardSkeleton({ shopCompact = false }: { shopCompact?: boolean })
   );
 }
 
-function CarouselNavButton({
-  direction,
-  onClick,
-  disabled,
-  label,
+function CategoryTabStrip({
+  tabs,
+  activeTab,
+  onSelect,
+  size = "shop",
 }: {
-  direction: "prev" | "next";
-  onClick: () => void;
-  disabled: boolean;
-  label: string;
+  tabs: { id: string; name: string }[];
+  activeTab: string;
+  onSelect: (tabId: string) => void;
+  size?: "shop" | "featured";
 }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [scrollEdges, setScrollEdges] = useState({ left: false, right: false });
+
+  const updateScrollEdges = useCallback(() => {
+    const node = scrollRef.current;
+    if (!node) return;
+    const { scrollLeft, scrollWidth, clientWidth } = node;
+    setScrollEdges({
+      left: scrollLeft > 6,
+      right: scrollLeft + clientWidth < scrollWidth - 6,
+    });
+  }, []);
+
+  useEffect(() => {
+    updateScrollEdges();
+    const node = scrollRef.current;
+    if (!node) return;
+
+    node.addEventListener("scroll", updateScrollEdges, { passive: true });
+    const observer = new ResizeObserver(updateScrollEdges);
+    observer.observe(node);
+
+    return () => {
+      node.removeEventListener("scroll", updateScrollEdges);
+      observer.disconnect();
+    };
+  }, [tabs, updateScrollEdges]);
+
+  const buttonClass =
+    size === "featured"
+      ? "relative shrink-0 cursor-pointer px-5 py-2.5 text-xs font-semibold tracking-wider uppercase transition-all duration-200"
+      : "relative shrink-0 cursor-pointer px-2.5 py-2 text-[10px] font-semibold uppercase tracking-wide transition-all duration-200 sm:px-3 sm:text-xs lg:px-5 lg:py-2.5 lg:tracking-wider";
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={label}
-      className="inline-flex size-10 items-center justify-center rounded-full border border-border bg-surface-card text-ink shadow-sm transition-all duration-200 hover:border-border hover:bg-white disabled:pointer-events-none disabled:opacity-35"
-    >
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        aria-hidden
+    <div className="relative min-w-0 flex-1">
+      {scrollEdges.left ? (
+        <span
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-offwhite via-offwhite/80 to-transparent"
+          aria-hidden
+        />
+      ) : null}
+      {scrollEdges.right ? (
+        <span
+          className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-offwhite via-offwhite/80 to-transparent"
+          aria-hidden
+        />
+      ) : null}
+      <div
+        ref={scrollRef}
+        className="flex min-w-0 gap-0.5 overflow-x-auto overscroll-x-contain scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-1"
       >
-        {direction === "prev" ? (
-          <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-        ) : (
-          <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-        )}
-      </svg>
-    </button>
+        {tabs.map((tab) => {
+          const active = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => onSelect(tab.id)}
+              className={`${buttonClass} ${
+                active ? "text-charcoal" : "text-muted hover:text-charcoal"
+              }`}
+            >
+              {tab.name}
+              {active ? (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#322b81]" />
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -150,9 +202,9 @@ export default function FeaturedProductsClient({
   const [selectedEquipment, setSelectedEquipment] = useState<Set<string>>(() => new Set());
   const [equipmentExpanded, setEquipmentExpanded] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [carouselStart, setCarouselStart] = useState(0);
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState(SHOP_INITIAL_VISIBLE);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const productGridRef = useRef<HTMLDivElement>(null);
   const isShopCatalogue = compactTop;
   const searchParams = useSearchParams();
 
@@ -170,6 +222,8 @@ export default function FeaturedProductsClient({
       setActiveTab(match.id);
       setSelectedEquipment(new Set());
       setEquipmentExpanded(false);
+      setVisibleCount(SHOP_INITIAL_VISIBLE);
+      setLoadingMore(false);
     }
   }, [categories, searchParams]);
 
@@ -199,6 +253,7 @@ export default function FeaturedProductsClient({
         slug: product.slug,
         name: product.title,
         category: product.categoryName ?? "",
+        categoryId: product.categoryId,
         subCategoryName: product.subCategoryName,
         description: product.description,
         attributes: product.attributes,
@@ -211,10 +266,16 @@ export default function FeaturedProductsClient({
   const filtered = useMemo(() => {
     let list =
       activeTab === ALL_TAB
-        ? [...productCards]
+        ? isShopCatalogue
+          ? [...productCards]
+          : productCards.filter((product) => product.tag === "Popular" || product.tag === "New")
         : productCards.filter((product) => {
             const category = categories.find((item) => item.id === activeTab);
-            return category ? product.category === category.name : false;
+            if (!category) return false;
+            return (
+              product.categoryId === category.id ||
+              product.category === category.name
+            );
           });
 
     if (highlight !== "all") {
@@ -243,71 +304,43 @@ export default function FeaturedProductsClient({
     }
 
     return list;
-  }, [activeTab, categories, highlight, productCards, search, selectedEquipment]);
+  }, [activeTab, categories, highlight, isShopCatalogue, productCards, search, selectedEquipment]);
 
   const displayed = filtered;
 
-  const rowOne = displayed.slice(carouselStart, carouselStart + CARDS_PER_ROW);
-  const rowTwo = displayed.slice(carouselStart + CARDS_PER_ROW, carouselStart + PAGE_SIZE);
-  const maxCarouselStart = Math.max(0, displayed.length - CARDS_PER_ROW);
-  const canGoPrev = carouselStart > 0;
-  const canGoNext = carouselStart + PAGE_SIZE < displayed.length;
+  const homepageGridProducts = displayed.slice(0, PAGE_SIZE);
+  const homepageRowOne = homepageGridProducts.slice(0, CARDS_PER_ROW);
+  const homepageRowTwo = homepageGridProducts.slice(CARDS_PER_ROW, PAGE_SIZE);
 
   const visibleProducts = displayed.slice(0, visibleCount);
   const canLoadMore = visibleCount < displayed.length;
-  const canShowLess = visibleCount > PAGE_SIZE;
+  const loadingSkeletonCount = loadingMore
+    ? Math.min(SHOP_LOAD_MORE_STEP, displayed.length - visibleCount)
+    : 0;
+
+  function scrollToProductGridStart() {
+    if (!isShopCatalogue || !productGridRef.current) return;
+    productGridRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   function resetProductWindow() {
-    if (isShopCatalogue) {
-      setVisibleCount(PAGE_SIZE);
-    } else {
-      setCarouselStart(0);
-    }
+    setVisibleCount(isShopCatalogue ? SHOP_INITIAL_VISIBLE : PAGE_SIZE);
+    setLoadingMore(false);
   }
 
   useEffect(() => {
     if (!isShopCatalogue) return;
-    setVisibleCount(PAGE_SIZE);
-  }, [activeTab, search, highlight, selectedEquipment, displayed.length, isShopCatalogue]);
-
-  useEffect(() => {
-    if (!isShopCatalogue) return;
-    setCarouselStart(0);
-  }, [activeTab, search, highlight, selectedEquipment, displayed.length, isShopCatalogue]);
-
-  useEffect(() => {
-    if (!isShopCatalogue) return;
-
-    const node = loadMoreRef.current;
-    if (!node || !canLoadMore) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          setVisibleCount((count) => Math.min(count + PAGE_SIZE, displayed.length));
-        }
-      },
-      { rootMargin: "240px" },
-    );
-
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [canLoadMore, displayed.length, isShopCatalogue, visibleCount]);
-
-  function goPrevRow() {
-    setCarouselStart((prev) => Math.max(0, prev - CARDS_PER_ROW));
-  }
-
-  function goNextRow() {
-    setCarouselStart((prev) => Math.min(maxCarouselStart, prev + CARDS_PER_ROW));
-  }
+    setVisibleCount(SHOP_INITIAL_VISIBLE);
+    setLoadingMore(false);
+  }, [activeTab, search, highlight, selectedEquipment, isShopCatalogue]);
 
   function loadMore() {
-    setVisibleCount((count) => Math.min(count + PAGE_SIZE, displayed.length));
-  }
-
-  function showLess() {
-    setVisibleCount((count) => Math.max(PAGE_SIZE, count - PAGE_SIZE));
+    if (!canLoadMore || loadingMore) return;
+    setLoadingMore(true);
+    window.setTimeout(() => {
+      setVisibleCount((count) => Math.min(count + SHOP_LOAD_MORE_STEP, displayed.length));
+      setLoadingMore(false);
+    }, 320);
   }
 
   function toggleEquipment(label: string) {
@@ -321,10 +354,16 @@ export default function FeaturedProductsClient({
   }
 
   function selectTab(tabId: string) {
+    const tabChanged = tabId !== activeTab;
     setActiveTab(tabId);
     setSelectedEquipment(new Set());
     setEquipmentExpanded(false);
     resetProductWindow();
+    if (tabChanged && isShopCatalogue) {
+      window.requestAnimationFrame(() => {
+        scrollToProductGridStart();
+      });
+    }
   }
 
   function selectHighlight(nextHighlight: HighlightFilter) {
@@ -382,67 +421,60 @@ export default function FeaturedProductsClient({
     ...categories.map((category) => ({ id: category.id, name: category.name })),
   ];
 
-  function ShopPagination({
-    className = "",
-    layout = "row",
-  }: {
-    className?: string;
-    layout?: "row" | "stack";
-  }) {
-    if (displayed.length === 0) return null;
+  function ShopProductCount({ className = "" }: { className?: string }) {
+    if (displayed.length <= SHOP_INITIAL_VISIBLE && !loadingMore) return null;
 
     return (
-      <div
-        className={
-          layout === "stack"
-            ? `min-w-0 space-y-3 ${className}`
-            : `flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-2.5 ${className}`
-        }
-      >
-        <p className="text-[11px] text-muted">
-          Showing 1-{Math.min(visibleCount, displayed.length)} of {displayed.length}
-        </p>
-        <div className="flex items-center gap-1.5">
-          <CarouselNavButton
-            direction="prev"
-            onClick={showLess}
-            disabled={!canShowLess}
-            label="Show fewer products"
-          />
-          <CarouselNavButton
-            direction="next"
-            onClick={loadMore}
-            disabled={!canLoadMore}
-            label="Load more products"
-          />
+      <p className={`text-[11px] text-muted ${className}`}>
+        Showing {Math.min(visibleCount, displayed.length)} of {displayed.length}
+      </p>
+    );
+  }
+
+  function ShopLoadMoreButton() {
+    if (displayed.length <= SHOP_INITIAL_VISIBLE && !loadingMore) return null;
+    if (!canLoadMore && !loadingMore) return null;
+
+    return (
+      <div className="flex justify-center pt-2">
+        <button
+          type="button"
+          onClick={loadMore}
+          disabled={loadingMore}
+          className="inline-flex min-h-10 items-center justify-center rounded-full border border-border bg-surface-card px-6 text-sm font-semibold text-charcoal shadow-sm transition-colors hover:border-ink/20 hover:bg-white disabled:cursor-wait disabled:opacity-70"
+        >
+          {loadingMore ? "Loading…" : "Load more"}
+        </button>
+      </div>
+    );
+  }
+
+  function ShopCategoryTabs({ className = "" }: { className?: string }) {
+    return (
+      <div className={`sticky top-[var(--header-height)] z-20 bg-offwhite ${className}`}>
+        <div className="border-b border-border py-1 mb-4 lg:mb-6">
+          <div className="flex min-w-0 items-end gap-2 sm:gap-3">
+            <CategoryTabStrip tabs={tabs} activeTab={activeTab} onSelect={selectTab} size="shop" />
+          </div>
         </div>
       </div>
     );
   }
 
-  function FeaturedPagination() {
-    if (displayed.length <= PAGE_SIZE) return null;
+  function FeaturedViewMore() {
+    if (activeTab === ALL_TAB || !activeCategory) return null;
+
+    const categoryHref = `/shop?category=${encodeURIComponent(activeCategory.slug)}`;
+    const hasMoreThanGrid = displayed.length > PAGE_SIZE;
 
     return (
-      <div className="flex items-center justify-end gap-2.5">
-        <p className="text-[11px] text-muted">
-          Showing {carouselStart + 1}-{Math.min(carouselStart + PAGE_SIZE, displayed.length)} of{" "}
-          {displayed.length}
-        </p>
-        <div className="flex items-center gap-1.5">
-          <CarouselNavButton
-            direction="prev"
-            onClick={goPrevRow}
-            disabled={!canGoPrev}
-            label="Previous products"
-          />
-          <CarouselNavButton
-            direction="next"
-            onClick={goNextRow}
-            disabled={!canGoNext}
-            label="Next products"
-          />
-        </div>
+      <div className="flex justify-end pt-1">
+        <Link
+          href={categoryHref}
+          className="inline-flex min-h-10 items-center justify-center rounded-full border border-border bg-surface-card px-5 text-sm font-semibold text-charcoal shadow-sm transition-colors hover:border-ink/20 hover:bg-white"
+        >
+          {hasMoreThanGrid ? `View more in ${activeCategory.name}` : `Browse ${activeCategory.name}`}
+        </Link>
       </div>
     );
   }
@@ -570,55 +602,13 @@ export default function FeaturedProductsClient({
         {isShopCatalogue ? <div className="h-5 md:h-6" aria-hidden /> : null}
 
         {isShopCatalogue ? (
-          <div className="sticky top-[var(--header-height)] z-10 bg-offwhite">
-            <div className="border-b border-border py-1 mb-4 lg:mb-6">
-              <div className="flex min-w-0 items-end gap-2 sm:gap-3">
-                <div className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-1">
-                  {tabs.map((tab) => {
-                    const active = activeTab === tab.id;
-                    return (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => selectTab(tab.id)}
-                        className={`relative shrink-0 px-2.5 py-2 text-[10px] font-semibold uppercase tracking-wide transition-all duration-200 sm:px-3 sm:text-xs lg:px-5 lg:py-2.5 lg:tracking-wider ${
-                          active ? "text-charcoal" : "text-muted hover:text-charcoal"
-                        }`}
-                      >
-                        {tab.name}
-                        {active ? (
-                          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#322b81]" />
-                        ) : null}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
+          <ShopCategoryTabs className="mb-0 lg:hidden" />
+        ) : null}
+
+        {!isShopCatalogue ? (
         <div className="mb-6 min-w-0 border-b border-border md:mb-10">
           <div className="flex min-w-0 items-end gap-2 sm:gap-3">
-          <div className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-1">
-            {tabs.map((tab) => {
-              const active = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => selectTab(tab.id)}
-                  className={`relative shrink-0 px-5 py-2.5 text-xs font-semibold tracking-wider uppercase transition-all duration-200 ${
-                    active ? "text-charcoal" : "text-muted hover:text-charcoal"
-                  }`}
-                >
-                  {tab.name}
-                  {active ? (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#322b81]" />
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
+          <CategoryTabStrip tabs={tabs} activeTab={activeTab} onSelect={selectTab} size="featured" />
           <div className="relative shrink-0 before:pointer-events-none before:absolute before:-left-5 before:top-0 before:h-full before:w-6 before:bg-gradient-to-r before:from-transparent before:to-offwhite sm:before:-left-6 sm:before:w-8">
             <Link
               href="/shop"
@@ -629,7 +619,7 @@ export default function FeaturedProductsClient({
           </div>
           </div>
         </div>
-        )}
+        ) : null}
 
         <div
           className={`flex min-w-0 flex-col items-start gap-6 lg:flex-row lg:gap-8 ${
@@ -639,7 +629,7 @@ export default function FeaturedProductsClient({
           <aside
             className={`w-full shrink-0 space-y-3 lg:w-[252px] lg:space-y-5 xl:w-[260px] ${
               isShopCatalogue
-                ? "lg:sticky lg:top-[calc(var(--header-height)+3.25rem)] lg:z-10 lg:self-start lg:bg-offwhite"
+                ? "lg:sticky lg:top-[calc(var(--header-height)+0.75rem)] lg:z-10 lg:self-start lg:bg-offwhite"
                 : "lg:sticky lg:top-28 lg:self-start"
             }`}
           >
@@ -760,18 +750,21 @@ export default function FeaturedProductsClient({
               </div>
             ) : null}
 
-            {isShopCatalogue && displayed.length > PAGE_SIZE ? (
-              <ShopPagination className="hidden lg:flex lg:flex-col" layout="stack" />
+            {isShopCatalogue && displayed.length > SHOP_INITIAL_VISIBLE ? (
+              <ShopProductCount className="hidden text-right lg:block" />
             ) : null}
           </aside>
 
           <div className="relative z-0 w-full min-w-0 flex-1">
+            {isShopCatalogue ? (
+              <ShopCategoryTabs className="hidden lg:block" />
+            ) : null}
             {catalogError || (productCards.length === 0 && !hasActiveFilters) ? (
               <div className="min-w-0 space-y-4" aria-busy="true" aria-label="Loading products">
                 <p className="sr-only">{catalogError || "Products are loading."}</p>
                 {isShopCatalogue ? (
                   <div className="grid min-w-0 grid-cols-2 gap-2.5 sm:gap-3.5 md:gap-4 lg:grid-cols-4 lg:gap-6">
-                    {Array.from({ length: PAGE_SIZE }, (_, index) => (
+                    {Array.from({ length: SHOP_INITIAL_VISIBLE }, (_, index) => (
                       <ProductCardSkeleton key={index} shopCompact />
                     ))}
                   </div>
@@ -802,7 +795,11 @@ export default function FeaturedProductsClient({
               </div>
             ) : isShopCatalogue ? (
               <div className="min-w-0 space-y-4">
-                <div className="grid min-w-0 grid-cols-2 gap-2.5 sm:gap-3.5 md:gap-4 lg:grid-cols-4 lg:gap-6">
+                <div
+                  ref={productGridRef}
+                  key={activeTab}
+                  className="grid min-w-0 scroll-mt-[calc(var(--header-height)+3.25rem)] grid-cols-2 gap-2.5 sm:gap-3.5 md:gap-4 lg:grid-cols-4 lg:gap-6"
+                >
                   {visibleProducts.map((product) => (
                     <StorefrontProductCard
                       key={product.id}
@@ -811,15 +808,18 @@ export default function FeaturedProductsClient({
                       shopCompact
                     />
                   ))}
+                  {loadingMore
+                    ? Array.from({ length: loadingSkeletonCount }, (_, index) => (
+                        <ProductCardSkeleton key={`loading-${index}`} shopCompact />
+                      ))
+                    : null}
                 </div>
 
-                {canLoadMore ? <div ref={loadMoreRef} className="h-1" aria-hidden /> : null}
-
-                {displayed.length > PAGE_SIZE ? <ShopPagination className="lg:hidden" /> : null}
+                <ShopLoadMoreButton />
               </div>
             ) : (
               <div className="space-y-4">
-                {[rowOne, rowTwo].map((rowProducts, rowIndex) => {
+                {[homepageRowOne, homepageRowTwo].map((rowProducts, rowIndex) => {
                   const slots = Array.from(
                     { length: CARDS_PER_ROW },
                     (_, i) => rowProducts[i] ?? null,
@@ -840,7 +840,7 @@ export default function FeaturedProductsClient({
                   );
                 })}
 
-                <FeaturedPagination />
+                <FeaturedViewMore />
               </div>
             )}
           </div>

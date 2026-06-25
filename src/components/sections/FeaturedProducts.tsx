@@ -6,7 +6,7 @@ import FeaturedProductsClient, {
 } from "@/components/sections/FeaturedProductsClient";
 
 export default async function FeaturedProducts() {
-  const data = await getCatalogueProductData({ featuredOnly: true });
+  const data = await getCatalogueProductData();
   return (
     <Suspense fallback={<div className="min-h-[32rem] bg-offwhite" aria-hidden />}>
       <FeaturedProductsClient
