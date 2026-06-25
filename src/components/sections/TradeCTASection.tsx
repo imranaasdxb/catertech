@@ -68,7 +68,7 @@ function TradeCtaButton({
 export default function TradeCTASection() {
   return (
     <section
-      className="relative isolate w-full overflow-hidden bg-[#f9f4ec] py-10 sm:py-12 md:py-16 lg:py-20"
+      className="relative z-20 isolate w-full overflow-hidden bg-[#f9f4ec] py-10 shadow-[0_32px_72px_-20px_rgba(27,43,75,0.22)] sm:py-12 md:py-16 lg:py-20"
       aria-labelledby="trade-cta-heading"
     >
       <Image
@@ -77,6 +77,21 @@ export default function TradeCTASection() {
         fill
         className="-z-10 object-contain object-fill"
         sizes="100vw"
+      />
+
+      {/* Soft vignette over bg image — depth at section bottom */}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 -z-[5] h-[50%] bg-linear-to-t from-[#1b2b4b]/14 via-[#1b2b4b]/5 to-transparent"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 -z-[5] h-40 bg-[radial-gradient(ellipse_140%_100%_at_50%_100%,rgba(27,43,75,0.12)_0%,transparent_65%)] sm:h-48 md:h-56"
+        aria-hidden
+      />
+      {/* Blend into journey section tone — no hard lines */}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-36 bg-linear-to-t from-[#F5F0E8] from-15% via-[#f5f0e8]/55 to-transparent sm:h-44 md:h-52"
+        aria-hidden
       />
 
       <Container className="relative z-10">

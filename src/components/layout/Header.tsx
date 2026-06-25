@@ -22,6 +22,11 @@ const NAV_LINKS = [
 const headerBtnBase =
   "btn-brand shrink-0 rounded-xl px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.12em]";
 
+function isNavLinkActive(href: string, pathname: string) {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export default function Header() {
   const pathname = usePathname();
   const { totalItems } = useCart();
@@ -45,10 +50,25 @@ export default function Header() {
   const isHome = pathname === "/";
   const isShop = pathname === "/shop";
 
-  const navLinkClass = (href: string) =>
-    `text-[13px] font-semibold uppercase tracking-[0.12em] text-primary transition-colors duration-200 ${
-      pathname === href ? "text-accent-dark" : "hover:text-accent-dark"
-    }`;
+  const navLinkClass = (href: string) => {
+    const active = isNavLinkActive(href, pathname);
+    return [
+      "relative inline-flex pb-1.5 text-[13px] font-semibold uppercase tracking-[0.12em] transition-colors duration-200",
+      active
+        ? "text-[#322b81] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:rounded-full after:bg-[#322b81] after:content-['']"
+        : "text-primary hover:text-[#322b81]",
+    ].join(" ");
+  };
+
+  const mobileNavLinkClass = (href: string) => {
+    const active = isNavLinkActive(href, pathname);
+    return [
+      "border-b border-border py-3 font-display text-3xl transition-colors duration-150",
+      active
+        ? "font-medium text-[#322b81]"
+        : "font-light text-ink/80 hover:text-ink",
+    ].join(" ");
+  };
 
   return (
     <>
@@ -77,7 +97,12 @@ export default function Header() {
 
           <nav className="hidden items-center gap-6 lg:flex xl:gap-7">
             {NAV_LINKS.map((link) => (
-              <Link key={link.href} href={link.href} className={navLinkClass(link.href)}>
+              <Link
+                key={link.href}
+                href={link.href}
+                className={navLinkClass(link.href)}
+                aria-current={isNavLinkActive(link.href, pathname) ? "page" : undefined}
+              >
                 {link.label}
               </Link>
             ))}
@@ -187,7 +212,8 @@ export default function Header() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setMenuOpen(false)}
-                className="border-b border-border py-3 font-display text-3xl font-light text-ink/80 transition-colors duration-150 hover:text-ink"
+                className={mobileNavLinkClass(link.href)}
+                aria-current={isNavLinkActive(link.href, pathname) ? "page" : undefined}
                 style={{ transitionDelay: `${i * 40}ms` }}
               >
                 {link.label}

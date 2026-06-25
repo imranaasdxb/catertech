@@ -53,9 +53,16 @@ export const defaultTestimonialsMarquee: TestimonialMarqueeItem[] = [
   },
 ];
 
+const MARQUEE_REPEATS = 4;
+
+function buildSeamlessTrack(items: TestimonialMarqueeItem[]) {
+  const segment = Array.from({ length: MARQUEE_REPEATS }, () => items).flat();
+  return [...segment, ...segment];
+}
+
 const ROWS = [
-  { start: 0, end: 3, className: "testimonials-marquee-scroll" },
-  { start: 3, end: 6, className: "testimonials-marquee-scroll-reverse" },
+  { className: "testimonials-marquee-scroll", offset: 0 },
+  { className: "testimonials-marquee-scroll-reverse", offset: 3 },
 ] as const;
 
 function TestimonialCard({
@@ -110,8 +117,12 @@ export default function TestimonialsMarquee({
   return (
     <div className="space-y-6">
       {ROWS.map((row, rowIndex) => {
-        const rowItems = items.slice(row.start, row.end);
-        const duplicated = [...rowItems, ...rowItems];
+        const offset = row.offset % items.length;
+        const rowItems =
+          offset === 0
+            ? items
+            : [...items.slice(offset), ...items.slice(0, offset)];
+        const track = buildSeamlessTrack(rowItems);
 
         return (
           <div
@@ -119,18 +130,18 @@ export default function TestimonialsMarquee({
             className="testimonials-marquee-row relative overflow-hidden"
           >
             <div
-              className="pointer-events-none absolute inset-y-0 left-0 z-10 w-28 bg-linear-to-r from-bg-warm to-transparent"
+              className="pointer-events-none absolute inset-y-0 left-0 z-10 w-28 bg-linear-to-r from-[#f4f6f9] to-transparent"
               aria-hidden
             />
             <div
-              className="pointer-events-none absolute inset-y-0 right-0 z-10 w-28 bg-linear-to-l from-bg-warm to-transparent"
+              className="pointer-events-none absolute inset-y-0 right-0 z-10 w-28 bg-linear-to-l from-[#f4f6f9] to-transparent"
               aria-hidden
             />
 
             <div className={`flex w-max gap-6 ${row.className}`}>
-              {duplicated.map((testimonial, index) => (
+              {track.map((testimonial, index) => (
                 <TestimonialCard
-                  key={`${rowIndex}-${index}`}
+                  key={`${rowIndex}-${testimonial.name}-${index}`}
                   testimonial={testimonial}
                   index={index}
                 />

@@ -10,6 +10,8 @@ import DeseriPartner from "@/components/sections/DeseriPartner";
 import BlogPreview from "@/components/sections/BlogPreview";
 import JourneyTeaser from "@/components/sections/JourneyTeaser";
 
+export const revalidate = 60;
+
 export default function Home() {
   return (
     <>

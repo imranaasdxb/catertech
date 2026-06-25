@@ -192,23 +192,38 @@ function mapSanityPost(row: SanityPostResult): BlogPostPublic {
   };
 }
 
+function parsePostDate(post: BlogPostPublic) {
+  const parsed = new Date(post.dateLabel);
+  return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+}
+
+function sortPostsByDate(posts: BlogPostPublic[]) {
+  return [...posts].sort((left, right) => parsePostDate(right) - parsePostDate(left));
+}
+
 function mergeWithStaticPosts(posts: BlogPostPublic[]) {
   const seenSlugs = new Set(posts.map((post) => post.slug));
-  return [
+  return sortPostsByDate([
     ...posts,
     ...STATIC_BLOG_POSTS.filter((post) => !seenSlugs.has(post.slug)),
-  ];
+  ]);
+}
+
+function mergeSlugs(primary: string[], fallback: string[]) {
+  const seen = new Set(primary);
+  return [...primary, ...fallback.filter((slug) => slug && !seen.has(slug))];
 }
 
 export async function getAllBlogPosts(): Promise<BlogPostPublic[]> {
   const client = getSanityClient();
-  if (!client) return STATIC_BLOG_POSTS;
+  if (!client) return sortPostsByDate([...STATIC_BLOG_POSTS]);
 
   try {
     const rows = await client.fetch<SanityPostResult[]>(allBlogPostsQuery);
     return mergeWithStaticPosts(rows.map(mapSanityPost));
-  } catch {
-    return STATIC_BLOG_POSTS;
+  } catch (error) {
+    console.error("[blog-posts] Sanity fetch failed, using static posts:", error);
+    return sortPostsByDate([...STATIC_BLOG_POSTS]);
   }
 }
 
@@ -231,17 +246,17 @@ export async function getBlogPostBySlug(
 }
 
 export async function getAllBlogSlugs(): Promise<string[]> {
+  const staticSlugs = STATIC_BLOG_POSTS.map((post) => post.slug);
   const client = getSanityClient();
-  if (client) {
-    try {
-      const rows = await client.fetch<string[]>(allBlogSlugsQuery);
-      return rows.filter(Boolean);
-    } catch {
-      // Keep local pages usable before Sanity is fully configured.
-    }
-  }
+  if (!client) return staticSlugs;
 
-  return STATIC_BLOG_POSTS.map((p) => p.slug);
+  try {
+    const rows = await client.fetch<string[]>(allBlogSlugsQuery);
+    return mergeSlugs(rows.filter(Boolean), staticSlugs);
+  } catch (error) {
+    console.error("[blog-posts] Sanity slug fetch failed, using static slugs:", error);
+    return staticSlugs;
+  }
 }
 
 export async function getRelatedPosts(
@@ -266,7 +281,7 @@ export async function getRelatedPosts(
   return STATIC_BLOG_POSTS.filter((p) => p.slug !== slug).slice(0, limit);
 }
 
-export async function getLatestBlogPosts(limit = 3): Promise<BlogPostPublic[]> {
+export async function getLatestBlogPosts(limit = 4): Promise<BlogPostPublic[]> {
   const posts = await getAllBlogPosts();
   return posts.slice(0, limit);
 }

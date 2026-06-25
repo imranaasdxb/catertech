@@ -4,7 +4,7 @@ import BlogCoverImage from "@/components/blog/BlogCoverImage";
 import { getLatestBlogPosts } from "@/lib/blog-posts";
 
 export default async function BlogPreview() {
-  const posts = await getLatestBlogPosts(3);
+  const posts = await getLatestBlogPosts(4);
 
   return (
     <section className="bg-white py-16 md:py-24">

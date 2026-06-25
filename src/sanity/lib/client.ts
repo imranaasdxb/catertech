@@ -13,6 +13,6 @@ export function getSanityClient() {
     projectId: sanityProjectId,
     dataset: sanityDataset,
     apiVersion: sanityApiVersion,
-    useCdn: true,
+    useCdn: false,
   });
 }
