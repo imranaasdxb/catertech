@@ -1,11 +1,11 @@
-import { desc, ilike, or } from "drizzle-orm";
+import { asc, desc, ilike, or } from "drizzle-orm";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 import AdminProductsTable from "@/components/admin/AdminProductsTable";
 import { admin } from "@/components/admin/adminTheme";
 import { getDb } from "@/db";
-import { products } from "@/db/schema";
+import { productCategories, products } from "@/db/schema";
 
 type SearchProps = {
   searchParams?: Promise<{ q?: string }> | { q?: string };
@@ -26,6 +26,7 @@ export default async function AdminProductsPage({ searchParams }: SearchProps) {
     title: products.title,
     slug: products.slug,
     category: products.category,
+    categoryId: products.categoryId,
     published: products.published,
     isFeatured: products.isFeatured,
     isAvailable: products.isAvailable,
@@ -34,25 +35,36 @@ export default async function AdminProductsPage({ searchParams }: SearchProps) {
     images: products.images,
   };
 
-  const raw = q
-    ? await db
-        .select(selectFields)
-        .from(products)
-        .where(
-          or(
-            ilike(products.title, `%${q}%`),
-            ilike(products.slug, `%${q}%`),
-            ilike(products.category, `%${q}%`)
+  const [raw, categories] = await Promise.all([
+    q
+      ? db
+          .select(selectFields)
+          .from(products)
+          .where(
+            or(
+              ilike(products.title, `%${q}%`),
+              ilike(products.slug, `%${q}%`),
+              ilike(products.category, `%${q}%`)
+            )
           )
-        )
-        .orderBy(desc(products.updatedAt))
-    : await db.select(selectFields).from(products).orderBy(desc(products.updatedAt));
+          .orderBy(desc(products.updatedAt))
+      : db.select(selectFields).from(products).orderBy(desc(products.updatedAt)),
+    db
+      .select({
+        id: productCategories.id,
+        name: productCategories.name,
+        slug: productCategories.slug,
+      })
+      .from(productCategories)
+      .orderBy(asc(productCategories.sortOrder), asc(productCategories.name)),
+  ]);
 
   const rows = raw.map((r) => ({
     id: r.id,
     title: r.title,
     slug: r.slug,
     category: r.category ?? null,
+    categoryId: r.categoryId ?? null,
     galleryCount: r.images?.filter(Boolean).length ?? 0,
     published: r.published,
     isFeatured: r.isFeatured,
@@ -81,6 +93,7 @@ export default async function AdminProductsPage({ searchParams }: SearchProps) {
       </div>
       <AdminProductsTable
         rows={rows}
+        categories={categories}
         initialSearch={q}
         emptyMessage={q ? "No products match your search." : "No products yet."}
       />

@@ -19,6 +19,7 @@ export type AdminProductListRow = {
   title: string;
   slug: string;
   category: string | null;
+  categoryId: string | null;
   galleryCount: number;
   published: boolean;
   isFeatured: boolean;
@@ -28,9 +29,15 @@ export type AdminProductListRow = {
   thumbUrl: string | null;
 };
 
+export type AdminProductCategoryOption = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
 type ProductRow = InferSelectModel<typeof products>;
 
-type FilterKey = "all" | "live" | "draft" | "featured";
+type FilterKey = "all" | string;
 
 type ToggleAction = {
   id: string;
@@ -60,14 +67,28 @@ function formatAttribute(value: ProductAttributeValue) {
   return `${value.value || "Not set"}${value.unit ? ` ${value.unit}` : ""}`;
 }
 
+const SHORT_MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+] as const;
+
 function formatUpdatedAt(value: Date | string) {
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleDateString(undefined, {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const month = SHORT_MONTHS[date.getUTCMonth()];
+  const year = date.getUTCFullYear();
+  return `${day} ${month} ${year}`;
 }
 
 function Specifications({
@@ -156,10 +177,12 @@ function VisibilityToggle({
 
 export default function AdminProductsTable({
   rows,
+  categories = [],
   initialSearch = "",
   emptyMessage = "No products yet.",
 }: {
   rows: AdminProductListRow[];
+  categories?: AdminProductCategoryOption[];
   initialSearch?: string;
   emptyMessage?: string;
 }) {
@@ -193,12 +216,22 @@ export default function AdminProductsTable({
 
   const filteredRows = useMemo(() => {
     return localRows.filter((r) => {
-      if (filter === "live") return r.published;
-      if (filter === "draft") return !r.published;
-      if (filter === "featured") return r.isFeatured;
-      return true;
+      if (filter === "all") return true;
+      if (r.categoryId === filter) return true;
+      const selected = categories.find((category) => category.id === filter);
+      if (!selected) return false;
+      const categoryLabel = r.category?.trim().toLowerCase() ?? "";
+      const categoryName = selected.name.trim().toLowerCase();
+      return (
+        categoryLabel === categoryName ||
+        categoryLabel.startsWith(`${categoryName} ›`) ||
+        categoryLabel.startsWith(`${categoryName} >`)
+      );
     });
-  }, [localRows, filter]);
+  }, [localRows, filter, categories]);
+
+  const activeCategoryName =
+    filter === "all" ? null : categories.find((category) => category.id === filter)?.name ?? null;
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -337,18 +370,20 @@ export default function AdminProductsTable({
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value as FilterKey)}
-            aria-label="Filter products"
-            className="cursor-pointer rounded-lg border border-admin-border bg-white px-3 py-2.5 text-sm text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15"
+            aria-label="Filter products by category"
+            className="min-w-[11.5rem] cursor-pointer rounded-lg border border-admin-border bg-white px-3 py-2.5 text-sm text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15"
           >
-            <option value="all">All products</option>
-            <option value="live">Live only</option>
-            <option value="draft">Draft only</option>
-            <option value="featured">Featured only</option>
+            <option value="all">All categories</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
           </select>
           <p className="shrink-0 text-sm text-gray-500">
             <span className="font-semibold text-gray-800">{filteredRows.length}</span>
             {filteredRows.length === 1 ? " product" : " products"}
-            {filter !== "all" ? " shown" : ""}
+            {activeCategoryName ? ` in ${activeCategoryName}` : ""}
           </p>
         </div>
         <div className="flex shrink-0 items-center justify-end gap-2">
@@ -433,6 +468,7 @@ export default function AdminProductsTable({
                         title: updated.title,
                         slug: updated.slug,
                         category: updated.category,
+                        categoryId: updated.categoryId ?? null,
                         galleryCount: updated.images?.length ?? 0,
                         published: updated.published,
                         isFeatured: updated.isFeatured,
