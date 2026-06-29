@@ -71,6 +71,9 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
   const [searchKeywordsOverride, setSearchKeywordsOverride] = useState<string | null>(
     product.searchKeywords?.join(", ") ?? null
   );
+  const [selectedProductTitlePresetId, setSelectedProductTitlePresetId] = useState<string | null>(
+    product.productTitlePresetId
+  );
   const canShowFields = Boolean(selectedTaxonomy.categoryId);
 
   const handleTaxonomySelection = useCallback((selection: TaxonomySelection) => {
@@ -142,6 +145,7 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
           .split(",")
           .map((keyword) => keyword.trim())
           .filter(Boolean),
+        productTitlePresetId: selectedProductTitlePresetId,
       };
 
       const res = await fetch(`/api/admin/products/${product.id}`, {
@@ -210,6 +214,7 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
                 initialPresetId={product.productTitlePresetId}
                 onTitleChange={setLiveTitle}
                 onPresetSelected={handlePresetSelected}
+                onPresetIdentityChange={setSelectedProductTitlePresetId}
               />
             ) : (
               <p className="rounded-lg border border-dashed border-black/10 py-4 text-center text-xs text-admin-ink/45">

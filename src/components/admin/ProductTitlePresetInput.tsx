@@ -7,6 +7,11 @@ import {
   type TaxonomyRow,
 } from "@/components/admin/ProductCategorySelects";
 import type { ProductAttributeValue } from "@/lib/category-template";
+import {
+  normalizeMatchText,
+  productTitleMatchesPreset,
+  resolveProductPresetMatch,
+} from "@/lib/product-preset-match";
 import { Check, ChevronDown, Loader2, Plus, RotateCcw, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -42,7 +47,7 @@ type Props = {
 };
 
 function normalizePresetTitle(value: string) {
-  return value.trim().replace(/\s+/g, " ").toLowerCase();
+  return normalizeMatchText(value);
 }
 
 export function ProductTitlePresetInput({
@@ -203,13 +208,28 @@ export function ProductTitlePresetInput({
 
     const normalizedTitle = normalizePresetTitle(title);
     if (!normalizedTitle) return null;
-    const matches = presets.filter(
-      (preset) =>
-        normalizePresetTitle(preset.title) === normalizedTitle ||
-        normalizePresetTitle(preset.sourceLabel) === normalizedTitle
-    );
+
+    const productInput = {
+      title,
+      productTitlePresetId: null,
+      attributes: {} as Record<string, ProductAttributeValue>,
+      subCategoryId: subCategoryId || null,
+    };
+
+    const presetRows = presets.map((preset) => ({
+      id: preset.id,
+      title: preset.title,
+      sourceLabel: preset.sourceLabel,
+      attributes: preset.attributes,
+      subCategoryId: null,
+    }));
+
+    const resolved = resolveProductPresetMatch(productInput, presetRows);
+    if (resolved) return presets.find((preset) => preset.id === resolved.id) ?? null;
+
+    const matches = presets.filter((preset) => productTitleMatchesPreset(title, preset));
     return matches.length === 1 ? matches[0] : null;
-  }, [presets, selectedPresetId, title]);
+  }, [presets, selectedPresetId, subCategoryId, title]);
 
   const presetSubcategories = useMemo(() => {
     return taxonomy.find((row) => row.id === presetCategoryId)?.subcategories ?? [];
@@ -262,8 +282,9 @@ export function ProductTitlePresetInput({
   function selectPreset(preset: ProductPreset) {
     if (preset.created && preset.id !== initialPresetId) return;
     if (blurTimer.current) clearTimeout(blurTimer.current);
-    setTitle(preset.title);
-    onTitleChange?.(preset.title);
+    const nextTitle = preset.sourceLabel || preset.title;
+    setTitle(nextTitle);
+    onTitleChange?.(nextTitle);
     setOpen(false);
     setCustomPresetOpen(false);
     setSelectedPresetId(preset.id);
@@ -389,7 +410,7 @@ export function ProductTitlePresetInput({
             {categoryId ? (
               <span
                 className="pointer-events-none absolute right-10 top-1/2 -translate-y-1/2 text-xs font-bold tabular-nums text-admin-ink/45"
-                aria-label={`${selectedCategoryProgress?.createdPresetCount ?? 0} of ${selectedCategoryProgress?.presetCount ?? 0} product title presets created`}
+                aria-label={`${selectedCategoryProgress?.createdPresetCount ?? 0} of ${selectedCategoryProgress?.presetCount ?? 0} catalogue products created in this category`}
               >
                 ({selectedCategoryProgress?.createdPresetCount ?? 0}/
                 {selectedCategoryProgress?.presetCount ?? 0})

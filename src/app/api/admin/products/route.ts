@@ -1,4 +1,4 @@
-import { and, count, desc, eq, like, sql } from "drizzle-orm";
+import { desc, eq, like } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import {
@@ -12,6 +12,7 @@ import {
 } from "@/lib/product-taxonomy";
 import { generateProductSeo } from "@/lib/product-seo";
 import { buildProductIdPrefix, reserveProductId } from "@/lib/product-id";
+import { resolveProductPresetMatch } from "@/lib/product-preset-match";
 import { slugify } from "@/lib/slug";
 import { z } from "zod";
 
@@ -31,37 +32,6 @@ const createSchema = z.object({
   canonicalProductId: z.union([z.string().uuid(), z.null()]).optional(),
   productTitlePresetId: z.union([z.string().uuid(), z.null()]).optional(),
 });
-
-function normalizeText(value: string) {
-  return value.trim().replace(/\s+/g, " ").toLowerCase();
-}
-
-function normalizeAttributeValue(value: ProductAttributeValue | undefined) {
-  if (!value) return "";
-  if (typeof value === "string") return normalizeText(value);
-  return normalizeText(`${value.value ?? ""} ${value.unit ?? ""}`);
-}
-
-function attributesMatch(
-  productAttributes: Record<string, ProductAttributeValue>,
-  presetAttributes: Record<string, ProductAttributeValue>
-) {
-  const presetEntries = Object.entries(presetAttributes).filter(([, value]) =>
-    Boolean(normalizeAttributeValue(value))
-  );
-  if (!presetEntries.length) return false;
-
-  return presetEntries.every(([key, presetValue]) => {
-    const productValue = normalizeAttributeValue(productAttributes[key]);
-    const normalizedPresetValue = normalizeAttributeValue(presetValue);
-    return (
-      Boolean(productValue) &&
-      (productValue === normalizedPresetValue ||
-        productValue.includes(normalizedPresetValue) ||
-        normalizedPresetValue.includes(productValue))
-    );
-  });
-}
 
 export async function GET() {
   const db = getDb();
@@ -96,47 +66,35 @@ export async function POST(request: Request) {
   const d = parsed.data;
   const catId = d.categoryId === undefined ? null : d.categoryId;
   let subId = d.subCategoryId === undefined ? null : d.subCategoryId;
-
-  const subCheck = await validateSubcategoryForCategory(db, catId, subId);
-  if (!subCheck.ok) {
-    return NextResponse.json({ error: subCheck.message }, { status: 400 });
-  }
   if (!catId) subId = null;
   const attributes = (d.attributes ?? {}) as Record<string, ProductAttributeValue>;
 
   let productTitlePresetId = d.productTitlePresetId ?? null;
   if (!productTitlePresetId && catId) {
-    const matchingPresets = await db
+    const categoryPresets = await db
       .select({
         id: productTitlePresets.id,
+        title: productTitlePresets.title,
+        sourceLabel: productTitlePresets.sourceLabel,
         subCategoryId: productTitlePresets.subCategoryId,
         attributes: productTitlePresets.attributes,
       })
       .from(productTitlePresets)
-      .where(
-        and(
-          eq(productTitlePresets.categoryId, catId),
-          sql`(
-            lower(trim(${productTitlePresets.title})) = ${d.title.trim().toLowerCase()}
-            or lower(trim(${productTitlePresets.sourceLabel})) = ${d.title.trim().toLowerCase()}
-          )`
-        )
-      )
-      .limit(2);
+      .where(eq(productTitlePresets.categoryId, catId));
 
-    const sameSubcategoryPresets = matchingPresets.filter(
-      (matchingPreset) => matchingPreset.subCategoryId === subId
+    const match = resolveProductPresetMatch(
+      {
+        title: d.title,
+        productTitlePresetId: null,
+        attributes,
+        subCategoryId: subId,
+      },
+      categoryPresets.map((preset) => ({
+        ...preset,
+        attributes: preset.attributes as Record<string, ProductAttributeValue>,
+      }))
     );
-    const attributeMatches =
-      sameSubcategoryPresets.length > 1
-        ? sameSubcategoryPresets.filter((matchingPreset) =>
-            attributesMatch(attributes, matchingPreset.attributes)
-          )
-        : sameSubcategoryPresets;
-    const [matchingPreset] = attributeMatches;
-    if (attributeMatches.length === 1 && matchingPreset) {
-      productTitlePresetId = matchingPreset.id;
-    }
+    if (match) productTitlePresetId = match.id;
   }
 
   if (productTitlePresetId) {
@@ -150,17 +108,28 @@ export async function POST(request: Request) {
       .where(eq(productTitlePresets.id, productTitlePresetId))
       .limit(1);
 
-    if (
-      !preset ||
-      !catId ||
-      preset.categoryId !== catId ||
-      preset.subCategoryId !== subId
-    ) {
+    if (!preset || !catId || preset.categoryId !== catId) {
       return NextResponse.json(
         { error: "Selected title preset does not belong to this category selection." },
         { status: 400 }
       );
     }
+
+    if (!subId && preset.subCategoryId) {
+      subId = preset.subCategoryId;
+    }
+
+    if (subId && preset.subCategoryId && preset.subCategoryId !== subId) {
+      return NextResponse.json(
+        { error: "Selected title preset does not belong to this sub-category selection." },
+        { status: 400 }
+      );
+    }
+  }
+
+  const subCheck = await validateSubcategoryForCategory(db, catId, subId);
+  if (!subCheck.ok) {
+    return NextResponse.json({ error: subCheck.message }, { status: 400 });
   }
 
   const categoryLabel = await buildCategoryDisplayLabel(db, catId, subId);
@@ -238,12 +207,8 @@ export async function POST(request: Request) {
   );
 
   let presetProgressIncremented = false;
-  if (productTitlePresetId) {
-    const [{ linkedProductCount }] = await db
-      .select({ linkedProductCount: count() })
-      .from(products)
-      .where(eq(products.productTitlePresetId, productTitlePresetId));
-    presetProgressIncremented = linkedProductCount === 1;
+  if (catId) {
+    presetProgressIncremented = true;
   }
 
   return NextResponse.json({ ...row, presetProgressIncremented }, { status: 201 });

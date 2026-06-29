@@ -1,12 +1,13 @@
 import { and, eq, ne } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { products, type ProductAttributeValue } from "@/db/schema";
+import { products, productTitlePresets, type ProductAttributeValue } from "@/db/schema";
 import {
   buildCategoryDisplayLabel,
   validateSubcategoryForCategory,
 } from "@/lib/product-taxonomy";
 import { generateProductSeo } from "@/lib/product-seo";
+import { resolveProductPresetMatch } from "@/lib/product-preset-match";
 import { slugify } from "@/lib/slug";
 import { z } from "zod";
 
@@ -15,6 +16,7 @@ const updateSchema = z.object({
   description: z.string().nullable().optional(),
   categoryId: z.union([z.string().uuid(), z.null()]).optional(),
   subCategoryId: z.union([z.string().uuid(), z.null()]).optional(),
+  productTitlePresetId: z.union([z.string().uuid(), z.null()]).optional(),
   images: z.array(z.string()).optional(),
   isAvailable: z.boolean().optional(),
   isFeatured: z.boolean().optional(),
@@ -86,6 +88,84 @@ export async function PUT(
 
   if (!nextCat) nextSub = null;
 
+  const title = d.title ?? row.title;
+  const nextAttributes =
+    d.attributes !== undefined
+      ? (d.attributes as Record<string, ProductAttributeValue>)
+      : (row.attributes as Record<string, ProductAttributeValue>);
+
+  let productTitlePresetId =
+    d.productTitlePresetId !== undefined
+      ? d.productTitlePresetId
+      : row.productTitlePresetId;
+
+  const presetLinkageChanged =
+    (d.title !== undefined && d.title !== row.title) ||
+    (d.categoryId !== undefined && d.categoryId !== row.categoryId) ||
+    (d.subCategoryId !== undefined && d.subCategoryId !== row.subCategoryId) ||
+    (d.attributes !== undefined &&
+      JSON.stringify(d.attributes) !== JSON.stringify(row.attributes));
+
+  if (presetLinkageChanged && d.productTitlePresetId === undefined) {
+    productTitlePresetId = null;
+    if (nextCat) {
+      const categoryPresets = await db
+        .select({
+          id: productTitlePresets.id,
+          title: productTitlePresets.title,
+          sourceLabel: productTitlePresets.sourceLabel,
+          subCategoryId: productTitlePresets.subCategoryId,
+          attributes: productTitlePresets.attributes,
+        })
+        .from(productTitlePresets)
+        .where(eq(productTitlePresets.categoryId, nextCat));
+
+      const match = resolveProductPresetMatch(
+        {
+          title,
+          productTitlePresetId: null,
+          attributes: nextAttributes,
+          subCategoryId: nextSub,
+        },
+        categoryPresets.map((preset) => ({
+          ...preset,
+          attributes: preset.attributes as Record<string, ProductAttributeValue>,
+        }))
+      );
+      if (match) productTitlePresetId = match.id;
+    }
+  }
+
+  if (productTitlePresetId && nextCat) {
+    const [preset] = await db
+      .select({
+        id: productTitlePresets.id,
+        categoryId: productTitlePresets.categoryId,
+        subCategoryId: productTitlePresets.subCategoryId,
+      })
+      .from(productTitlePresets)
+      .where(eq(productTitlePresets.id, productTitlePresetId))
+      .limit(1);
+
+    if (!preset || preset.categoryId !== nextCat) {
+      return NextResponse.json(
+        { error: "Selected title preset does not belong to this category selection." },
+        { status: 400 }
+      );
+    }
+
+    if (!nextSub && preset.subCategoryId) {
+      nextSub = preset.subCategoryId;
+    }
+
+    if (nextSub && preset.subCategoryId && preset.subCategoryId !== nextSub) {
+      return NextResponse.json(
+        { error: "Selected title preset does not belong to this sub-category selection." },
+        { status: 400 }
+      );
+    }
+  }
+
   const subCheck = await validateSubcategoryForCategory(db, nextCat, nextSub);
   if (!subCheck.ok) {
     return NextResponse.json({ error: subCheck.message }, { status: 400 });
@@ -101,13 +181,6 @@ export async function PUT(
       ? row.category
       : categoryLabelRaw;
 
-  const title = d.title ?? row.title;
-  const presetLinkageChanged =
-    (d.title !== undefined && d.title !== row.title) ||
-    (d.categoryId !== undefined && d.categoryId !== row.categoryId) ||
-    (d.subCategoryId !== undefined && d.subCategoryId !== row.subCategoryId);
-  const productTitlePresetId =
-    presetLinkageChanged ? null : row.productTitlePresetId;
   let nextSlug = row.slug;
   if (d.title !== undefined && d.title !== row.title) {
     const base = slugify(d.title);
@@ -124,10 +197,6 @@ export async function PUT(
       nextSlug = `${base}-${n}`;
     }
   }
-  const nextAttributes =
-    d.attributes !== undefined
-      ? (d.attributes as Record<string, ProductAttributeValue>)
-      : row.attributes;
   const generatedSeo = generateProductSeo({
     title,
     categoryName: categoryLabel?.split("›")[0]?.trim() ?? null,

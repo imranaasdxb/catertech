@@ -66,10 +66,7 @@ export function incrementProductTaxonomyCreatedPresetCount(categoryId: string) {
     category.id === categoryId
       ? {
           ...category,
-          createdPresetCount: Math.min(
-            category.createdPresetCount + 1,
-            category.presetCount
-          ),
+          createdPresetCount: category.createdPresetCount + 1,
         }
       : category
   );
