@@ -8,6 +8,7 @@ import Container from "@/components/Container";
 import StorefrontProductCard from "@/components/shop/StorefrontProductCard";
 import SectionHeader from "@/components/ui/SectionHeader";
 import WaterRiseCta from "@/components/ui/WaterRiseCta";
+import { productMatchesCategory, resolveCategoryForProduct } from "@/lib/product-category-match";
 import { slugify } from "@/lib/slug";
 import type { ProductAttributeValue } from "@/lib/category-template";
 
@@ -36,6 +37,7 @@ export type ProductRow = {
   tag: "Popular" | "New" | null;
   attributes: Record<string, ProductAttributeValue>;
   categoryName: string | null;
+  categorySlug?: string | null;
   subCategoryName: string | null;
 };
 
@@ -45,6 +47,7 @@ type ProductCard = {
   name: string;
   category: string;
   categoryId: string | null;
+  categorySlug: string | null;
   subCategoryName: string | null;
   description: string;
   attributes: Record<string, ProductAttributeValue>;
@@ -248,19 +251,31 @@ export default function FeaturedProductsClient({
 
   const productCards = useMemo<ProductCard[]>(
     () =>
-      products.map((product) => ({
-        id: product.id,
-        slug: product.slug,
-        name: product.title,
-        category: product.categoryName ?? "",
-        categoryId: product.categoryId,
-        subCategoryName: product.subCategoryName,
-        description: product.description,
-        attributes: product.attributes,
-        image: product.image,
-        tag: product.tag,
-      })),
-    [products]
+      products.map((product) => {
+        const resolved = resolveCategoryForProduct(
+          {
+            categoryId: product.categoryId,
+            categorySlug: product.categorySlug ?? null,
+            category: product.categoryName ?? "",
+          },
+          categories,
+        );
+
+        return {
+          id: product.id,
+          slug: product.slug,
+          name: product.title,
+          category: product.categoryName ?? resolved?.name ?? "",
+          categoryId: resolved?.id ?? product.categoryId,
+          categorySlug: resolved?.slug ?? product.categorySlug ?? null,
+          subCategoryName: product.subCategoryName,
+          description: product.description,
+          attributes: product.attributes,
+          image: product.image,
+          tag: product.tag,
+        };
+      }),
+    [categories, products]
   );
 
   const filtered = useMemo(() => {
@@ -272,10 +287,7 @@ export default function FeaturedProductsClient({
         : productCards.filter((product) => {
             const category = categories.find((item) => item.id === activeTab);
             if (!category) return false;
-            return (
-              product.categoryId === category.id ||
-              product.category === category.name
-            );
+            return productMatchesCategory(product, category);
           });
 
     if (highlight !== "all") {

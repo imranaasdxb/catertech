@@ -7,6 +7,8 @@ import ShopCatalogueClient from "@/components/shop/ShopCatalogueClient";
 import { getCatalogueProductData } from "@/lib/catalogue-presets";
 import Image from "next/image";
 
+export const revalidate = 60;
+
 export default async function ShopPage() {
   const catalogueData = await getCatalogueProductData();
 

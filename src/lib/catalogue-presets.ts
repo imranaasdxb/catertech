@@ -7,6 +7,7 @@ import {
   products,
 } from "@/db/schema";
 import type { ProductAttributeValue } from "@/lib/category-template";
+import { resolveCategoryForProduct } from "@/lib/product-category-match";
 
 export type CatalogueCategoryRow = {
   id: string;
@@ -30,6 +31,7 @@ export type CatalogueProductRow = {
   tag: "Popular" | "New" | null;
   attributes: Record<string, ProductAttributeValue>;
   categoryName: string | null;
+  categorySlug: string | null;
   subCategoryName: string | null;
 };
 
@@ -45,9 +47,15 @@ function mapStorefrontProduct(product: {
   isFeatured: boolean;
   createdAt: Date;
   categoryName: string | null;
+  categorySlug?: string | null;
+  categoryLabel?: string | null;
   subCategoryName: string | null;
 }): CatalogueProductRow {
   const isNew = Date.now() - product.createdAt.getTime() <= 30 * 24 * 60 * 60 * 1000;
+  const resolvedCategoryName =
+    product.categoryName?.trim() ||
+    product.categoryLabel?.trim() ||
+    null;
   return {
     id: product.id,
     categoryId: product.categoryId,
@@ -58,7 +66,8 @@ function mapStorefrontProduct(product: {
     image: product.images[0] ?? null,
     tag: isNew ? "New" : product.isFeatured ? "Popular" : null,
     attributes: product.attributes,
-    categoryName: product.categoryName,
+    categoryName: resolvedCategoryName,
+    categorySlug: product.categorySlug ?? null,
     subCategoryName: product.subCategoryName,
   };
 }
@@ -103,7 +112,9 @@ const storefrontProductSelect = {
   attributes: products.attributes,
   isFeatured: products.isFeatured,
   createdAt: products.createdAt,
+  categoryLabel: products.category,
   categoryName: productCategories.name,
+  categorySlug: productCategories.slug,
   subCategoryName: productSubcategories.name,
   presetTitle: productTitlePresets.title,
 };
@@ -398,7 +409,9 @@ export async function getCatalogueProductData({
           attributes: products.attributes,
           isFeatured: products.isFeatured,
           createdAt: products.createdAt,
+          categoryLabel: products.category,
           categoryName: productCategories.name,
+          categorySlug: productCategories.slug,
           subCategoryName: productSubcategories.name,
         })
         .from(products)
@@ -427,7 +440,31 @@ export async function getCatalogueProductData({
             name: subcategory.name,
           })),
       })),
-      products: storefrontProducts.map((product) => mapStorefrontProduct(product)),
+      products: storefrontProducts.map((product) => {
+        const mapped = mapStorefrontProduct(product);
+        const categoryRows = categories.map((category) => ({
+          id: category.id,
+          name: category.name,
+          slug: category.slug,
+        }));
+        const resolved = resolveCategoryForProduct(
+          {
+            categoryId: mapped.categoryId,
+            categorySlug: mapped.categorySlug,
+            category: mapped.categoryName ?? "",
+          },
+          categoryRows,
+        );
+
+        if (!resolved) return mapped;
+
+        return {
+          ...mapped,
+          categoryId: mapped.categoryId ?? resolved.id,
+          categorySlug: mapped.categorySlug ?? resolved.slug,
+          categoryName: mapped.categoryName ?? resolved.name,
+        };
+      }),
     };
   } catch {
     return {

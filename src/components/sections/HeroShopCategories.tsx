@@ -66,11 +66,14 @@ function PartnerAside({ className }: { className?: string }) {
   );
 }
 
+const DESKTOP_MIN_WINDOW_WIDTH = 1536;
+const DESKTOP_GRID_MAX_CATEGORIES = 9;
+
 function CategoryCard({ category }: { category: CategoryItem }) {
   return (
     <Link
       href={`/shop?category=${category.slug}`}
-      className="group flex w-[128px] shrink-0 flex-col overflow-hidden rounded-xl border border-primary/8 bg-white shadow-[0_10px_30px_rgba(27,43,75,0.08)] transition-transform duration-300 hover:-translate-y-0.5 sm:w-[140px] md:w-[148px] lg:w-full lg:min-w-0 lg:min-h-[196px]"
+      className="hero-shop-category-card group flex w-[128px] shrink-0 flex-col overflow-hidden rounded-xl border border-primary/10 bg-white transition-transform duration-300 hover:-translate-y-0.5 sm:w-[140px] md:w-[148px] lg:w-[136px] lg:min-h-[196px]"
     >
       <div className="relative h-[92px] shrink-0 bg-white sm:h-[98px] lg:h-[108px]">
         <div className="absolute inset-1 sm:inset-1.5 lg:inset-1">
@@ -105,10 +108,25 @@ export default function HeroShopCategories() {
     if (!viewport || !track) return;
 
     const syncMarquee = () => {
-      const overflow = track.scrollWidth - viewport.clientWidth;
-      const useDesktopGrid = viewport.clientWidth >= 1024;
+      const columnWidth = viewport.clientWidth;
+      const isDesktopWindow = window.innerWidth >= DESKTOP_MIN_WINDOW_WIDTH;
+      const shouldUseDesktopGrid =
+        isDesktopWindow && CATEGORIES.length <= DESKTOP_GRID_MAX_CATEGORIES;
 
-      if (useDesktopGrid || overflow <= 4) {
+      if (shouldUseDesktopGrid) {
+        track.classList.add("hero-shop-categories-marquee--grid");
+        viewport.classList.add("hero-shop-categories-viewport--grid");
+        track.style.setProperty("--hero-categories-scroll", "0px");
+        track.classList.remove("hero-shop-categories-marquee--active");
+        return;
+      }
+
+      track.classList.remove("hero-shop-categories-marquee--grid");
+      viewport.classList.remove("hero-shop-categories-viewport--grid");
+
+      const overflow = track.scrollWidth - columnWidth;
+
+      if (overflow <= 4) {
         track.style.setProperty("--hero-categories-scroll", "0px");
         track.classList.remove("hero-shop-categories-marquee--active");
         return;
@@ -155,12 +173,12 @@ export default function HeroShopCategories() {
 
         <div
           ref={viewportRef}
-          className="min-w-0 overflow-hidden lg:col-start-1 lg:row-start-2 lg:overflow-visible"
+          className="min-w-0 overflow-hidden lg:col-start-1 lg:row-start-2"
           aria-label="Shop by category"
         >
           <div
             ref={trackRef}
-            className="hero-shop-categories-marquee flex w-max gap-2 sm:gap-2.5 lg:grid lg:w-full lg:grid-cols-9 lg:gap-2"
+            className="hero-shop-categories-marquee flex w-max gap-2 sm:gap-2.5"
           >
             {CATEGORIES.map((category) => (
               <CategoryCard key={category.slug} category={category} />

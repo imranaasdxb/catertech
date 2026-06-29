@@ -194,8 +194,32 @@ h3 {
   will-change: transform;
 }
 
+.hero-shop-categories-marquee--grid {
+  display: flex;
+  width: 100%;
+  gap: 0.5rem;
+  transform: none !important;
+}
+
+.hero-shop-categories-marquee--grid .hero-shop-category-card {
+  flex: 1 1 0;
+  width: auto !important;
+  min-width: 0;
+  max-width: none;
+}
+
+.hero-shop-categories-viewport--grid {
+  overflow: visible;
+}
+
 .hero-shop-categories-marquee--active {
-  animation: hero-shop-categories-scroll 28s ease-in-out infinite alternate;
+  animation: hero-shop-categories-scroll 26s ease-in-out infinite alternate;
+}
+
+@media (min-width: 1024px) and (max-width: 1535px) {
+  .hero-shop-categories-marquee--active {
+    animation-duration: 32s;
+  }
 }
 
 .hero-shop-categories-marquee--active:hover {
