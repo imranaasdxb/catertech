@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import { AdminLeadStatsChart } from "./AdminLeadStatsChart";
 import { AdminWidgetCard } from "./AdminWidgetCard";
 import { adminCard } from "./adminTheme";
@@ -38,12 +41,67 @@ function formatNum(n: number) {
   return n.toLocaleString();
 }
 
+function asCount(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function statsToMetrics(data: unknown): DashboardMetrics | null {
+  if (!data || typeof data !== "object") return null;
+  const d = data as Record<string, unknown>;
+  return {
+    productCount: asCount(d.products),
+    messageCount: asCount(d.messages),
+    enquiryCount: asCount(d.enquiries),
+    rfqCount: asCount(d.rfqs),
+    quoteCount: asCount(d.quotations),
+    newContacts: asCount(d.newContacts),
+    newQuotes: asCount(d.newQuotes),
+  };
+}
+
 function pct(part: number, whole: number) {
   if (whole <= 0) return 0;
   return Math.min(100, Math.max(0, Math.round((part / whole) * 100)));
 }
 
-export function AdminDashboardView(m: DashboardMetrics) {
+export function AdminDashboardView(initialMetrics: DashboardMetrics) {
+  const [metrics, setMetrics] = useState(initialMetrics);
+  const refreshMetrics = useCallback(async (signal?: AbortSignal) => {
+    const res = await fetch("/api/admin/stats", {
+      cache: "no-store",
+      signal,
+    });
+    if (!res.ok) return;
+    const next = statsToMetrics(await res.json());
+    if (next) setMetrics(next);
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    refreshMetrics(controller.signal).catch(() => {});
+
+    const id = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        refreshMetrics().catch(() => {});
+      }
+    }, 5000);
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        refreshMetrics().catch(() => {});
+      }
+    };
+
+    window.addEventListener("focus", onVisible);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      controller.abort();
+      window.clearInterval(id);
+      window.removeEventListener("focus", onVisible);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [refreshMetrics]);
+
   const {
     productCount,
     messageCount,
@@ -52,7 +110,7 @@ export function AdminDashboardView(m: DashboardMetrics) {
     quoteCount,
     newContacts,
     newQuotes,
-  } = m;
+  } = metrics;
 
   const cards = [
     { label: "Products", value: productCount, href: "/admin/products" },

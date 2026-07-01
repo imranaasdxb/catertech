@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getDb } from "@/db";
 import { quotations } from "@/db/schema";
 import { sendQuoteRequestEmail } from "@/lib/smtp-mail";
 import { quoteSchema } from "@/lib/validations/forms";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const db = getDb();
@@ -51,6 +54,9 @@ export async function POST(request: Request) {
       items: itemsNoPrice,
     })
     .returning({ id: quotations.id });
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/quotations");
 
   const mail = await sendQuoteRequestEmail({
     quotationId: row.id,

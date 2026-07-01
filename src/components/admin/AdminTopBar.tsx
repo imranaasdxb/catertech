@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { Bell, Menu, Search } from "lucide-react";
 import { SUPERADMIN_ROLE } from "@/lib/admin-roles";
 import { cn } from "@/lib/utils";
@@ -115,19 +115,44 @@ export function AdminTopBar() {
   const [profileOpen, setProfileOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    fetch("/api/admin/stats")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data) {
-          setStats({
-            newContacts: data.newContacts ?? 0,
-            newQuotes: data.newQuotes ?? 0,
-          });
-        }
-      })
-      .catch(() => {});
+  const refreshStats = useCallback(async (signal?: AbortSignal) => {
+    const res = await fetch("/api/admin/stats", {
+      cache: "no-store",
+      signal,
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    setStats({
+      newContacts: data.newContacts ?? 0,
+      newQuotes: data.newQuotes ?? 0,
+    });
   }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    refreshStats(controller.signal).catch(() => {});
+
+    const id = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        refreshStats().catch(() => {});
+      }
+    }, 5000);
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        refreshStats().catch(() => {});
+      }
+    };
+
+    window.addEventListener("focus", onVisible);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      controller.abort();
+      window.clearInterval(id);
+      window.removeEventListener("focus", onVisible);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [refreshStats]);
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {

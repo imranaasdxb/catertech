@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { quotations } from "@/db/schema";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const db = getDb();
   if (!db)

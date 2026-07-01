@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 export type QuotationAdminRow = {
   id: string;
@@ -38,16 +38,69 @@ function rowMatchesSearch(row: QuotationAdminRow, q: string) {
   return hay.includes(n);
 }
 
+function sameQuotationRows(a: QuotationAdminRow[], b: QuotationAdminRow[]) {
+  if (a.length !== b.length) return false;
+  return a.every((row, index) => {
+    const next = b[index];
+    return next && row.id === next.id && row.status === next.status;
+  });
+}
+
 export default function AdminQuotationsClient({
-  rows,
+  rows: initialRows,
 }: {
   rows: QuotationAdminRow[];
 }) {
+  const [rows, setRows] = useState(initialRows);
   const [search, setSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState<"all" | "email" | "whatsapp">(
     "all"
   );
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const refreshRows = useCallback(async (signal?: AbortSignal) => {
+    const res = await fetch("/api/admin/quotations", {
+      cache: "no-store",
+      signal,
+    });
+    if (!res.ok) return;
+    const next = await res.json();
+    if (!Array.isArray(next)) return;
+    setRows((current) =>
+      sameQuotationRows(current, next as QuotationAdminRow[])
+        ? current
+        : (next as QuotationAdminRow[])
+    );
+  }, []);
+
+  useEffect(() => {
+    setRows(initialRows);
+  }, [initialRows]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    refreshRows(controller.signal).catch(() => {});
+
+    const id = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        refreshRows().catch(() => {});
+      }
+    }, 5000);
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        refreshRows().catch(() => {});
+      }
+    };
+
+    window.addEventListener("focus", onVisible);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      controller.abort();
+      window.clearInterval(id);
+      window.removeEventListener("focus", onVisible);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [refreshRows]);
 
   const statusOptions = useMemo(() => {
     const set = new Set(rows.map((r) => r.status).filter(Boolean));

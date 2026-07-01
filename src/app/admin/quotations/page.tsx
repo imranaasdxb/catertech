@@ -5,6 +5,8 @@ import AdminQuotationsClient, {
   type QuotationAdminRow,
 } from "@/components/admin/AdminQuotationsClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminQuotationsPage() {
   const db = getDb();
   if (!db) return <p className="text-muted">Configure DATABASE_URL.</p>;

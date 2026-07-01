@@ -9,6 +9,8 @@ import {
   tradeEnquiries,
 } from "@/db/schema";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const db = getDb();
   if (!db) {
@@ -24,25 +26,25 @@ export async function GET() {
     enquiryCount,
     rfqCount,
     quoteCount,
+    newContacts,
+    newQuotes,
   ] = await Promise.all([
     db.select({ c: count() }).from(products).then((r) => r[0].c),
     db.select({ c: count() }).from(contactMessages).then((r) => r[0].c),
     db.select({ c: count() }).from(tradeEnquiries).then((r) => r[0].c),
     db.select({ c: count() }).from(rfqSubmissions).then((r) => r[0].c),
     db.select({ c: count() }).from(quotations).then((r) => r[0].c),
+    db
+      .select({ c: count() })
+      .from(contactMessages)
+      .where(eq(contactMessages.status, "new"))
+      .then((r) => r[0].c),
+    db
+      .select({ c: count() })
+      .from(quotations)
+      .where(eq(quotations.status, "new"))
+      .then((r) => r[0].c),
   ]);
-
-  const newContacts = await db
-    .select({ c: count() })
-    .from(contactMessages)
-    .where(eq(contactMessages.status, "new"))
-    .then((r) => r[0].c);
-
-  const newQuotes = await db
-    .select({ c: count() })
-    .from(quotations)
-    .where(eq(quotations.status, "new"))
-    .then((r) => r[0].c);
 
   return NextResponse.json({
     products: productCount,
