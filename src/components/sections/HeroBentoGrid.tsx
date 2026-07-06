@@ -72,7 +72,7 @@ export default function HeroBentoGrid({ className }: HeroBentoGridProps) {
           )}
         >
           <BentoVideo
-            videoSrc="/videos/plate.mp4"
+            videoSrc="/videos/mainvideo.mp4"
             alt="Premium plateware and catering presentation"
           />
         </div>

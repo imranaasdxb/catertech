@@ -2,6 +2,10 @@ import footerBgImage from "@/assets/footerbg.png";
 import Image from "next/image";
 import Link from "next/link";
 import FooterMapPanel from "@/components/layout/FooterMapPanel";
+import {
+  CATER_TECH_LOCATION,
+  GOOGLE_MAPS_PLACE_URL,
+} from "@/lib/site-location";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
@@ -11,9 +15,6 @@ import {
   Shield,
 } from "lucide-react";
 import { FaFacebook, FaInstagram, FaLinkedin, FaWhatsapp } from "react-icons/fa";
-
-const GOOGLE_MAPS_URL =
-  "https://www.google.com/maps/place/Catertech+Food+Catering+Services+LLC/@25.184327,55.350027,17z";
 
 const data = {
   facebookLink: "https://facebook.com",
@@ -41,8 +42,8 @@ const data = {
   contact: {
     emails: ["info@catertech.ae", "sales@catertech.ae"],
     phones: ["+971 50 4522867", "+971 50 1400957"],
-    address: "176 Ras Al Khor St, Dubai, United Arab Emirates",
-    mapsUrl: GOOGLE_MAPS_URL,
+    address: CATER_TECH_LOCATION.fullAddress,
+    mapsUrl: GOOGLE_MAPS_PLACE_URL,
   },
   company: {
     tagline: "Trusted by Hospitality, Chosen for Quality.",
@@ -188,8 +189,8 @@ export default function Footer() {
             </div>
 
             <FooterMapPanel
-              mapsUrl={GOOGLE_MAPS_URL}
-              addressLine="176 Ras Al Khor St, Dubai"
+              mapsUrl={GOOGLE_MAPS_PLACE_URL}
+              addressLine={CATER_TECH_LOCATION.addressLine}
             />
           </div>
         </div>

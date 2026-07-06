@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { MapPin } from "lucide-react";
+import { CATER_TECH_LOCATION } from "@/lib/site-location";
 
 const FooterLocationMap = dynamic(
   () => import("@/components/layout/FooterLocationMap"),
@@ -14,7 +15,7 @@ const FooterLocationMap = dynamic(
   },
 );
 
-const COMPANY_NAME = "Catertech Food Catering Services LLC";
+const COMPANY_NAME = CATER_TECH_LOCATION.companyName;
 
 type FooterMapPanelProps = {
   mapsUrl: string;

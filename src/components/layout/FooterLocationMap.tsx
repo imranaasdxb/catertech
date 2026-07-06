@@ -1,17 +1,18 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import L from "leaflet";
-import { MapContainer, Marker, TileLayer } from "react-leaflet";
+import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { CATER_TECH_LOCATION } from "@/lib/site-location";
 
-const OFFICE_COORDS = {
-  lat: 25.184327,
-  lng: 55.350027,
-} as const;
+/** Carto basemap — reliable in production (Wikimedia tiles often 403 off localhost). */
+const MAP_TILE_URL =
+  "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
+const MAP_TILE_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
-/** Latin-script / English-friendly OSM labels (Wikimedia intl layer). */
-const ENGLISH_TILE_URL = "https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png";
+const OFFICE_COORDS = CATER_TECH_LOCATION.coords;
 
 function createOfficePin(companyName: string) {
   return L.divIcon({
@@ -28,6 +29,30 @@ function createOfficePin(companyName: string) {
     iconSize: [228, 78],
     iconAnchor: [114, 58],
   });
+}
+
+function MapResizeFix() {
+  const map = useMap();
+
+  useEffect(() => {
+    map.invalidateSize();
+    const timer = window.setTimeout(() => map.invalidateSize(), 150);
+    return () => window.clearTimeout(timer);
+  }, [map]);
+
+  return null;
+}
+
+function MapOpenLink({ mapsUrl }: { mapsUrl: string }) {
+  const openInGoogleMaps = () => {
+    window.open(mapsUrl, "_blank", "noopener,noreferrer");
+  };
+
+  useMapEvents({
+    click: openInGoogleMaps,
+  });
+
+  return null;
 }
 
 type FooterLocationMapProps = {
@@ -53,15 +78,22 @@ export default function FooterLocationMap({
       maxZoom={18}
       scrollWheelZoom={false}
       zoomControl={false}
-      attributionControl={false}
+      attributionControl
       dragging={false}
       doubleClickZoom={false}
       boxZoom={false}
       keyboard={false}
       touchZoom={false}
-      className="footer-location-map h-full w-full"
+      className="footer-location-map h-full w-full cursor-pointer"
     >
-      <TileLayer url={ENGLISH_TILE_URL} maxZoom={19} />
+      <TileLayer
+        url={MAP_TILE_URL}
+        attribution={MAP_TILE_ATTRIBUTION}
+        subdomains="abcd"
+        maxZoom={20}
+      />
+      <MapResizeFix />
+      <MapOpenLink mapsUrl={mapsUrl} />
       <Marker
         position={[OFFICE_COORDS.lat, OFFICE_COORDS.lng]}
         icon={pinIcon}
