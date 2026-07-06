@@ -80,6 +80,76 @@ export async function sendSignupOtpEmail(
   }
 }
 
+export async function sendAdminEmailChangeOtpEmail(opts: {
+  toEmail: string;
+  code: string;
+  adminName: string;
+}): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const transport = getSmtpTransport();
+  if (!transport) {
+    return {
+      ok: false,
+      reason:
+        "SMTP not configured — set SMTP_HOST, SMTP_USER, SMTP_PASS (optional SMTP_PORT, SMTP_SECURE, SMTP_FROM).",
+    };
+  }
+  const user = (process.env.SMTP_USER || "").trim();
+  const fromRaw = (process.env.SMTP_FROM || user || "").trim();
+  const appName = process.env.MAIL_FROM_NAME?.trim() || "CaterTech";
+
+  try {
+    await transport.sendMail({
+      from: `"${appName}" <${fromRaw}>`,
+      to: opts.toEmail,
+      subject: `${appName} — verify admin email change`,
+      text: `Use code ${opts.code} to change the admin email for ${opts.adminName}. It expires in 10 minutes. If you did not request this, ignore this email.`,
+      html: `<p>Use this code to change the admin email for <strong>${escapeHtml(opts.adminName)}</strong>:</p><p style="font-size:22px;font-weight:bold;letter-spacing:0.2em;">${opts.code}</p><p>This code expires in 10 minutes.</p><p style="color:#666;font-size:13px;">If you did not request this, you can ignore this email.</p>`,
+    });
+    return { ok: true };
+  } catch (err: unknown) {
+    const msg =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message?: string }).message)
+        : String(err);
+    return { ok: false, reason: `Mail failed: ${msg}` };
+  }
+}
+
+export async function sendAdminCreatedUserOtpEmail(opts: {
+  toEmail: string;
+  code: string;
+  fullName: string;
+}): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const transport = getSmtpTransport();
+  if (!transport) {
+    return {
+      ok: false,
+      reason:
+        "SMTP not configured — set SMTP_HOST, SMTP_USER, SMTP_PASS (optional SMTP_PORT, SMTP_SECURE, SMTP_FROM).",
+    };
+  }
+  const user = (process.env.SMTP_USER || "").trim();
+  const fromRaw = (process.env.SMTP_FROM || user || "").trim();
+  const appName = process.env.MAIL_FROM_NAME?.trim() || "CaterTech";
+
+  try {
+    await transport.sendMail({
+      from: `"${appName}" <${fromRaw}>`,
+      to: opts.toEmail,
+      subject: `${appName} — verify your admin account`,
+      text: `Hi ${opts.fullName}, your admin verification code is ${opts.code}. It expires in 10 minutes.`,
+      html: `<p>Hi <strong>${escapeHtml(opts.fullName)}</strong>, use this code to verify your admin account:</p><p style="font-size:22px;font-weight:bold;letter-spacing:0.2em;">${opts.code}</p><p>This code expires in 10 minutes.</p>`,
+    });
+    return { ok: true };
+  } catch (err: unknown) {
+    const msg =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message?: string }).message)
+        : String(err);
+    return { ok: false, reason: `Mail failed: ${msg}` };
+  }
+}
+
 const DEFAULT_QUOTE_NOTIFY = "aasimran26@gmail.com";
 
 export type QuoteNotifyItem = {

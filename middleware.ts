@@ -32,12 +32,15 @@ export async function middleware(request: NextRequest) {
   const isContactsArea =
     pathname.startsWith("/admin/contacts") ||
     pathname.startsWith("/api/admin/contacts");
+  const isUsersArea =
+    pathname.startsWith("/admin/users") ||
+    pathname.startsWith("/api/admin/users");
 
   if (pathname.startsWith("/api/admin")) {
     if (!staffAuthed) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (isContactsArea && !isSuperadminRole(sess?.role)) {
+    if ((isContactsArea || isUsersArea) && !isSuperadminRole(sess?.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     return NextResponse.next();
@@ -62,7 +65,7 @@ export async function middleware(request: NextRequest) {
       url.searchParams.set("from", pathname);
       return NextResponse.redirect(url);
     }
-    if (isContactsArea && !isSuperadminRole(sess?.role)) {
+    if ((isContactsArea || isUsersArea) && !isSuperadminRole(sess?.role)) {
       const url = request.nextUrl.clone();
       url.pathname = "/admin";
       url.search = "";

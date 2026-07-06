@@ -6,6 +6,7 @@ import {
   LayoutGrid,
   Mail,
   Package,
+  ShieldCheck,
   UsersRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -21,6 +22,7 @@ const links: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/admin/enquiries", label: "Quick enquiries", icon: UsersRound },
   { href: "/admin/rfq", label: "Events RFQ enquiry", icon: LayoutGrid },
   { href: "/admin/contacts", label: "Contacts", icon: Mail },
+  { href: "/admin/users", label: "Users", icon: ShieldCheck },
 ];
 
 export function DashboardContent({ children }: { children: React.ReactNode }) {
@@ -51,7 +53,7 @@ function AdminShellInner({ children }: { children: React.ReactNode }) {
 
   const navLinks = canAccessContacts
     ? links
-    : links.filter((l) => l.href !== "/admin/contacts");
+    : links.filter((l) => l.href !== "/admin/contacts" && l.href !== "/admin/users");
 
   const staffName = staffProfile?.fullName?.trim() || "Account";
   const staffEmail = staffProfile?.email?.trim();

@@ -318,7 +318,7 @@ export default function Footer() {
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-white/75 sm:justify-end">
               <Link
-                href="/admin/login"
+                href="/auth?tab=login"
                 className="transition hover:text-accent"
               >
                 Staff Login
