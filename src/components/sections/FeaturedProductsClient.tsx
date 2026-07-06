@@ -606,7 +606,7 @@ export default function FeaturedProductsClient({
           <SectionHeader
             eyebrow="Shop Our Range"
             title="Featured Equipment"
-            subtitle="Open any item to choose size, finish and quantity - then add it to your quote basket."
+            subtitle="Open any item to choose size, finish and quantity  then add it to your quote basket."
             subtitleClassName="max-w-xl text-sm leading-snug sm:text-base"
           />
         </div>

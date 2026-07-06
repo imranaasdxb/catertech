@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import Container from "@/components/Container";
 import logo from "@/assets/logo.png";
+import { ShoppingBasket } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 
 const NAV_LINKS = [
@@ -21,6 +22,33 @@ const NAV_LINKS = [
 
 const headerBtnBase =
   "btn-brand shrink-0 rounded-xl px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.12em]";
+
+function CartIconLink({
+  totalItems,
+  showEmptyBadge = false,
+  className = "",
+}: {
+  totalItems: number;
+  showEmptyBadge?: boolean;
+  className?: string;
+}) {
+  const showBadge = showEmptyBadge || totalItems > 0;
+
+  return (
+    <Link
+      href="/cart"
+      className={`relative inline-flex items-center justify-center text-ink/75 transition-colors duration-200 hover:text-ink ${className}`}
+      aria-label={`Cart — ${totalItems} item${totalItems !== 1 ? "s" : ""}`}
+    >
+      <ShoppingBasket className="size-7 lg:size-8" strokeWidth={1.65} aria-hidden />
+      {showBadge ? (
+        <span className="brand-gradient-bg absolute -top-1.5 -right-2 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-0.5 text-[10px] leading-none font-bold text-white">
+          {totalItems > 99 ? "99+" : totalItems}
+        </span>
+      ) : null}
+    </Link>
+  );
+}
 
 function isNavLinkActive(href: string, pathname: string) {
   if (href === "/") return pathname === "/";
@@ -79,10 +107,10 @@ export default function Header() {
           isShop && !scrolled ? "site-header--on-shop" : ""
         }`}
       >
-        <Container className="flex h-[var(--header-height)] min-h-[84px] items-center justify-between gap-4">
+        <Container className="flex h-[var(--header-height)] items-center justify-between gap-4">
           <Link
             href="/"
-            className="flex shrink-0 items-center"
+            className="flex shrink-0 items-center leading-none"
             aria-label="Catertech home"
           >
             <Image
@@ -91,7 +119,7 @@ export default function Header() {
               width={300}
               height={130}
               priority
-              className="h-10 w-auto max-h-[42px] object-contain"
+              className="site-header__logo block h-12 w-auto max-h-[52px] object-contain sm:h-[54px] sm:max-h-[56px] md:h-[62px] md:max-h-[66px] lg:h-[68px] lg:max-h-[72px]"
             />
           </Link>
 
@@ -121,57 +149,12 @@ export default function Header() {
             >
               Sign up
             </Link>
-            <button className="px-1 text-[11px] font-medium uppercase tracking-[0.12em] text-muted transition-colors duration-200 hover:text-ink">
-              EN&nbsp;·&nbsp;AR
-            </button>
 
-            <Link
-              href="/cart"
-              className="relative text-ink/70 transition-colors duration-200 hover:text-ink"
-              aria-label={`Cart — ${totalItems} item${totalItems !== 1 ? "s" : ""}`}
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              >
-                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <path d="M16 10a4 4 0 01-8 0" />
-              </svg>
-              <span className="brand-gradient-bg absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] leading-none font-bold text-white">
-                {totalItems > 99 ? "99+" : totalItems}
-              </span>
-            </Link>
+            <CartIconLink totalItems={totalItems} showEmptyBadge />
           </div>
 
           <div className="flex items-center gap-4 lg:hidden">
-            <Link
-              href="/cart"
-              className="relative text-ink/70 transition-colors duration-200 hover:text-ink"
-              aria-label="Cart"
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              >
-                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <path d="M16 10a4 4 0 01-8 0" />
-              </svg>
-              {totalItems > 0 && (
-                <span className="brand-gradient-bg absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] leading-none font-bold text-white">
-                  {totalItems}
-                </span>
-              )}
-            </Link>
+            <CartIconLink totalItems={totalItems} />
 
             <button
               className="flex flex-col gap-1.5 p-1 text-ink transition-colors duration-200"
@@ -205,7 +188,7 @@ export default function Header() {
             : "pointer-events-none opacity-0"
         }`}
       >
-        <div className="flex h-full flex-col px-8 pt-24 pb-10">
+        <div className="flex h-full flex-col px-8 pt-[var(--header-height)] pb-10">
           <nav className="flex flex-col gap-1">
             {NAV_LINKS.map((link, i) => (
               <Link
@@ -240,7 +223,6 @@ export default function Header() {
             </div>
             <div className="flex items-center justify-between text-sm text-muted">
               <span>+971 4 XXX XXXX</span>
-              <span>EN · AR</span>
             </div>
           </div>
         </div>

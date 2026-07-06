@@ -161,7 +161,7 @@ export default function VercepFeaturesDemo() {
           </h2>
           <p className="max-w-xl text-base text-body-muted md:text-lg">
             Whether you are scaling a hotel kitchen, dressing a wedding venue or stocking a
-            high-volume buffet, Catertech filters the complexity — so you get the right equipment,
+            high-volume buffet, Catertech filters the complexity  so you get the right equipment,
             on time, across Dubai and the UAE.
           </p>
 

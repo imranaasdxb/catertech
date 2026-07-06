@@ -77,7 +77,7 @@
   --foreground: #1b2b4b;
   --brand-gradient: linear-gradient(135deg, #1b2b4b 40%, #c9a84c 100%);
   --btn-brand-hover-fill: color-mix(in srgb, #1b2b4b 90%, #ffffff 10%);
-  --header-height: 84px;
+  --header-height: 118px;
 }
 
 html {
@@ -561,6 +561,17 @@ h3 {
   box-shadow: none;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
+}
+
+@media (max-width: 1023px) {
+  .site-header.site-header--on-hero {
+    background-color: transparent;
+  }
+
+  .site-header.site-header--on-hero .site-header__logo {
+    display: block;
+    line-height: 0;
+  }
 }
 
 /* Shop hero — frosted header with soft drop shadow over background */

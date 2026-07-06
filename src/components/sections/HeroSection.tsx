@@ -49,7 +49,7 @@ export default function HeroSection() {
   return (
     <section className="hero-section relative flex min-h-dvh flex-col overflow-hidden bg-bg-warm max-lg:h-auto lg:min-h-[620px] xl:h-dvh xl:max-h-dvh">
       <div className="hero-section__body relative flex min-h-0 flex-1 flex-col max-lg:min-h-0">
-        <div className="pointer-events-none absolute inset-0 overflow-hidden max-md:min-h-[360px] md:max-lg:min-h-[300px]">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden max-md:min-h-[calc(var(--header-height)+360px)] md:max-lg:min-h-[300px]">
           {/* Mobile */}
           <Image
             src={heroMobile}
@@ -57,7 +57,7 @@ export default function HeroSection() {
             fill
             priority
             sizes="100vw"
-            className="h-full w-full object-contain object-right md:hidden"
+            className="h-full w-full object-cover object-top-right md:hidden"
           />
           {/* Tablet */}
           <Image
@@ -114,7 +114,7 @@ export default function HeroSection() {
                 </h1>
 
                 <p className="hero-section__lead mt-3 max-w-md text-[13px] leading-relaxed text-body-muted sm:text-sm">
-                  Catertech supplies hotel, venue and F&amp;B teams with commercial-grade
+                  Catertech supplies hotel, venue and F&amp;B teams with commercial grade
                   buffetware, kitchen equipment and trade sourcing support across Dubai and
                   the UAE.
                 </p>
