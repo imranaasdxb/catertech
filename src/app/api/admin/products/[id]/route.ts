@@ -2,6 +2,7 @@ import { and, eq, ne } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { products, productTitlePresets, type ProductAttributeValue } from "@/db/schema";
+import { cleanPresetProductTitle } from "@/lib/catalog/canonical-catalog";
 import {
   buildCategoryDisplayLabel,
   validateSubcategoryForCategory,
@@ -169,6 +170,74 @@ export async function PUT(
   const subCheck = await validateSubcategoryForCategory(db, nextCat, nextSub);
   if (!subCheck.ok) {
     return NextResponse.json({ error: subCheck.message }, { status: 400 });
+  }
+
+  if (!productTitlePresetId && nextCat) {
+    const [sameSourcePreset] = await db
+      .select({ id: productTitlePresets.id })
+      .from(productTitlePresets)
+      .where(
+        and(
+          eq(productTitlePresets.categoryId, nextCat),
+          eq(productTitlePresets.sourceLabel, title)
+        )
+      )
+      .limit(1);
+
+    if (sameSourcePreset) {
+      productTitlePresetId = sameSourcePreset.id;
+    } else {
+      const [createdPreset] = await db
+        .insert(productTitlePresets)
+        .values({
+          categoryId: nextCat,
+          subCategoryId: nextSub,
+          title: cleanPresetProductTitle(title),
+          sourceLabel: title,
+          attributes: nextAttributes,
+        })
+        .returning({ id: productTitlePresets.id });
+
+      productTitlePresetId = createdPreset.id;
+    }
+
+    await db
+      .update(productTitlePresets)
+      .set({
+        subCategoryId: nextSub,
+        title: cleanPresetProductTitle(title),
+        sourceLabel: title,
+        attributes: nextAttributes,
+        updatedAt: new Date(),
+      })
+      .where(eq(productTitlePresets.id, productTitlePresetId));
+  } else if (productTitlePresetId && nextCat) {
+    const [sameSourcePreset] = await db
+      .select({ id: productTitlePresets.id })
+      .from(productTitlePresets)
+      .where(
+        and(
+          eq(productTitlePresets.categoryId, nextCat),
+          eq(productTitlePresets.sourceLabel, title),
+          ne(productTitlePresets.id, productTitlePresetId)
+        )
+      )
+      .limit(1);
+
+    if (sameSourcePreset) {
+      productTitlePresetId = sameSourcePreset.id;
+    }
+
+    await db
+      .update(productTitlePresets)
+      .set({
+        subCategoryId: nextSub,
+        title: cleanPresetProductTitle(title),
+        sourceLabel: title,
+        attributes: nextAttributes,
+        updatedAt: new Date(),
+      })
+      .where(eq(productTitlePresets.id, productTitlePresetId));
   }
 
   const categoryLabelRaw = await buildCategoryDisplayLabel(db, nextCat, nextSub);

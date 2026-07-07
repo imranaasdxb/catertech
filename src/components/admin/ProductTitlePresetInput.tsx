@@ -90,7 +90,7 @@ export function ProductTitlePresetInput({
   const loadPresets = useCallback(
     async (
       nextCategoryId: string,
-      nextSubCategoryId: string,
+      _nextSubCategoryId: string,
       onLoaded: (nextPresets: ProductPreset[]) => void
     ) => {
       if (!nextCategoryId) {
@@ -99,7 +99,6 @@ export function ProductTitlePresetInput({
       }
 
       const params = new URLSearchParams({ categoryId: nextCategoryId });
-      if (nextSubCategoryId) params.set("subCategoryId", nextSubCategoryId);
 
       try {
         const res = await fetch(`/api/admin/product-presets?${params}`, { cache: "no-store" });
@@ -196,9 +195,16 @@ export function ProductTitlePresetInput({
 
   const filtered = useMemo(() => {
     const query = title.trim().toLowerCase();
-    if (!query) return presets;
-    return presets.filter((preset) =>
-      `${preset.title} ${preset.sourceLabel}`.toLowerCase().includes(query)
+    const list = !query
+      ? presets
+      : presets.filter((preset) =>
+          `${preset.title} ${preset.sourceLabel}`.toLowerCase().includes(query),
+        );
+
+    return [...list].sort((a, b) =>
+      (a.sourceLabel || a.title).localeCompare(b.sourceLabel || b.title, undefined, {
+        sensitivity: "base",
+      }),
     );
   }, [presets, title]);
 

@@ -37,6 +37,7 @@ export type AdminProductCategoryOption = {
 type ProductRow = InferSelectModel<typeof products>;
 
 type FilterKey = "all" | string;
+type SortOrder = "default" | "a-z";
 
 type ToggleAction = {
   id: string;
@@ -189,6 +190,7 @@ export default function AdminProductsTable({
   const [localRows, setLocalRows] = useState(rows);
   const [searchInput, setSearchInput] = useState(initialSearch);
   const [filter, setFilter] = useState<FilterKey>("all");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("default");
   const [viewId, setViewId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminProductListRow | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -229,20 +231,27 @@ export default function AdminProductsTable({
     });
   }, [localRows, filter, categories]);
 
+  const sortedRows = useMemo(() => {
+    if (sortOrder !== "a-z") return filteredRows;
+    return [...filteredRows].sort((a, b) =>
+      a.title.localeCompare(b.title, undefined, { sensitivity: "base" }),
+    );
+  }, [filteredRows, sortOrder]);
+
   const activeCategoryName =
     filter === "all" ? null : categories.find((category) => category.id === filter)?.name ?? null;
 
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(sortedRows.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const pageStart = (currentPage - 1) * PAGE_SIZE;
-  const paginatedRows = filteredRows.slice(pageStart, pageStart + PAGE_SIZE);
-  const showingFrom = filteredRows.length === 0 ? 0 : pageStart + 1;
-  const showingTo = Math.min(pageStart + PAGE_SIZE, filteredRows.length);
+  const paginatedRows = sortedRows.slice(pageStart, pageStart + PAGE_SIZE);
+  const showingFrom = sortedRows.length === 0 ? 0 : pageStart + 1;
+  const showingTo = Math.min(pageStart + PAGE_SIZE, sortedRows.length);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
-  }, [filter, initialSearch, rows.length]);
+  }, [filter, initialSearch, rows.length, sortOrder]);
 
   useEffect(() => {
     if (page > totalPages) {
@@ -370,7 +379,7 @@ export default function AdminProductsTable({
             value={filter}
             onChange={(e) => setFilter(e.target.value as FilterKey)}
             aria-label="Filter products by category"
-            className="min-w-[11.5rem] cursor-pointer rounded-lg border border-admin-border bg-white px-3 py-2.5 text-sm text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15"
+            className="w-full min-w-0 max-w-[10.5rem] shrink cursor-pointer rounded-lg border border-admin-border bg-white px-2.5 py-2.5 text-sm text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15 sm:w-[10.5rem]"
           >
             <option value="all">All categories</option>
             {categories.map((category) => (
@@ -379,9 +388,18 @@ export default function AdminProductsTable({
               </option>
             ))}
           </select>
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+            aria-label="Sort products alphabetically"
+            className="w-[5.75rem] shrink-0 cursor-pointer rounded-lg border border-admin-border bg-white px-2.5 py-2.5 text-sm font-semibold text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15"
+          >
+            <option value="default">Default</option>
+            <option value="a-z">A–Z</option>
+          </select>
           <p className="shrink-0 text-sm text-gray-500">
-            <span className="font-semibold text-gray-800">{filteredRows.length}</span>
-            {filteredRows.length === 1 ? " product" : " products"}
+            <span className="font-semibold text-gray-800">{sortedRows.length}</span>
+            {sortedRows.length === 1 ? " product" : " products"}
             {activeCategoryName ? ` in ${activeCategoryName}` : ""}
           </p>
         </div>

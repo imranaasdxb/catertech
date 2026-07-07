@@ -163,11 +163,7 @@ export async function GET(request: Request) {
       .where(eq(products.categoryId, categoryId)),
   ]);
 
-  const relevantProducts = subCategoryId
-    ? categoryProducts.filter((product) => product.subCategoryId === subCategoryId)
-    : categoryProducts;
-
-  const productInputs = relevantProducts.map((product) => ({
+  const productInputs = categoryProducts.map((product) => ({
     title: product.title,
     productTitlePresetId: product.productTitlePresetId,
     attributes: product.attributes as Record<string, ProductAttributeValue>,
@@ -180,50 +176,34 @@ export async function GET(request: Request) {
   }));
 
   const createdPresetIds = collectCreatedPresetIds(productInputs, presetRows);
-  const unmatchedProductRows: Array<{
-    id: string;
-    title: string;
-    sourceLabel: string;
-    attributes: Record<string, ProductAttributeValue>;
-    subCategoryId: string | null;
-    created: boolean;
-  }> = [];
-  const unmatchedProductKeys = new Set<string>();
 
-  for (const product of relevantProducts) {
-    const productInput = {
-      title: product.title,
-      productTitlePresetId: product.productTitlePresetId,
-      attributes: product.attributes as Record<string, ProductAttributeValue>,
-      subCategoryId: product.subCategoryId,
-    };
-
-    if (resolveProductPresetMatch(productInput, presetRows)) continue;
-
-    const normalizedTitle = normalizeMatchText(product.title);
-    if (!normalizedTitle) continue;
-
-    const key = `${product.subCategoryId ?? ""}:${normalizedTitle}`;
-    if (unmatchedProductKeys.has(key)) continue;
-    unmatchedProductKeys.add(key);
-
-    unmatchedProductRows.push({
-      id: `created-product:${product.id}`,
-      title: product.title,
-      sourceLabel: product.title,
-      attributes: product.attributes as Record<string, ProductAttributeValue>,
-      subCategoryId: product.subCategoryId,
-      created: true,
-    });
+  const presetProductById = new Map<string, { id: string; title: string }>();
+  for (const product of categoryProducts) {
+    const match = resolveProductPresetMatch(
+      {
+        title: product.title,
+        productTitlePresetId: product.productTitlePresetId,
+        attributes: product.attributes as Record<string, ProductAttributeValue>,
+        subCategoryId: product.subCategoryId,
+      },
+      presetRows
+    );
+    if (!match) continue;
+    presetProductById.set(match.id, { id: product.id, title: product.title });
   }
 
-  const presets = rows.map((row) => ({
-    ...row,
-    created: createdPresetIds.has(row.id),
-  }));
+  const presets = rows.map((row) => {
+    const linkedProduct = presetProductById.get(row.id);
+    return {
+      ...row,
+      created: createdPresetIds.has(row.id),
+      productId: linkedProduct?.id ?? null,
+      productTitle: linkedProduct?.title ?? null,
+    };
+  });
 
   return NextResponse.json(
-    { presets: [...presets, ...unmatchedProductRows] },
+    { presets },
     { headers: { "Cache-Control": "no-store" } }
   );
 }

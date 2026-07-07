@@ -14,6 +14,7 @@ import {
   notifyProductTaxonomyChanged,
   ProductCategorySelects,
 } from "@/components/admin/ProductCategorySelects";
+import { ProductPresetStatusButtons } from "@/components/admin/ProductPresetStatusButtons";
 import { ProductTitlePresetInput } from "@/components/admin/ProductTitlePresetInput";
 import { admin } from "@/components/admin/adminTheme";
 import type {
@@ -136,14 +137,19 @@ export default function NewProductPage() {
   }, []);
 
   const handleCustomPresetSelection = useCallback((selection: TaxonomySelection) => {
+    const categoryChanged = selectedTaxonomy.categoryId !== selection.categoryId;
+
     setCustomPresetMode(true);
     setSelectedTaxonomy(selection);
     setSelectedProductTitlePresetId(null);
-    setTemplateFields([]);
-    setLiveAttributes({});
-    setPresetFieldKeys(undefined);
-    setPresetRevision((revision) => revision + 1);
-  }, []);
+
+    if (categoryChanged) {
+      setTemplateFields([]);
+      setLiveAttributes({});
+      setPresetFieldKeys(undefined);
+      setPresetRevision((revision) => revision + 1);
+    }
+  }, [selectedTaxonomy.categoryId]);
 
   const refreshPresetAfterSave = useCallback(() => {
     setPresetRevision((revision) => revision + 1);
@@ -336,7 +342,15 @@ export default function NewProductPage() {
                         </span>
                         Product
                       </div>
-                      <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
+                        {selectedTaxonomy.categoryId ? (
+                          <ProductPresetStatusButtons
+                            categoryId={selectedTaxonomy.categoryId}
+                            subCategoryId={selectedTaxonomy.subCategoryId}
+                            categoryName={selectedTaxonomy.categoryName}
+                            subCategoryName={selectedTaxonomy.subCategoryName}
+                          />
+                        ) : null}
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-admin-accent/10 px-3 py-1 text-xs font-semibold text-admin-accent">
                           <Tag size={12} aria-hidden />
                           {selectedTaxonomy.categoryName || "Choose preset category"}

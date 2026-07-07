@@ -33,6 +33,8 @@ type PresetRow = {
 
 type EditDraft = {
   id: string;
+  categoryId: string;
+  subCategoryId: string | null;
   title: string;
   attributes: Record<string, ProductAttributeValue>;
 };
@@ -160,14 +162,24 @@ export function AdminProductPresetsPanel({
   function startEdit(row: PresetRow) {
     setEditDraft({
       id: row.id,
+      categoryId: row.categoryId,
+      subCategoryId: row.subCategoryId,
       title: row.title,
       attributes: cloneAttributes(row.attributes),
     });
+  }
+
+  const editCategoryId = editDraft?.categoryId ?? "";
+  const editSubCategoryId = editDraft?.subCategoryId ?? null;
+
+  useEffect(() => {
+    if (!editCategoryId) return;
+
     setTemplateFields([]);
     setLoadingTemplate(true);
 
-    const params = new URLSearchParams({ categoryId: row.categoryId });
-    if (row.subCategoryId) params.set("subCategoryId", row.subCategoryId);
+    const params = new URLSearchParams({ categoryId: editCategoryId });
+    if (editSubCategoryId) params.set("subCategoryId", editSubCategoryId);
     void fetch(`/api/admin/category-templates?${params}`)
       .then(async (response) => {
         if (!response.ok) throw new Error("Could not load fields.");
@@ -176,7 +188,7 @@ export function AdminProductPresetsPanel({
       .then((data) => setTemplateFields(data.fields ?? []))
       .catch(() => setTemplateFields([]))
       .finally(() => setLoadingTemplate(false));
-  }
+  }, [editCategoryId, editSubCategoryId]);
 
   function updateAttribute(key: string, value: ProductAttributeValue) {
     setEditDraft((current) =>
@@ -213,6 +225,7 @@ export function AdminProductPresetsPanel({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title: editDraft.title.trim(),
+        subCategoryId: editDraft.subCategoryId,
         attributes: editDraft.attributes,
       }),
     });
@@ -224,7 +237,7 @@ export function AdminProductPresetsPanel({
 
     const updated = (await response.json()) as Pick<
       PresetRow,
-      "id" | "title" | "attributes"
+      "id" | "title" | "subCategoryId" | "subCategoryName" | "attributes"
     >;
     setRows((current) =>
       current.map((row) => (row.id === updated.id ? { ...row, ...updated } : row))
@@ -425,7 +438,34 @@ export function AdminProductPresetsPanel({
                     </td>
                     <td className="px-4 py-4 text-sm text-admin-ink/70">{row.categoryName}</td>
                     <td className="px-4 py-4 text-sm text-admin-ink/55">
-                      {row.subCategoryName ?? "—"}
+                      {isEditing ? (
+                        <select
+                          value={editDraft.subCategoryId ?? ""}
+                          onChange={(event) =>
+                            setEditDraft((current) =>
+                              current
+                                ? {
+                                    ...current,
+                                    subCategoryId: event.target.value || null,
+                                  }
+                                : current
+                            )
+                          }
+                          className={`${admin.fieldModern} px-3 py-2 text-sm`}
+                          aria-label="Preset sub-category"
+                        >
+                          <option value="">No sub-category</option>
+                          {(categories.find((category) => category.id === row.categoryId)
+                            ?.subcategories ?? []
+                          ).map((subcategory) => (
+                            <option key={subcategory.id} value={subcategory.id}>
+                              {subcategory.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        row.subCategoryName ?? "—"
+                      )}
                     </td>
                     <td className="px-4 py-4">
                       {isEditing ? (

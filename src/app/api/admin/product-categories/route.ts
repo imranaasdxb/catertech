@@ -10,8 +10,6 @@ import {
 } from "@/db/schema";
 import {
   collectCreatedPresetIds,
-  normalizeMatchText,
-  resolveProductPresetMatch,
 } from "@/lib/product-preset-match";
 import {
   uniqueCategorySlug,
@@ -99,22 +97,11 @@ export async function GET() {
       categoryProducts,
       categoryPresets
     );
-    const unmatchedProductKeys = new Set<string>();
-
-    for (const product of categoryProducts) {
-      if (resolveProductPresetMatch(product, categoryPresets)) continue;
-
-      const normalizedTitle = normalizeMatchText(product.title);
-      if (!normalizedTitle) continue;
-
-      unmatchedProductKeys.add(`${product.subCategoryId ?? ""}:${normalizedTitle}`);
-    }
-
     return {
       ...c,
       subcategories: subcategoriesByCategory.get(c.id) ?? [],
-      presetCount: categoryPresets.length + unmatchedProductKeys.size,
-      createdPresetCount: createdPresetIds.size + unmatchedProductKeys.size,
+      presetCount: categoryPresets.length,
+      createdPresetCount: createdPresetIds.size,
     };
   });
 
