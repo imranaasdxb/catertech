@@ -20,6 +20,7 @@ type ProductPreset = {
   title: string;
   sourceLabel: string;
   attributes: Record<string, ProductAttributeValue>;
+  subCategoryId?: string | null;
   created: boolean;
 };
 
@@ -221,7 +222,7 @@ export function ProductTitlePresetInput({
       title: preset.title,
       sourceLabel: preset.sourceLabel,
       attributes: preset.attributes,
-      subCategoryId: null,
+      subCategoryId: preset.subCategoryId,
     }));
 
     const resolved = resolveProductPresetMatch(productInput, presetRows);

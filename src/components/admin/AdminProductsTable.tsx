@@ -5,7 +5,6 @@ import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import AdminProductViewEditPanel from "@/components/admin/AdminProductViewEditPanel";
 import AdminProductViewPanel from "@/components/admin/AdminProductViewPanel";
 import { AdminPanelModal } from "@/components/admin/AdminPanelModal";
-import { AdminTypedDeleteDialog } from "@/components/admin/AdminTypedDeleteDialog";
 import { notifyProductTaxonomyChanged } from "@/components/admin/ProductCategorySelects";
 import { products, type ProductAttributeValue } from "@/db/schema";
 import type { InferSelectModel } from "drizzle-orm";
@@ -488,17 +487,26 @@ export default function AdminProductsTable({
         ) : null}
       </AdminPanelModal>
 
-      <AdminTypedDeleteDialog
+      <AdminConfirmDialog
         open={Boolean(deleteTarget)}
-        noun="product"
+        title="Delete product?"
         highlight={deleteTarget?.title}
+        message="This will permanently remove the product from your catalogue. This cannot be undone."
+        confirmLabel="Yes, delete"
+        confirmVariant="danger"
         onCancel={() => setDeleteTarget(null)}
         onConfirm={async () => {
           if (!deleteTarget) return;
-          setDeletingId(deleteTarget.id);
+          const deletedId = deleteTarget.id;
+          setDeletingId(deletedId);
           try {
-            const res = await fetch(`/api/admin/products/${deleteTarget.id}`, { method: "DELETE" });
-            if (!res.ok) throw new Error();
+            const res = await fetch(`/api/admin/products/${deletedId}`, { method: "DELETE" });
+            if (!res.ok) {
+              alert("Could not delete this product. Please try again.");
+              throw new Error("Delete failed");
+            }
+            setLocalRows((prev) => prev.filter((row) => row.id !== deletedId));
+            if (viewId === deletedId) closeView();
             notifyProductTaxonomyChanged();
             router.refresh();
           } finally {

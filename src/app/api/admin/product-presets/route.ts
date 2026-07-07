@@ -10,8 +10,9 @@ import {
 } from "@/db/schema";
 import { cleanPresetProductTitle } from "@/lib/catalog/canonical-catalog";
 import {
+  collectCreatedPresetIds,
   normalizeMatchText,
-  presetIsCreated,
+  resolveProductPresetMatch,
 } from "@/lib/product-preset-match";
 import { z } from "zod";
 
@@ -152,6 +153,7 @@ export async function GET(request: Request) {
       .orderBy(asc(productTitlePresets.sortOrder), asc(productTitlePresets.sourceLabel)),
     db
       .select({
+        id: products.id,
         title: products.title,
         productTitlePresetId: products.productTitlePresetId,
         attributes: products.attributes,
@@ -161,7 +163,11 @@ export async function GET(request: Request) {
       .where(eq(products.categoryId, categoryId)),
   ]);
 
-  const productInputs = categoryProducts.map((product) => ({
+  const relevantProducts = subCategoryId
+    ? categoryProducts.filter((product) => product.subCategoryId === subCategoryId)
+    : categoryProducts;
+
+  const productInputs = relevantProducts.map((product) => ({
     title: product.title,
     productTitlePresetId: product.productTitlePresetId,
     attributes: product.attributes as Record<string, ProductAttributeValue>,
@@ -173,13 +179,51 @@ export async function GET(request: Request) {
     attributes: row.attributes as Record<string, ProductAttributeValue>,
   }));
 
+  const createdPresetIds = collectCreatedPresetIds(productInputs, presetRows);
+  const unmatchedProductRows: Array<{
+    id: string;
+    title: string;
+    sourceLabel: string;
+    attributes: Record<string, ProductAttributeValue>;
+    subCategoryId: string | null;
+    created: boolean;
+  }> = [];
+  const unmatchedProductKeys = new Set<string>();
+
+  for (const product of relevantProducts) {
+    const productInput = {
+      title: product.title,
+      productTitlePresetId: product.productTitlePresetId,
+      attributes: product.attributes as Record<string, ProductAttributeValue>,
+      subCategoryId: product.subCategoryId,
+    };
+
+    if (resolveProductPresetMatch(productInput, presetRows)) continue;
+
+    const normalizedTitle = normalizeMatchText(product.title);
+    if (!normalizedTitle) continue;
+
+    const key = `${product.subCategoryId ?? ""}:${normalizedTitle}`;
+    if (unmatchedProductKeys.has(key)) continue;
+    unmatchedProductKeys.add(key);
+
+    unmatchedProductRows.push({
+      id: `created-product:${product.id}`,
+      title: product.title,
+      sourceLabel: product.title,
+      attributes: product.attributes as Record<string, ProductAttributeValue>,
+      subCategoryId: product.subCategoryId,
+      created: true,
+    });
+  }
+
   const presets = rows.map((row) => ({
     ...row,
-    created: presetIsCreated(row.id, productInputs, presetRows),
+    created: createdPresetIds.has(row.id),
   }));
 
   return NextResponse.json(
-    { presets },
+    { presets: [...presets, ...unmatchedProductRows] },
     { headers: { "Cache-Control": "no-store" } }
   );
 }

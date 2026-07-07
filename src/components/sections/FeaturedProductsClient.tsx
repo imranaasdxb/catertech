@@ -15,6 +15,7 @@ import type { ProductAttributeValue } from "@/lib/category-template";
 const ALL_TAB = "all";
 
 type HighlightFilter = "all" | "Popular" | "New";
+type SortOrder = "default" | "a-z";
 
 export type CategoryRow = {
   id: string;
@@ -202,12 +203,14 @@ export default function FeaturedProductsClient({
   const [activeTab, setActiveTab] = useState(ALL_TAB);
   const [search, setSearch] = useState("");
   const [highlight, setHighlight] = useState<HighlightFilter>("all");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("default");
   const [selectedEquipment, setSelectedEquipment] = useState<Set<string>>(() => new Set());
   const [equipmentExpanded, setEquipmentExpanded] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(SHOP_INITIAL_VISIBLE);
   const [loadingMore, setLoadingMore] = useState(false);
   const productGridRef = useRef<HTMLDivElement>(null);
+  const skipFilterScrollRef = useRef(true);
   const isShopCatalogue = compactTop;
   const searchParams = useSearchParams();
 
@@ -318,7 +321,17 @@ export default function FeaturedProductsClient({
     return list;
   }, [activeTab, categories, highlight, isShopCatalogue, productCards, search, selectedEquipment]);
 
-  const displayed = filtered;
+  const displayed = useMemo(() => {
+    if (sortOrder !== "a-z") return filtered;
+    return [...filtered].sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+    );
+  }, [filtered, sortOrder]);
+
+  const equipmentFilterKey = useMemo(
+    () => [...selectedEquipment].sort().join("\0"),
+    [selectedEquipment],
+  );
 
   const homepageGridProducts = displayed.slice(0, PAGE_SIZE);
   const homepageRowOne = homepageGridProducts.slice(0, CARDS_PER_ROW);
@@ -332,7 +345,15 @@ export default function FeaturedProductsClient({
 
   function scrollToProductGridStart() {
     if (!isShopCatalogue || !productGridRef.current) return;
-    productGridRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    const node = productGridRef.current;
+    const scrollMarginTop = Number.parseFloat(getComputedStyle(node).scrollMarginTop) || 0;
+    const top = node.getBoundingClientRect().top + window.scrollY - scrollMarginTop;
+
+    window.scrollTo({
+      top: Math.max(0, top),
+      behavior: "smooth",
+    });
   }
 
   function resetProductWindow() {
@@ -344,7 +365,23 @@ export default function FeaturedProductsClient({
     if (!isShopCatalogue) return;
     setVisibleCount(SHOP_INITIAL_VISIBLE);
     setLoadingMore(false);
-  }, [activeTab, search, highlight, selectedEquipment, isShopCatalogue]);
+  }, [activeTab, search, highlight, equipmentFilterKey, sortOrder, isShopCatalogue]);
+
+  useEffect(() => {
+    if (!isShopCatalogue) return;
+    if (skipFilterScrollRef.current) {
+      skipFilterScrollRef.current = false;
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        scrollToProductGridStart();
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeTab, highlight, equipmentFilterKey, sortOrder, isShopCatalogue]);
 
   function loadMore() {
     if (!canLoadMore || loadingMore) return;
@@ -366,20 +403,19 @@ export default function FeaturedProductsClient({
   }
 
   function selectTab(tabId: string) {
-    const tabChanged = tabId !== activeTab;
     setActiveTab(tabId);
     setSelectedEquipment(new Set());
     setEquipmentExpanded(false);
     resetProductWindow();
-    if (tabChanged && isShopCatalogue) {
-      window.requestAnimationFrame(() => {
-        scrollToProductGridStart();
-      });
-    }
   }
 
   function selectHighlight(nextHighlight: HighlightFilter) {
     setHighlight(nextHighlight);
+    resetProductWindow();
+  }
+
+  function toggleSortOrder() {
+    setSortOrder((current) => (current === "a-z" ? "default" : "a-z"));
     resetProductWindow();
   }
 
@@ -391,9 +427,11 @@ export default function FeaturedProductsClient({
   function clearFilters() {
     setSearch("");
     setHighlight("all");
+    setSortOrder("default");
     setActiveTab(ALL_TAB);
     setSelectedEquipment(new Set());
     setEquipmentExpanded(false);
+    resetProductWindow();
   }
 
   const hiddenEquipmentCount = Math.max(0, equipmentOptions.length - EQUIPMENT_PREVIEW_COUNT);
@@ -404,11 +442,12 @@ export default function FeaturedProductsClient({
   const hasActiveFilters =
     norm(search).length > 0 ||
     highlight !== "all" ||
+    sortOrder !== "default" ||
     activeTab !== ALL_TAB ||
     selectedEquipment.size > 0;
 
   const mobileFilterCount =
-    (highlight !== "all" ? 1 : 0) + selectedEquipment.size;
+    (highlight !== "all" ? 1 : 0) + (sortOrder === "a-z" ? 1 : 0) + selectedEquipment.size;
 
   useEffect(() => {
     if (!mobileFiltersOpen) return;
@@ -507,9 +546,25 @@ export default function FeaturedProductsClient({
         ) : null}
 
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-charcoal pb-2 mb-3 border-b border-charcoal/25">
-            {activeCategory ? `${activeCategory.name} types` : "Category types"}
-          </p>
+          <div className="mb-3 flex items-center justify-between gap-2 border-b border-charcoal/25 pb-2">
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-charcoal">
+              {activeCategory ? `${activeCategory.name} types` : "Category types"}
+            </p>
+            {isShopCatalogue ? (
+              <button
+                type="button"
+                onClick={toggleSortOrder}
+                aria-pressed={sortOrder === "a-z"}
+                className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] transition-colors ${
+                  sortOrder === "a-z"
+                    ? "border-[#322b81] bg-[#322b81] text-white"
+                    : "border-border bg-[#f6f6f6] text-muted hover:border-border hover:text-charcoal"
+                }`}
+              >
+                A–Z
+              </button>
+            ) : null}
+          </div>
           {visibleEquipmentOptions.length ? (
             <ul
               className={
@@ -771,6 +826,14 @@ export default function FeaturedProductsClient({
             {isShopCatalogue ? (
               <ShopCategoryTabs className="hidden lg:block" />
             ) : null}
+            <div
+              ref={isShopCatalogue ? productGridRef : undefined}
+              className={
+                isShopCatalogue
+                  ? "scroll-mt-[calc(var(--header-height)+3.25rem)]"
+                  : undefined
+              }
+            >
             {catalogError || (productCards.length === 0 && !hasActiveFilters) ? (
               <div className="min-w-0 space-y-4" aria-busy="true" aria-label="Loading products">
                 <p className="sr-only">{catalogError || "Products are loading."}</p>
@@ -808,9 +871,8 @@ export default function FeaturedProductsClient({
             ) : isShopCatalogue ? (
               <div className="min-w-0 space-y-4">
                 <div
-                  ref={productGridRef}
-                  key={activeTab}
-                  className="grid min-w-0 scroll-mt-[calc(var(--header-height)+3.25rem)] grid-cols-2 gap-2.5 sm:gap-3.5 md:gap-4 lg:grid-cols-4 lg:gap-6"
+                  key={`${activeTab}-${equipmentFilterKey}-${highlight}-${search}-${sortOrder}`}
+                  className="grid min-w-0 grid-cols-2 gap-2.5 sm:gap-3.5 md:gap-4 lg:grid-cols-4 lg:gap-6"
                 >
                   {visibleProducts.map((product) => (
                     <StorefrontProductCard
@@ -855,6 +917,7 @@ export default function FeaturedProductsClient({
                 <FeaturedViewMore />
               </div>
             )}
+            </div>
           </div>
         </div>
 

@@ -5,7 +5,7 @@ import AdminGalleryUpload, {
   type AdminGalleryUploadHandle,
 } from "@/components/admin/AdminGalleryUpload";
 import { AdminBlockingOverlay, AdminSuccessModal } from "@/components/admin/AdminFormOverlays";
-import { AdminTypedDeleteDialog } from "@/components/admin/AdminTypedDeleteDialog";
+import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import {
   parseProductAttributes,
   ProductTemplateFields,
@@ -43,7 +43,7 @@ export default function ProductEditClient({
   const [blockingTitle, setBlockingTitle] = useState("");
   const [blockingSubtitle, setBlockingSubtitle] = useState("");
   const [showSaved, setShowSaved] = useState(false);
-  const [typedDeleteOpen, setTypedDeleteOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [categoryId, setCategoryId] = useState(product.categoryId ?? "");
   const [subCategoryId, setSubCategoryId] = useState(product.subCategoryId ?? "");
   const [templateFields, setTemplateFields] = useState<TemplateFieldDef[]>([]);
@@ -113,7 +113,7 @@ export default function ProductEditClient({
     const res = await fetch(`/api/admin/products/${product.id}`, { method: "DELETE" });
     if (!res.ok) throw new Error("Delete failed");
     notifyProductTaxonomyChanged();
-    setTypedDeleteOpen(false);
+    setDeleteConfirmOpen(false);
     void Promise.resolve().then(() => {
       if (onDeleted) onDeleted();
       else router.push("/admin/products");
@@ -138,11 +138,14 @@ export default function ProductEditClient({
         onConfirm={() => setShowSaved(false)}
         onDismiss={() => setShowSaved(false)}
       />
-      <AdminTypedDeleteDialog
-        open={typedDeleteOpen}
-        noun="product"
+      <AdminConfirmDialog
+        open={deleteConfirmOpen}
+        title="Delete product?"
         highlight={product.title}
-        onCancel={() => setTypedDeleteOpen(false)}
+        message="This will permanently remove the product from your catalogue. This cannot be undone."
+        confirmLabel="Yes, delete"
+        confirmVariant="danger"
+        onCancel={() => setDeleteConfirmOpen(false)}
         onConfirm={runDelete}
       />
 
@@ -244,7 +247,7 @@ export default function ProductEditClient({
             </button>
             <button
               type="button"
-              onClick={() => setTypedDeleteOpen(true)}
+              onClick={() => setDeleteConfirmOpen(true)}
               className={`${admin.dangerBtn} ${isModal ? "text-xs py-3" : ""}`}
             >
               Delete

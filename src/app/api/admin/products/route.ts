@@ -6,6 +6,7 @@ import {
   productTitlePresets,
   type ProductAttributeValue,
 } from "@/db/schema";
+import { cleanPresetProductTitle } from "@/lib/catalog/canonical-catalog";
 import {
   buildCategoryDisplayLabel,
   validateSubcategoryForCategory,
@@ -32,6 +33,14 @@ const createSchema = z.object({
   canonicalProductId: z.union([z.string().uuid(), z.null()]).optional(),
   productTitlePresetId: z.union([z.string().uuid(), z.null()]).optional(),
 });
+
+function hasSavedAttributes(attributes: Record<string, ProductAttributeValue>) {
+  return Object.values(attributes).some((value) => {
+    if (!value) return false;
+    if (typeof value === "string") return Boolean(value.trim());
+    return Boolean(value.value?.trim() || value.unit?.trim());
+  });
+}
 
 export async function GET() {
   const db = getDb();
@@ -97,12 +106,15 @@ export async function POST(request: Request) {
     if (match) productTitlePresetId = match.id;
   }
 
+  let presetAttributes: Record<string, ProductAttributeValue> | null = null;
+
   if (productTitlePresetId) {
     const [preset] = await db
       .select({
         id: productTitlePresets.id,
         categoryId: productTitlePresets.categoryId,
         subCategoryId: productTitlePresets.subCategoryId,
+        attributes: productTitlePresets.attributes,
       })
       .from(productTitlePresets)
       .where(eq(productTitlePresets.id, productTitlePresetId))
@@ -125,11 +137,38 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    presetAttributes = preset.attributes as Record<string, ProductAttributeValue>;
   }
 
   const subCheck = await validateSubcategoryForCategory(db, catId, subId);
   if (!subCheck.ok) {
     return NextResponse.json({ error: subCheck.message }, { status: 400 });
+  }
+
+  if (!productTitlePresetId && catId) {
+    const [createdPreset] = await db
+      .insert(productTitlePresets)
+      .values({
+        categoryId: catId,
+        subCategoryId: subId,
+        title: cleanPresetProductTitle(d.title),
+        sourceLabel: d.title,
+        attributes,
+      })
+      .returning({ id: productTitlePresets.id });
+
+    productTitlePresetId = createdPreset.id;
+  } else if (
+    productTitlePresetId &&
+    presetAttributes &&
+    !hasSavedAttributes(presetAttributes) &&
+    hasSavedAttributes(attributes)
+  ) {
+    await db
+      .update(productTitlePresets)
+      .set({ attributes, updatedAt: new Date() })
+      .where(eq(productTitlePresets.id, productTitlePresetId));
   }
 
   const categoryLabel = await buildCategoryDisplayLabel(db, catId, subId);

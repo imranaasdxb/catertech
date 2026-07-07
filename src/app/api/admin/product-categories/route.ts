@@ -1,4 +1,4 @@
-import { asc, count, eq } from "drizzle-orm";
+import { asc } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import {
@@ -6,7 +6,13 @@ import {
   products,
   productSubcategories,
   productTitlePresets,
+  type ProductAttributeValue,
 } from "@/db/schema";
+import {
+  collectCreatedPresetIds,
+  normalizeMatchText,
+  resolveProductPresetMatch,
+} from "@/lib/product-preset-match";
 import {
   uniqueCategorySlug,
 } from "@/lib/product-taxonomy";
@@ -22,7 +28,7 @@ export async function GET() {
   if (!db)
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
 
-  const [cats, subs, presetCounts, productRows] = await Promise.all([
+  const [cats, subs, presetRows, productRows] = await Promise.all([
     db
       .select()
       .from(productCategories)
@@ -33,14 +39,22 @@ export async function GET() {
       .orderBy(asc(productSubcategories.sortOrder), asc(productSubcategories.name)),
     db
       .select({
+        id: productTitlePresets.id,
         categoryId: productTitlePresets.categoryId,
-        presetCount: count(),
+        title: productTitlePresets.title,
+        sourceLabel: productTitlePresets.sourceLabel,
+        attributes: productTitlePresets.attributes,
+        subCategoryId: productTitlePresets.subCategoryId,
       })
-      .from(productTitlePresets)
-      .groupBy(productTitlePresets.categoryId),
+      .from(productTitlePresets),
     db
       .select({
+        id: products.id,
         categoryId: products.categoryId,
+        title: products.title,
+        productTitlePresetId: products.productTitlePresetId,
+        attributes: products.attributes,
+        subCategoryId: products.subCategoryId,
       })
       .from(products),
   ]);
@@ -52,24 +66,57 @@ export async function GET() {
     subcategoriesByCategory.set(subcategory.categoryId, current);
   }
 
-  const presetCountByCategory = new Map(
-    presetCounts.map((row) => [row.categoryId, row.presetCount])
-  );
-  const productCountByCategory = new Map<string, number>();
-  for (const product of productRows) {
-    if (!product.categoryId) continue;
-    productCountByCategory.set(
-      product.categoryId,
-      (productCountByCategory.get(product.categoryId) ?? 0) + 1
-    );
+  const presetsByCategory = new Map<string, typeof presetRows>();
+  for (const preset of presetRows) {
+    const current = presetsByCategory.get(preset.categoryId) ?? [];
+    current.push(preset);
+    presetsByCategory.set(preset.categoryId, current);
   }
 
-  const categories = cats.map((c) => ({
-    ...c,
-    subcategories: subcategoriesByCategory.get(c.id) ?? [],
-    presetCount: presetCountByCategory.get(c.id) ?? 0,
-    createdPresetCount: productCountByCategory.get(c.id) ?? 0,
-  }));
+  const productsByCategory = new Map<string, typeof productRows>();
+  for (const product of productRows) {
+    if (!product.categoryId) continue;
+    const current = productsByCategory.get(product.categoryId) ?? [];
+    current.push(product);
+    productsByCategory.set(product.categoryId, current);
+  }
+
+  const categories = cats.map((c) => {
+    const categoryPresets = (presetsByCategory.get(c.id) ?? []).map((preset) => ({
+      id: preset.id,
+      title: preset.title,
+      sourceLabel: preset.sourceLabel,
+      attributes: preset.attributes as Record<string, ProductAttributeValue>,
+      subCategoryId: preset.subCategoryId,
+    }));
+    const categoryProducts = (productsByCategory.get(c.id) ?? []).map((product) => ({
+      title: product.title,
+      productTitlePresetId: product.productTitlePresetId,
+      attributes: product.attributes as Record<string, ProductAttributeValue>,
+      subCategoryId: product.subCategoryId,
+    }));
+    const createdPresetIds = collectCreatedPresetIds(
+      categoryProducts,
+      categoryPresets
+    );
+    const unmatchedProductKeys = new Set<string>();
+
+    for (const product of categoryProducts) {
+      if (resolveProductPresetMatch(product, categoryPresets)) continue;
+
+      const normalizedTitle = normalizeMatchText(product.title);
+      if (!normalizedTitle) continue;
+
+      unmatchedProductKeys.add(`${product.subCategoryId ?? ""}:${normalizedTitle}`);
+    }
+
+    return {
+      ...c,
+      subcategories: subcategoriesByCategory.get(c.id) ?? [],
+      presetCount: categoryPresets.length + unmatchedProductKeys.size,
+      createdPresetCount: createdPresetIds.size + unmatchedProductKeys.size,
+    };
+  });
 
   return NextResponse.json({ categories });
 }

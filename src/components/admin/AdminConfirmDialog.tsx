@@ -81,7 +81,11 @@ export function AdminConfirmDialog({
             className={`${confirmVariant === "primary" ? admin.primaryBtn : admin.dangerBtn} py-2.5 text-sm disabled:opacity-50`}
             style={confirmVariant === "primary" ? { backgroundColor: ADMIN_PURPLE } : undefined}
           >
-            {busy ? "Saving…" : confirmLabel}
+            {busy
+              ? confirmVariant === "danger"
+                ? "Deleting…"
+                : "Saving…"
+              : confirmLabel}
           </button>
         </div>
       </div>
