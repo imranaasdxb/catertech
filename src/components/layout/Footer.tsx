@@ -141,7 +141,7 @@ export default function Footer() {
       <div className="relative z-10 mx-auto max-w-screen-xl px-4 pt-10 pb-8 sm:px-6 sm:pt-12 lg:px-8 lg:pt-14 lg:pb-10">
         {/* Newsletter CTA */}
         <div className="overflow-hidden rounded-2xl border border-accent/55 bg-primary/88 shadow-[0_24px_60px_rgba(0,0,0,0.35)] backdrop-blur-sm">
-          <div className="grid items-stretch lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+          <div className="grid items-stretch md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
             <div className="px-5 py-6 sm:px-7 sm:py-8 lg:px-9 lg:py-9">
               <div className="flex items-center gap-2.5">
                 <span className="flex size-8 items-center justify-center rounded-full border border-accent/50 bg-primary-dark/60">

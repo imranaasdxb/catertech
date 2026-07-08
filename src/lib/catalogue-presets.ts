@@ -35,6 +35,44 @@ export type CatalogueProductRow = {
   subCategoryName: string | null;
 };
 
+const RETRY_DELAYS_MS = [150, 400];
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getErrorText(error: unknown): string {
+  if (!error || typeof error !== "object") return String(error);
+
+  const err = error as { message?: unknown; cause?: unknown };
+  return `${String(err.message ?? "")} ${getErrorText(err.cause)}`;
+}
+
+function isRetryableNeonBusyError(error: unknown) {
+  const text = getErrorText(error);
+  return (
+    text.includes("neon:retryable") ||
+    text.includes("Failed to acquire permit") ||
+    text.includes("Too many database connection attempts")
+  );
+}
+
+async function retryBusyDatabase<T>(query: () => Promise<T>) {
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
+    try {
+      return await query();
+    } catch (error) {
+      if (!isRetryableNeonBusyError(error) || attempt === RETRY_DELAYS_MS.length) {
+        throw error;
+      }
+
+      await wait(RETRY_DELAYS_MS[attempt]);
+    }
+  }
+
+  throw new Error("Database query failed.");
+}
+
 function mapStorefrontProduct(product: {
   id: string;
   categoryId: string | null;
@@ -388,15 +426,21 @@ export async function getCatalogueProductData({
   }
 
   try {
-    const [categories, subcategories, storefrontProducts] = await Promise.all([
+    const categories = await retryBusyDatabase(() =>
       db
         .select()
         .from(productCategories)
-        .orderBy(asc(productCategories.sortOrder), asc(productCategories.name)),
+        .orderBy(asc(productCategories.sortOrder), asc(productCategories.name))
+    );
+
+    const subcategories = await retryBusyDatabase(() =>
       db
         .select()
         .from(productSubcategories)
-        .orderBy(asc(productSubcategories.sortOrder), asc(productSubcategories.name)),
+        .orderBy(asc(productSubcategories.sortOrder), asc(productSubcategories.name))
+    );
+
+    const storefrontProducts = await retryBusyDatabase(() =>
       db
         .select({
           id: products.id,
@@ -425,8 +469,14 @@ export async function getCatalogueProductData({
             ? and(eq(products.published, true), eq(products.isFeatured, true))
             : eq(products.published, true)
         )
-        .orderBy(desc(products.isFeatured), desc(products.createdAt)),
-    ]);
+        .orderBy(desc(products.isFeatured), desc(products.createdAt))
+    );
+
+    const categoryRows = categories.map((category) => ({
+      id: category.id,
+      name: category.name,
+      slug: category.slug,
+    }));
 
     return {
       categories: categories.map((category) => ({
@@ -442,11 +492,6 @@ export async function getCatalogueProductData({
       })),
       products: storefrontProducts.map((product) => {
         const mapped = mapStorefrontProduct(product);
-        const categoryRows = categories.map((category) => ({
-          id: category.id,
-          name: category.name,
-          slug: category.slug,
-        }));
         const resolved = resolveCategoryForProduct(
           {
             categoryId: mapped.categoryId,

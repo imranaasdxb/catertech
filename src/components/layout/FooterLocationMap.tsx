@@ -35,9 +35,38 @@ function MapResizeFix() {
   const map = useMap();
 
   useEffect(() => {
-    map.invalidateSize();
-    const timer = window.setTimeout(() => map.invalidateSize(), 150);
-    return () => window.clearTimeout(timer);
+    const invalidate = () => {
+      map.invalidateSize({ animate: false });
+    };
+
+    invalidate();
+    const timers = [150, 400, 900].map((ms) => window.setTimeout(invalidate, ms));
+
+    const container = map.getContainer();
+    const resizeTarget = container.parentElement ?? container;
+
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(invalidate)
+        : null;
+    resizeObserver?.observe(resizeTarget);
+
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) invalidate();
+      },
+      { threshold: 0.01 },
+    );
+    intersectionObserver.observe(container);
+
+    window.addEventListener("resize", invalidate);
+
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+      resizeObserver?.disconnect();
+      intersectionObserver.disconnect();
+      window.removeEventListener("resize", invalidate);
+    };
   }, [map]);
 
   return null;
@@ -84,7 +113,7 @@ export default function FooterLocationMap({
       boxZoom={false}
       keyboard={false}
       touchZoom={false}
-      className="footer-location-map h-full w-full cursor-pointer"
+      className="footer-location-map h-full min-h-[200px] w-full cursor-pointer"
     >
       <TileLayer
         url={MAP_TILE_URL}

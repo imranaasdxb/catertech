@@ -24,8 +24,8 @@ type FooterMapPanelProps = {
 
 export default function FooterMapPanel({ mapsUrl, addressLine }: FooterMapPanelProps) {
   return (
-    <div className="relative hidden min-h-[280px] lg:block">
-      <div className="absolute inset-0 overflow-hidden rounded-tl-[4.5rem] rounded-tr-2xl rounded-br-2xl ring-1 ring-inset ring-accent/30 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]">
+    <div className="relative min-h-[200px] sm:min-h-[220px] md:min-h-[240px] lg:min-h-[280px]">
+      <div className="absolute inset-0 overflow-hidden rounded-b-2xl ring-1 ring-inset ring-accent/30 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] md:rounded-tl-[3rem] md:rounded-tr-2xl md:rounded-br-2xl md:rounded-bl-none lg:rounded-tl-[4.5rem]">
         <FooterLocationMap mapsUrl={mapsUrl} companyName={COMPANY_NAME} />
         <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-primary/45 via-primary/5 to-transparent" />
         <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-primary/15 via-transparent to-transparent" />

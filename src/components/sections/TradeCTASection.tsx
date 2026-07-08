@@ -97,15 +97,15 @@ export default function TradeCTASection() {
       <Container className="relative z-10">
         <div className="grid gap-6 sm:gap-8 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-stretch lg:gap-10 xl:gap-14">
           {/* Left column */}
-          <div className="flex flex-col lg:h-full">
+          <div className="flex min-w-0 flex-col lg:h-full">
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-accent-dark">
               For business
             </p>
 
-            <div className="mt-2 flex max-w-full items-center gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] sm:mt-3 sm:gap-3 [&::-webkit-scrollbar]:hidden">
+            <div className="mt-2 flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 sm:mt-3 sm:gap-x-3">
               <h2
                 id="trade-cta-heading"
-                className="shrink-0 whitespace-nowrap font-display text-[clamp(1.35rem,4.2vw,2.65rem)] font-medium leading-none tracking-tight text-primary"
+                className="min-w-0 max-w-full font-display text-[clamp(1.35rem,4.2vw,2.65rem)] font-medium leading-[1.08] tracking-tight text-primary lg:text-[clamp(1.45rem,2.4vw,2.125rem)] xl:text-[clamp(1.65rem,2.75vw,2.5rem)] 2xl:text-[clamp(1.85rem,3vw,2.65rem)]"
               >
                 Trade &amp; Corporate{" "}
                 <span className="text-accent">Solutions</span>
@@ -191,12 +191,12 @@ export default function TradeCTASection() {
             </div>
 
             <div className="flex w-full flex-col items-center">
-              <div className="flex w-full items-center gap-3">
-                <span className="h-px flex-1 bg-accent/35" aria-hidden />
-                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-accent-dark sm:text-[11px]">
+              <div className="flex w-full items-center gap-3 sm:gap-4">
+                <span className="h-px flex-1 bg-primary/15 sm:h-0.5" aria-hidden />
+                <p className="shrink-0 rounded-full bg-white/95 px-3.5 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-primary shadow-[0_2px_10px_rgba(27,43,75,0.08)] ring-1 ring-accent/45 sm:px-4 sm:py-2 sm:text-sm sm:tracking-[0.16em] md:text-[15px] lg:px-5">
                   Delivery coverage
                 </p>
-                <span className="h-px flex-1 bg-accent/35" aria-hidden />
+                <span className="h-px flex-1 bg-primary/15 sm:h-0.5" aria-hidden />
               </div>
 
               <ul

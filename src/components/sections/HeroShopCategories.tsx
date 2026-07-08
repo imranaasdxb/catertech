@@ -161,12 +161,12 @@ export default function HeroShopCategories() {
           </div>
           <Link
             href="/shop"
-            className="inline-flex items-center gap-2 text-[10px] font-semibold text-body-muted transition-colors hover:text-primary"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-body-muted transition-colors hover:text-primary sm:text-sm"
           >
             <span className="hidden sm:inline">View all categories</span>
             <span className="sm:hidden">View all</span>
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-primary">
-              <ArrowRight className="h-3 w-3" strokeWidth={2.25} />
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent text-primary sm:h-7 sm:w-7">
+              <ArrowRight className="h-3.5 w-3.5 stroke-[2.25] sm:h-4 sm:w-4" />
             </span>
           </Link>
         </div>

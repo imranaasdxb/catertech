@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { useRef } from "react";
 import Container from "@/components/Container";
 import gsap from "gsap";
@@ -18,12 +19,11 @@ const PRIMARY    = "#1B2B4B";
 const ACCENT     = "#C9A84C";
 const BG         = "#F5F0E8";
 
-const COLUMN_W      = 420;
 const COLUMN_GAP    = 56;
 const TRACK_PAD_X   = 40;
 
 const PIN_VIEWPORT_CLASS =
-  "relative flex min-h-[calc(100svh-11rem)] w-full items-center justify-center overflow-hidden py-8 sm:py-10";
+  "relative flex min-h-[calc(100svh-11rem)] w-full max-w-full items-center justify-center overflow-x-clip overflow-y-hidden py-8 sm:py-10";
 const CARD_STACK_CLASS =
   "relative flex h-[min(480px,58vh)] flex-col sm:h-[min(500px,60vh)]";
 
@@ -84,10 +84,17 @@ const MILESTONES = [
   },
 ];
 
-const SECTION_BG_BASE = {
+const SECTION_BG_SCROLL = {
+  backgroundRepeat: "no-repeat",
+  backgroundAttachment: "scroll",
+} as const;
+
+const SECTION_BG_FIXED = {
   backgroundRepeat: "no-repeat",
   backgroundAttachment: "fixed",
 } as const;
+
+const MOBILE_STAGE_QUERY = "(max-width: 1023px)";
 
 /** One main section background — CSS only, never inside GSAP pin (no sticky) */
 function JourneySectionBg() {
@@ -97,7 +104,7 @@ function JourneySectionBg() {
       <div
         className="absolute inset-0 bg-[#F5F0E8] md:hidden"
         style={{
-          ...SECTION_BG_BASE,
+          ...SECTION_BG_SCROLL,
           backgroundImage: `url(${journeyMobile.src})`,
           backgroundSize: "100% auto",
           backgroundPosition: "center top",
@@ -107,7 +114,7 @@ function JourneySectionBg() {
       <div
         className="absolute inset-0 bg-[#F5F0E8] hidden md:block lg:hidden"
         style={{
-          ...SECTION_BG_BASE,
+          ...SECTION_BG_SCROLL,
           backgroundImage: `url(${journeyTablet.src})`,
           backgroundSize: "cover",
           backgroundPosition: "center center",
@@ -117,7 +124,7 @@ function JourneySectionBg() {
       <div
         className="absolute inset-0 hidden lg:block"
         style={{
-          ...SECTION_BG_BASE,
+          ...SECTION_BG_FIXED,
           backgroundImage: `url(${journeyDesktop.src})`,
           backgroundSize: "cover",
           backgroundPosition: "center center",
@@ -262,24 +269,57 @@ export default function JourneyTeaser() {
       };
 
       let scrollTrigger: ScrollTrigger | undefined;
+      let resizeTimer: ReturnType<typeof setTimeout> | undefined;
+      const mobileMedia = window.matchMedia(MOBILE_STAGE_QUERY);
+
+      const resetPinViewport = () => {
+        pin.classList.remove(
+          "overflow-x-auto",
+          "[scrollbar-width:none]",
+          "[&::-webkit-scrollbar]:hidden",
+        );
+        pin.classList.add("overflow-x-clip", "overflow-y-hidden");
+        track.classList.remove("snap-x", "snap-mandatory");
+      };
+
+      const enableMobileStage = () => {
+        resetPinViewport();
+        scrollTrigger?.kill();
+        scrollTrigger = undefined;
+        gsap.set(track, { x: 0, clearProps: "transform" });
+        gsap.set(pathEl, { opacity: 0 });
+
+        pin.classList.remove("overflow-x-clip");
+        pin.classList.add(
+          "overflow-x-auto",
+          "[scrollbar-width:none]",
+          "[&::-webkit-scrollbar]:hidden",
+        );
+        track.classList.add("snap-x", "snap-mandatory");
+      };
 
       const setupScroll = () => {
+        scrollTrigger?.kill();
+        scrollTrigger = undefined;
+        resetPinViewport();
+        gsap.set(track, { x: 0, clearProps: "transform" });
+
         const pathLen = syncPathMetrics();
         if (!pathLen) return;
+
+        if (mobileMedia.matches || reduced) {
+          enableMobileStage();
+          if (reduced) {
+            gsap.set(pathEl, { strokeDashoffset: 0, opacity: 1 });
+          }
+          return;
+        }
 
         gsap.set(pathEl, {
           strokeDasharray: pathLen,
           strokeDashoffset: pathLen,
           opacity: 1,
         });
-
-        if (reduced) {
-          gsap.set(track, { x: 0 });
-          gsap.set(pathEl, { strokeDashoffset: 0 });
-          track.classList.add("overflow-x-auto");
-          pin.classList.remove("overflow-hidden");
-          return;
-        }
 
         scrollTrigger = ScrollTrigger.create({
           trigger: pinStage,
@@ -293,9 +333,9 @@ export default function JourneyTeaser() {
           onUpdate: (self) => {
             const { total, cumulative } = pathMetricsRef.current;
             const distance = getScrollDistance();
-            const drawn    = visiblePathLength(self.progress, cumulative);
+            const drawn = visiblePathLength(self.progress, cumulative);
             gsap.set(pathEl, { strokeDashoffset: total - drawn });
-            gsap.set(track,  { x: -distance * self.progress });
+            gsap.set(track, { x: -distance * self.progress });
           },
         });
       };
@@ -305,16 +345,27 @@ export default function JourneyTeaser() {
       });
 
       const onResize = () => {
-        syncPathMetrics();
-        ScrollTrigger.refresh();
+        if (resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          setupScroll();
+          ScrollTrigger.refresh(true);
+        }, 120);
+      };
+
+      const onBreakpointChange = () => {
+        setupScroll();
+        ScrollTrigger.refresh(true);
       };
 
       window.addEventListener("resize", onResize);
+      mobileMedia.addEventListener("change", onBreakpointChange);
       ScrollTrigger.addEventListener("refreshInit", syncPathMetrics);
 
       return () => {
         scrollTrigger?.kill();
+        if (resizeTimer) clearTimeout(resizeTimer);
         window.removeEventListener("resize", onResize);
+        mobileMedia.removeEventListener("change", onBreakpointChange);
         ScrollTrigger.removeEventListener("refreshInit", syncPathMetrics);
       };
     },
@@ -324,7 +375,7 @@ export default function JourneyTeaser() {
   return (
     <section
       ref={sectionRef}
-      className="journey-teaser relative isolate w-full overflow-hidden bg-[#F5F0E8] lg:bg-transparent"
+      className="journey-teaser relative isolate w-full max-w-full overflow-x-clip bg-[#F5F0E8] lg:bg-transparent"
       style={{ color: PRIMARY }}
       aria-labelledby="journey-teaser-heading"
     >
@@ -354,20 +405,20 @@ export default function JourneyTeaser() {
             </p>
             <Link
               href="/about/journey"
-              className="group inline-flex shrink-0 items-center gap-2 pt-0.5 text-sm font-semibold transition-colors duration-300 ease-out sm:pt-1"
-              style={{ color: PRIMARY }}
+              className="group inline-flex shrink-0 items-center gap-2.5 rounded-full border-2 px-5 py-2.5 text-sm font-semibold shadow-[0_8px_24px_rgba(27,43,75,0.16)] transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(27,43,75,0.22)] sm:gap-3 sm:px-6 sm:py-3 sm:text-base"
+              style={{
+                borderColor: PRIMARY,
+                backgroundColor: PRIMARY,
+                color: "#FFFFFF",
+              }}
             >
+              <span>Full company journey</span>
               <span
-                className="border-b pb-0.5 transition-[border-color,color] duration-300 ease-out group-hover:border-current"
-                style={{ borderColor: "transparent" }}
-              >
-                Full company journey
-              </span>
-              <span
-                className="inline-block transition-transform duration-300 ease-out group-hover:translate-x-1"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-transform duration-300 ease-out group-hover:translate-x-0.5 sm:h-8 sm:w-8"
+                style={{ backgroundColor: ACCENT, color: PRIMARY }}
                 aria-hidden
               >
-                →
+                <ArrowRight className="h-4 w-4 stroke-[2.25] sm:h-[18px] sm:w-[18px]" />
               </span>
             </Link>
           </div>
@@ -375,21 +426,25 @@ export default function JourneyTeaser() {
       </Container>
 
       {/* ── Pinned horizontal scroll stage ──────────────────────── */}
-      <div ref={pinStageRef} className="journey-teaser__stage relative z-10 w-full">
+      <div
+        ref={pinStageRef}
+        className="journey-teaser__stage relative z-10 w-full max-w-full overflow-x-clip"
+      >
         <div ref={pinRef} className={PIN_VIEWPORT_CLASS}>
           <div
             ref={trackRef}
-            className="relative z-10 flex h-[min(480px,58vh)] items-center will-change-transform sm:h-[min(500px,60vh)]"
+            className="journey-teaser__track relative z-10 flex h-[min(480px,58vh)] items-center will-change-transform sm:h-[min(500px,60vh)]"
             style={{
               gap: COLUMN_GAP,
               paddingLeft: TRACK_PAD_X,
               paddingRight: TRACK_PAD_X,
               width: "max-content",
+              maxWidth: "none",
             }}
           >
             {/* ── Animated SVG spring path ─────────────────────── */}
             <svg
-              className="pointer-events-none absolute inset-0 z-10 h-full w-full overflow-visible"
+              className="pointer-events-none absolute inset-0 z-10 h-full w-full overflow-hidden"
               aria-hidden
             >
               <defs>
@@ -424,8 +479,7 @@ export default function JourneyTeaser() {
               return (
                 <div
                   key={milestone.year}
-                  className="relative shrink-0"
-                  style={{ width: COLUMN_W }}
+                  className="relative w-[min(420px,calc(100vw-3rem))] shrink-0 snap-center"
                 >
                   <div className={CARD_STACK_CLASS}>
                     {/* horizontal centre rule */}
