@@ -29,6 +29,20 @@ const updateSchema = z.object({
   canonicalProductId: z.union([z.string().uuid(), z.null()]).optional(),
 });
 
+function replaceText(value: string | null, from: string | null | undefined, to: string | null | undefined) {
+  const source = from?.trim();
+  const target = to?.trim();
+  if (!value || !source || !target || source === target) return value;
+  return value.split(source).join(target);
+}
+
+function categoryParts(value: string | null | undefined) {
+  return (value ?? "")
+    .split(/›|â€º|>/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
 export async function GET(
   _req: Request,
   ctx: { params: Promise<{ id: string }> }
@@ -148,20 +162,9 @@ export async function PUT(
       .where(eq(productTitlePresets.id, productTitlePresetId))
       .limit(1);
 
-    if (!preset || preset.categoryId !== nextCat) {
+    if (!preset) {
       return NextResponse.json(
-        { error: "Selected title preset does not belong to this category selection." },
-        { status: 400 }
-      );
-    }
-
-    if (!nextSub && preset.subCategoryId) {
-      nextSub = preset.subCategoryId;
-    }
-
-    if (nextSub && preset.subCategoryId && preset.subCategoryId !== nextSub) {
-      return NextResponse.json(
-        { error: "Selected title preset does not belong to this sub-category selection." },
+        { error: "Selected title preset was not found." },
         { status: 400 }
       );
     }
@@ -204,6 +207,7 @@ export async function PUT(
     await db
       .update(productTitlePresets)
       .set({
+        categoryId: nextCat,
         subCategoryId: nextSub,
         title: cleanPresetProductTitle(title),
         sourceLabel: title,
@@ -231,6 +235,7 @@ export async function PUT(
     await db
       .update(productTitlePresets)
       .set({
+        categoryId: nextCat,
         subCategoryId: nextSub,
         title: cleanPresetProductTitle(title),
         sourceLabel: title,
@@ -266,22 +271,41 @@ export async function PUT(
       nextSlug = `${base}-${n}`;
     }
   }
+  const oldCategoryParts = categoryParts(row.category);
+  const newCategoryParts = categoryParts(categoryLabel);
+  const submittedDescription =
+    d.description !== undefined ? d.description : row.description;
+  const description =
+    d.description !== undefined && d.description === row.description
+      ? replaceText(
+          replaceText(
+            replaceText(submittedDescription, row.title, title),
+            oldCategoryParts[0],
+            newCategoryParts[0]
+          ),
+          oldCategoryParts[1],
+          newCategoryParts[1]
+        )
+      : submittedDescription;
   const generatedSeo = generateProductSeo({
     title,
-    categoryName: categoryLabel?.split("›")[0]?.trim() ?? null,
-    subCategoryName: categoryLabel?.split("›")[1]?.trim() ?? null,
-    description:
-      d.description !== undefined ? d.description : row.description,
+    categoryName: newCategoryParts[0] ?? null,
+    subCategoryName: newCategoryParts[1] ?? null,
+    description,
     attributes: nextAttributes,
   });
+  const seoSourceChanged =
+    presetLinkageChanged ||
+    d.description !== undefined ||
+    d.categoryId !== undefined ||
+    d.subCategoryId !== undefined;
 
   const [updated] = await db
     .update(products)
     .set({
       title,
       slug: nextSlug,
-      description:
-        d.description !== undefined ? d.description : row.description,
+      description,
       category: categoryLabel,
       categoryId: nextCat,
       subCategoryId: nextSub,
@@ -292,17 +316,25 @@ export async function PUT(
       published: d.published ?? row.published,
       attributes: nextAttributes,
       seoTitle:
-        d.seoTitle !== undefined ? d.seoTitle || generatedSeo.seoTitle : row.seoTitle,
+        d.seoTitle !== undefined
+          ? d.seoTitle || generatedSeo.seoTitle
+          : seoSourceChanged
+            ? generatedSeo.seoTitle
+            : row.seoTitle,
       seoDescription:
         d.seoDescription !== undefined
           ? d.seoDescription || generatedSeo.seoDescription
-          : row.seoDescription,
+          : seoSourceChanged
+            ? generatedSeo.seoDescription
+            : row.seoDescription,
       searchKeywords:
         d.searchKeywords !== undefined
           ? d.searchKeywords.length
             ? d.searchKeywords
             : generatedSeo.searchKeywords
-          : row.searchKeywords,
+          : seoSourceChanged
+            ? generatedSeo.searchKeywords
+            : row.searchKeywords,
       canonicalProductId:
         d.canonicalProductId !== undefined ? d.canonicalProductId : row.canonicalProductId,
       updatedAt: new Date(),

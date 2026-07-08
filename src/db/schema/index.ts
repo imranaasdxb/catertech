@@ -65,31 +65,6 @@ export const productSubcategories = pgTable(
   (t) => [uniqueIndex("product_subcategories_category_slug_uidx").on(t.categoryId, t.slug)]
 );
 
-/** Per-category (or sub-category) product form field template. */
-export const categoryProductTemplates = pgTable(
-  "category_product_templates",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    categoryId: uuid("category_id")
-      .notNull()
-      .references(() => productCategories.id, { onDelete: "cascade" }),
-    /** Null = category-level template; set = sub-category override. */
-    subCategoryId: uuid("sub_category_id").references(() => productSubcategories.id, {
-      onDelete: "cascade",
-    }),
-    fields: jsonb("fields").$type<TemplateFieldDef[]>().notNull().default([]),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-  },
-  (t) => [
-    uniqueIndex("category_product_templates_cat_sub_uidx").on(t.categoryId, t.subCategoryId),
-  ]
-);
-
 /** Suggested product titles and editable attribute defaults imported from the catalogue. */
 export const productTitlePresets = pgTable(
   "product_title_presets",
@@ -149,7 +124,7 @@ export const products = pgTable(
     isAvailable: boolean("is_available").notNull().default(true),
     isFeatured: boolean("is_featured").notNull().default(false),
     published: boolean("published").notNull().default(false),
-    /** Values for category template fields (dimensions, color, material, etc.). */
+    /** Product specification values such as dimensions, color, and material. */
     attributes: jsonb("attributes")
       .$type<Record<string, ProductAttributeValue>>()
       .notNull()

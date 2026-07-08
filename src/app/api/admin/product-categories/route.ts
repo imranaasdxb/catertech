@@ -9,12 +9,11 @@ import {
   type ProductAttributeValue,
 } from "@/db/schema";
 import {
-  collectCreatedPresetIds,
+  categoryLabelMatches,
 } from "@/lib/product-preset-match";
 import {
   uniqueCategorySlug,
 } from "@/lib/product-taxonomy";
-import { upsertCategoryTemplate, DEFAULT_TEMPLATE_FIELDS } from "@/lib/category-template";
 import { z } from "zod";
 
 const createSchema = z.object({
@@ -48,6 +47,7 @@ export async function GET() {
     db
       .select({
         id: products.id,
+        category: products.category,
         categoryId: products.categoryId,
         title: products.title,
         productTitlePresetId: products.productTitlePresetId,
@@ -73,10 +73,20 @@ export async function GET() {
 
   const productsByCategory = new Map<string, typeof productRows>();
   for (const product of productRows) {
-    if (!product.categoryId) continue;
-    const current = productsByCategory.get(product.categoryId) ?? [];
-    current.push(product);
-    productsByCategory.set(product.categoryId, current);
+    const matchedCategoryIds = new Set<string>();
+    if (product.categoryId) matchedCategoryIds.add(product.categoryId);
+
+    for (const category of cats) {
+      if (categoryLabelMatches(product.category, category.name)) {
+        matchedCategoryIds.add(category.id);
+      }
+    }
+
+    for (const categoryId of matchedCategoryIds) {
+      const current = productsByCategory.get(categoryId) ?? [];
+      current.push(product);
+      productsByCategory.set(categoryId, current);
+    }
   }
 
   const categories = cats.map((c) => {
@@ -93,15 +103,11 @@ export async function GET() {
       attributes: product.attributes as Record<string, ProductAttributeValue>,
       subCategoryId: product.subCategoryId,
     }));
-    const createdPresetIds = collectCreatedPresetIds(
-      categoryProducts,
-      categoryPresets
-    );
     return {
       ...c,
       subcategories: subcategoriesByCategory.get(c.id) ?? [],
       presetCount: categoryPresets.length,
-      createdPresetCount: createdPresetIds.size,
+      createdPresetCount: categoryProducts.length,
     };
   });
 
@@ -132,8 +138,6 @@ export async function POST(request: Request) {
     .insert(productCategories)
     .values({ name, slug })
     .returning();
-
-  await upsertCategoryTemplate(db, row.id, null, DEFAULT_TEMPLATE_FIELDS);
 
   return NextResponse.json(row, { status: 201 });
 }

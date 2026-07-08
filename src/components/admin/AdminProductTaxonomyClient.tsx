@@ -3,13 +3,11 @@
 import { admin, ADMIN_PURPLE } from "@/components/admin/adminTheme";
 import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import { AdminProductPresetsPanel } from "@/components/admin/AdminProductPresetsPanel";
-import { CategoryTemplateEditor } from "@/components/admin/CategoryTemplateEditor";
 import { notifyProductTaxonomyChanged, type TaxonomyRow } from "@/components/admin/ProductCategorySelects";
 import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
-  LayoutTemplate,
   ListTree,
   Loader2,
   PackageSearch,
@@ -72,12 +70,6 @@ export default function AdminProductTaxonomyClient() {
   const [subFilter, setSubFilter] = useState<SubFilter>("all");
   const [page, setPage] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
-  const [templateTarget, setTemplateTarget] = useState<{
-    categoryId: string;
-    subCategoryId?: string | null;
-    categoryName: string;
-    subCategoryName?: string;
-  } | null>(null);
   const [activeView, setActiveView] = useState<MasterView>("presets");
 
   const filteredCategories = useMemo(() => {
@@ -280,15 +272,6 @@ export default function AdminProductTaxonomyClient() {
 
   return (
     <>
-      <CategoryTemplateEditor
-        open={Boolean(templateTarget)}
-        categoryId={templateTarget?.categoryId ?? ""}
-        subCategoryId={templateTarget?.subCategoryId}
-        categoryName={templateTarget?.categoryName ?? ""}
-        subCategoryName={templateTarget?.subCategoryName}
-        onClose={() => setTemplateTarget(null)}
-      />
-
       <AdminConfirmDialog
         open={Boolean(deleteTarget)}
         title="Are you sure?"
@@ -529,19 +512,6 @@ export default function AdminProductTaxonomyClient() {
                             <div className="flex shrink-0 items-center gap-0.5">
                               <button
                                 type="button"
-                                className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-admin-accent hover:bg-admin-accent/10"
-                                onClick={() =>
-                                  setTemplateTarget({
-                                    categoryId: c.id,
-                                    categoryName: c.name,
-                                  })
-                                }
-                              >
-                                <LayoutTemplate className="h-3.5 w-3.5" />
-                                Template
-                              </button>
-                              <button
-                                type="button"
                                 className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-admin-accent hover:bg-admin-accent/10"
                                 disabled={busyCat === c.id}
                                 onClick={() => void renameCategory(c.id, c.name)}
@@ -606,22 +576,6 @@ export default function AdminProductTaxonomyClient() {
                                       {s.name}
                                     </span>
                                     <div className="flex shrink-0 items-center">
-                                      <button
-                                        type="button"
-                                        className="inline-flex h-6 w-6 items-center justify-center rounded text-admin-accent hover:bg-admin-accent/10"
-                                        disabled={busySub === s.id}
-                                        onClick={() =>
-                                          setTemplateTarget({
-                                            categoryId: c.id,
-                                            subCategoryId: s.id,
-                                            categoryName: c.name,
-                                            subCategoryName: s.name,
-                                          })
-                                        }
-                                        title="Template"
-                                      >
-                                        <LayoutTemplate className="h-3 w-3" />
-                                      </button>
                                       <button
                                         type="button"
                                         className="inline-flex h-6 w-6 items-center justify-center rounded text-admin-accent hover:bg-admin-accent/10"

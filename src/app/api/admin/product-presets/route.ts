@@ -10,6 +10,7 @@ import {
 } from "@/db/schema";
 import { cleanPresetProductTitle } from "@/lib/catalog/canonical-catalog";
 import {
+  categoryLabelMatches,
   collectCreatedPresetIds,
   normalizeMatchText,
   resolveProductPresetMatch,
@@ -132,7 +133,20 @@ export async function GET(request: Request) {
   }
 
   const { categoryId, subCategoryId } = parsed.data;
-  const [rows, categoryProducts] = await Promise.all([
+  const [category] = await db
+    .select({ name: productCategories.name })
+    .from(productCategories)
+    .where(eq(productCategories.id, categoryId))
+    .limit(1);
+
+  if (!category) {
+    return NextResponse.json(
+      { presets: [] },
+      { headers: { "Cache-Control": "no-store" } }
+    );
+  }
+
+  const [rows, categoryProductRows] = await Promise.all([
     db
       .select({
         id: productTitlePresets.id,
@@ -155,13 +169,26 @@ export async function GET(request: Request) {
       .select({
         id: products.id,
         title: products.title,
+        category: products.category,
+        categoryId: products.categoryId,
         productTitlePresetId: products.productTitlePresetId,
         attributes: products.attributes,
         subCategoryId: products.subCategoryId,
       })
       .from(products)
-      .where(eq(products.categoryId, categoryId)),
+      .where(
+        or(
+          eq(products.categoryId, categoryId),
+          ilike(products.category, `${category.name}%`)
+        )
+      ),
   ]);
+
+  const categoryProducts = categoryProductRows.filter(
+    (product) =>
+      product.categoryId === categoryId ||
+      categoryLabelMatches(product.category, category.name)
+  );
 
   const productInputs = categoryProducts.map((product) => ({
     title: product.title,

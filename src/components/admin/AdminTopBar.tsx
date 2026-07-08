@@ -9,6 +9,14 @@ import { cn } from "@/lib/utils";
 import { useAdminChrome } from "./AdminChromeContext";
 
 const ACCENT = "#f87941";
+const ADMIN_STATS_CHANGED_EVENT = "admin:stats-changed";
+const STATS_RELATED_API_PREFIXES = [
+  "/api/admin/products",
+  "/api/admin/contacts",
+  "/api/admin/enquiries",
+  "/api/admin/rfq",
+  "/api/admin/quotations",
+];
 
 type Stats = {
   newContacts: number;
@@ -36,6 +44,36 @@ function roleLabel(role: string | undefined): string {
   const r = (role || "").trim().toLowerCase();
   if (r === SUPERADMIN_ROLE) return "Superadmin";
   return "Admin";
+}
+
+function requestPath(input: RequestInfo | URL): string {
+  if (typeof input === "string") {
+    try {
+      return new URL(input, window.location.origin).pathname;
+    } catch {
+      return input;
+    }
+  }
+  if (input instanceof URL) return input.pathname;
+  try {
+    return new URL(input.url, window.location.origin).pathname;
+  } catch {
+    return input.url;
+  }
+}
+
+function requestMethod(input: RequestInfo | URL, init?: RequestInit): string {
+  if (init?.method) return init.method.toUpperCase();
+  if (input instanceof Request) return input.method.toUpperCase();
+  return "GET";
+}
+
+function isStatsRelatedMutation(input: RequestInfo | URL, init?: RequestInit): boolean {
+  const method = requestMethod(input, init);
+  if (method === "GET" || method === "HEAD") return false;
+
+  const path = requestPath(input);
+  return STATS_RELATED_API_PREFIXES.some((prefix) => path.startsWith(prefix));
 }
 
 function HeaderIconButton({
@@ -132,27 +170,39 @@ export function AdminTopBar() {
     const controller = new AbortController();
     refreshStats(controller.signal).catch(() => {});
 
-    const id = window.setInterval(() => {
-      if (document.visibilityState === "visible") {
-        refreshStats().catch(() => {});
-      }
-    }, 5000);
-
-    const onVisible = () => {
-      if (document.visibilityState === "visible") {
-        refreshStats().catch(() => {});
-      }
+    const onStatsChanged = () => {
+      refreshStats().catch(() => {});
     };
 
-    window.addEventListener("focus", onVisible);
-    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener(ADMIN_STATS_CHANGED_EVENT, onStatsChanged);
     return () => {
       controller.abort();
-      window.clearInterval(id);
-      window.removeEventListener("focus", onVisible);
-      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener(ADMIN_STATS_CHANGED_EVENT, onStatsChanged);
     };
   }, [refreshStats]);
+
+  useEffect(() => {
+    const originalFetch = window.fetch.bind(window);
+
+    const statsAwareFetch: typeof window.fetch = async (input, init) => {
+      const shouldRefreshStats = isStatsRelatedMutation(input, init);
+      const response = await originalFetch(input, init);
+
+      if (shouldRefreshStats && response.ok) {
+        window.dispatchEvent(new Event(ADMIN_STATS_CHANGED_EVENT));
+      }
+
+      return response;
+    };
+
+    window.fetch = statsAwareFetch;
+
+    return () => {
+      if (window.fetch === statsAwareFetch) {
+        window.fetch = originalFetch;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {

@@ -36,6 +36,7 @@ const CARD_SUBTITLES: Record<string, string> = {
 };
 
 const WEEK_LABELS = ["W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10"];
+const ADMIN_STATS_CHANGED_EVENT = "admin:stats-changed";
 
 function formatNum(n: number) {
   return n.toLocaleString();
@@ -77,28 +78,13 @@ export function AdminDashboardView(initialMetrics: DashboardMetrics) {
   }, []);
 
   useEffect(() => {
-    const controller = new AbortController();
-    refreshMetrics(controller.signal).catch(() => {});
-
-    const id = window.setInterval(() => {
-      if (document.visibilityState === "visible") {
-        refreshMetrics().catch(() => {});
-      }
-    }, 5000);
-
-    const onVisible = () => {
-      if (document.visibilityState === "visible") {
-        refreshMetrics().catch(() => {});
-      }
+    const onStatsChanged = () => {
+      refreshMetrics().catch(() => {});
     };
 
-    window.addEventListener("focus", onVisible);
-    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener(ADMIN_STATS_CHANGED_EVENT, onStatsChanged);
     return () => {
-      controller.abort();
-      window.clearInterval(id);
-      window.removeEventListener("focus", onVisible);
-      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener(ADMIN_STATS_CHANGED_EVENT, onStatsChanged);
     };
   }, [refreshMetrics]);
 

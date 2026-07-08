@@ -88,6 +88,7 @@ export default function ProductEditClient({
       isFeatured: fd.get("isFeatured") === "on",
       isAvailable: fd.get("isAvailable") === "on",
       attributes: parseProductAttributes(fd, templateFields),
+      productTitlePresetId: product.productTitlePresetId,
     };
 
     setLoading(true);

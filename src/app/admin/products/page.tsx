@@ -11,6 +11,44 @@ type SearchProps = {
   searchParams?: Promise<{ q?: string }> | { q?: string };
 };
 
+const RETRY_DELAYS_MS = [150, 400];
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getErrorText(error: unknown): string {
+  if (!error || typeof error !== "object") return String(error);
+
+  const err = error as { message?: unknown; cause?: unknown };
+  return `${String(err.message ?? "")} ${getErrorText(err.cause)}`;
+}
+
+function isRetryableNeonBusyError(error: unknown) {
+  const text = getErrorText(error);
+  return (
+    text.includes("neon:retryable") ||
+    text.includes("Failed to acquire permit") ||
+    text.includes("Too many database connection attempts")
+  );
+}
+
+async function retryBusyDatabase<T>(query: () => Promise<T>) {
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
+    try {
+      return await query();
+    } catch (error) {
+      if (!isRetryableNeonBusyError(error) || attempt === RETRY_DELAYS_MS.length) {
+        throw error;
+      }
+
+      await wait(RETRY_DELAYS_MS[attempt]);
+    }
+  }
+
+  throw new Error("Database query failed.");
+}
+
 export default async function AdminProductsPage({ searchParams }: SearchProps) {
   const sp = searchParams ? await Promise.resolve(searchParams) : {};
   const rawQ = typeof sp.q === "string" ? sp.q.trim() : "";
@@ -35,7 +73,7 @@ export default async function AdminProductsPage({ searchParams }: SearchProps) {
     images: products.images,
   };
 
-  const [raw, categories] = await Promise.all([
+  const raw = await retryBusyDatabase(() =>
     q
       ? db
           .select(selectFields)
@@ -48,7 +86,10 @@ export default async function AdminProductsPage({ searchParams }: SearchProps) {
             )
           )
           .orderBy(desc(products.updatedAt))
-      : db.select(selectFields).from(products).orderBy(desc(products.updatedAt)),
+      : db.select(selectFields).from(products).orderBy(desc(products.updatedAt))
+  );
+
+  const categories = await retryBusyDatabase(() =>
     db
       .select({
         id: productCategories.id,
@@ -56,8 +97,8 @@ export default async function AdminProductsPage({ searchParams }: SearchProps) {
         slug: productCategories.slug,
       })
       .from(productCategories)
-      .orderBy(asc(productCategories.sortOrder), asc(productCategories.name)),
-  ]);
+      .orderBy(asc(productCategories.sortOrder), asc(productCategories.name))
+  );
 
   const rows = raw.map((r) => ({
     id: r.id,

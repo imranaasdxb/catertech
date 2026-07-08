@@ -2,7 +2,6 @@ import { count, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import {
-  categoryProductTemplates,
   productCategories,
   productSubcategories,
   productTitlePresets,
@@ -11,9 +10,7 @@ import {
 import {
   FURNITURE_PRESETS,
   FURNITURE_SUBCATEGORIES,
-  FURNITURE_TEMPLATE_FIELDS,
 } from "@/lib/catalog/furniture-presets";
-import { upsertCategoryTemplate } from "@/lib/category-template";
 import { uniqueCategorySlug, uniqueSubcategorySlug } from "@/lib/product-taxonomy";
 
 export async function POST() {
@@ -51,13 +48,8 @@ export async function POST() {
 
   await db.delete(productTitlePresets).where(eq(productTitlePresets.categoryId, categoryId));
   await db
-    .delete(categoryProductTemplates)
-    .where(eq(categoryProductTemplates.categoryId, categoryId));
-  await db
     .delete(productSubcategories)
     .where(eq(productSubcategories.categoryId, categoryId));
-
-  await upsertCategoryTemplate(db, categoryId, null, FURNITURE_TEMPLATE_FIELDS);
 
   const subcategoryIds = new Map<string, string>();
   for (let index = 0; index < FURNITURE_SUBCATEGORIES.length; index += 1) {

@@ -23,6 +23,24 @@ export function normalizeMatchText(value: string) {
   return value.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
+export function categoryLabelMatches(
+  categoryLabel: string | null | undefined,
+  categoryName: string
+) {
+  const normalizedLabel = normalizeMatchText(categoryLabel ?? "");
+  const normalizedName = normalizeMatchText(categoryName);
+  if (!normalizedLabel || !normalizedName) return false;
+  if (normalizedLabel === normalizedName) return true;
+  if (!normalizedLabel.startsWith(normalizedName)) return false;
+
+  const suffix = normalizedLabel.slice(normalizedName.length).trimStart();
+  return (
+    suffix.startsWith(">") ||
+    suffix.startsWith("\u203a") ||
+    suffix.startsWith("\u00e2\u20ac\u00ba")
+  );
+}
+
 export function normalizeAttributeValue(value: ProductAttributeValue | undefined) {
   if (!value) return "";
   if (typeof value === "string") return normalizeMatchText(value);

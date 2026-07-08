@@ -64,13 +64,9 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
   const [liveAttributes, setLiveAttributes] = useState<Record<string, ProductAttributeValue>>(
     (product.attributes ?? {}) as Record<string, ProductAttributeValue>
   );
-  const [seoTitleOverride, setSeoTitleOverride] = useState<string | null>(product.seoTitle);
-  const [seoDescriptionOverride, setSeoDescriptionOverride] = useState<string | null>(
-    product.seoDescription
-  );
-  const [searchKeywordsOverride, setSearchKeywordsOverride] = useState<string | null>(
-    product.searchKeywords?.join(", ") ?? null
-  );
+  const [seoTitleOverride, setSeoTitleOverride] = useState<string | null>(null);
+  const [seoDescriptionOverride, setSeoDescriptionOverride] = useState<string | null>(null);
+  const [searchKeywordsOverride, setSearchKeywordsOverride] = useState<string | null>(null);
   const [selectedProductTitlePresetId, setSelectedProductTitlePresetId] = useState<string | null>(
     product.productTitlePresetId
   );

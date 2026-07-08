@@ -1,12 +1,10 @@
-import { eq, inArray, notInArray, or } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import {
-  categoryProductTemplates,
   productCategories,
   productSubcategories,
   productTitlePresets,
-  products,
 } from "@/db/schema";
 import {
   CANONICAL_CATALOGUE,
@@ -17,14 +15,11 @@ import {
 import {
   FURNITURE_PRESETS,
   FURNITURE_SUBCATEGORIES,
-  FURNITURE_TEMPLATE_FIELDS,
 } from "@/lib/catalog/furniture-presets";
 import {
   GLASSWARE_PRESETS,
   GLASSWARE_SUBCATEGORIES,
-  GLASSWARE_TEMPLATE_FIELDS,
 } from "@/lib/catalog/glassware-presets";
-import { upsertCategoryTemplate } from "@/lib/category-template";
 import { uniqueCategorySlug, uniqueSubcategorySlug } from "@/lib/product-taxonomy";
 import { z } from "zod";
 
@@ -65,12 +60,6 @@ export async function POST(request: Request) {
         : config.name === "Glass Ware"
           ? GLASSWARE_PRESETS
           : null;
-    const templateFields =
-      config.name === "Furniture"
-        ? FURNITURE_TEMPLATE_FIELDS
-        : config.name === "Glass Ware"
-          ? GLASSWARE_TEMPLATE_FIELDS
-          : config.fields;
     const subcategoryNames =
       config.name === "Furniture"
         ? [...FURNITURE_SUBCATEGORIES]
@@ -106,30 +95,12 @@ export async function POST(request: Request) {
 
     canonicalCategoryIds.push(categoryId);
 
-    const duplicateAliasIds = existingRows
-      .map((row) => row.id)
-      .filter((id) => id !== categoryId);
-    if (duplicateAliasIds.length) {
-      await db.delete(products).where(inArray(products.categoryId, duplicateAliasIds));
-      await db.delete(productCategories).where(inArray(productCategories.id, duplicateAliasIds));
-    }
-
     if (!sourceLabels && !dedicatedPresets) continue;
-
-    const deletedProducts = await db
-      .delete(products)
-      .where(eq(products.categoryId, categoryId))
-      .returning({ id: products.id });
 
     await db.delete(productTitlePresets).where(eq(productTitlePresets.categoryId, categoryId));
     await db
-      .delete(categoryProductTemplates)
-      .where(eq(categoryProductTemplates.categoryId, categoryId));
-    await db
       .delete(productSubcategories)
       .where(eq(productSubcategories.categoryId, categoryId));
-
-    await upsertCategoryTemplate(db, categoryId, null, templateFields);
 
     const subcategoryIds = new Map<string, string>();
     for (let index = 0; index < subcategoryNames.length; index += 1) {
@@ -169,32 +140,17 @@ export async function POST(request: Request) {
 
     imported.push({
       category: config.name,
-      productsDeleted: deletedProducts.length,
+      productsDeleted: 0,
       presets: rows.length,
       subcategories: subcategoryNames.length,
     });
   }
 
-  const unrelatedCategories = await db
-    .select({ id: productCategories.id })
-    .from(productCategories)
-    .where(notInArray(productCategories.id, canonicalCategoryIds));
-  const unrelatedIds = unrelatedCategories.map((row) => row.id);
-  let unrelatedProductsDeleted = 0;
-  if (unrelatedIds.length) {
-    const deleted = await db
-      .delete(products)
-      .where(inArray(products.categoryId, unrelatedIds))
-      .returning({ id: products.id });
-    unrelatedProductsDeleted = deleted.length;
-    await db.delete(productCategories).where(inArray(productCategories.id, unrelatedIds));
-  }
-
   return NextResponse.json({
     ok: true,
     imported,
-    unrelatedCategoriesDeleted: unrelatedIds.length,
-    unrelatedProductsDeleted,
+    unrelatedCategoriesDeleted: 0,
+    unrelatedProductsDeleted: 0,
     totalCategories: canonicalCategoryIds.length,
   });
 }

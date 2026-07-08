@@ -2,18 +2,14 @@ import { or, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import {
-  categoryProductTemplates,
   productCategories,
   productSubcategories,
   productTitlePresets,
-  products,
 } from "@/db/schema";
 import {
   GLASSWARE_PRESETS,
   GLASSWARE_SUBCATEGORIES,
-  GLASSWARE_TEMPLATE_FIELDS,
 } from "@/lib/catalog/glassware-presets";
-import { upsertCategoryTemplate } from "@/lib/category-template";
 import { uniqueCategorySlug, uniqueSubcategorySlug } from "@/lib/product-taxonomy";
 
 export async function POST() {
@@ -48,20 +44,10 @@ export async function POST() {
       .where(eq(productCategories.id, categoryId));
   }
 
-  const deletedProducts = await db
-    .delete(products)
-    .where(eq(products.categoryId, categoryId))
-    .returning({ id: products.id });
-
   await db.delete(productTitlePresets).where(eq(productTitlePresets.categoryId, categoryId));
-  await db
-    .delete(categoryProductTemplates)
-    .where(eq(categoryProductTemplates.categoryId, categoryId));
   await db
     .delete(productSubcategories)
     .where(eq(productSubcategories.categoryId, categoryId));
-
-  await upsertCategoryTemplate(db, categoryId, null, GLASSWARE_TEMPLATE_FIELDS);
 
   const subcategoryIds = new Map<string, string>();
   for (let index = 0; index < GLASSWARE_SUBCATEGORIES.length; index += 1) {
@@ -88,7 +74,7 @@ export async function POST() {
   return NextResponse.json({
     ok: true,
     categoryId,
-    deletedProducts: deletedProducts.length,
+    deletedProducts: 0,
     subcategories: GLASSWARE_SUBCATEGORIES.length,
     presets: GLASSWARE_PRESETS.length,
   });
