@@ -26,7 +26,7 @@ export const defaultStaggerTestimonials: StaggerTestimonialItem[] = [
   {
     tempId: 1,
     testimonial:
-      "We rely on Catertech for banquet equipment—the range is excellent, service is professional, and they truly understand hospitality operations.",
+      "We rely on Catertech for banquet equipment. The range is excellent, service is professional, and they truly understand hospitality operations.",
     by: "Sarah Mitchell, F&B Manager at Jumeirah Beach Hotel",
     imgSrc:
       "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=320&h=320&fit=crop&crop=faces&q=85",
@@ -42,7 +42,7 @@ export const defaultStaggerTestimonials: StaggerTestimonialItem[] = [
   {
     tempId: 3,
     testimonial:
-      "Their logistics team respects venue timelines—we get clear communication, clean handovers, and equipment that arrives stage-ready.",
+      "Their logistics team respects venue timelines. We get clear communication, clean handovers, and equipment that arrives stage-ready.",
     by: "Omar Hassan, Venue Operations Lead at Madinat Arena",
     imgSrc:
       "https://images.unsplash.com/photo-1566492031773-9277d6d5d6c3?w=320&h=320&fit=crop&crop=faces&q=85",
@@ -155,7 +155,7 @@ const TestimonialCard: FC<TestimonialCardProps> = ({
           isCenter ? "text-white/85" : "text-body-muted",
         )}
       >
-        — {testimonial.by}
+        · {testimonial.by}
       </p>
     </div>
   );

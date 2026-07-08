@@ -1,4 +1,5 @@
 import Container from "@/components/Container";
+import founderPortrait from "@/assets/imam_sir.png";
 import {
   ArrowRight,
   Globe,
@@ -19,7 +20,7 @@ import Link from "next/link";
 const whyItems = [
   {
     title: "Quality that holds up",
-    body: "Well-maintained equipment and food prepared to a standard you'd put your own name on — every booking, every time.",
+    body: "Well-maintained equipment and food prepared to a standard you'd put your own name on, every booking, every time.",
   },
   {
     title: "Built around you",
@@ -31,7 +32,7 @@ const whyItems = [
   },
   {
     title: "Right the first time",
-    body: "We sweat the last-minute details so you don't have to — and we stand behind every event until it's done well.",
+    body: "We sweat the last-minute details so you don't have to, and we stand behind every event until it's done well.",
   },
 ];
 
@@ -75,7 +76,7 @@ const serviceGroups = [
 ];
 
 const stats = [
-  { value: "2016", label: "Serving the UAE since" },
+  { value: "2005", label: "Serving the UAE since" },
   { value: "7", label: "Emirates covered" },
   { value: "10+", label: "Services under one roof" },
   { value: "GCC", label: "Reach across the region" },
@@ -104,7 +105,7 @@ const partners = [
 const faqs = [
   {
     q: "Which areas in the UAE does CaterTech serve?",
-    a: "We serve all seven emirates — Dubai, Abu Dhabi, Sharjah, Ras Al Khaimah, Ajman, Fujairah and Umm Al Quwain — plus Al Ain and clients across the wider GCC and Middle East, all from our base in Ras Al Khor, Dubai.",
+    a: "We serve all seven emirates: Dubai, Abu Dhabi, Sharjah, Ras Al Khaimah, Ajman, Fujairah and Umm Al Quwain, plus Al Ain and clients across the wider GCC and Middle East, all from our base in Ras Al Khor, Dubai.",
   },
   {
     q: "Does CaterTech provide both catering and equipment rental?",
@@ -116,7 +117,7 @@ const faqs = [
   },
   {
     q: "Does CaterTech deliver across the Emirates?",
-    a: "Yes — we run our own delivery and collection fleet, including open trucks with tail-lifts, mini buses and vans, providing competitively priced logistics to events anywhere in the UAE.",
+    a: "Yes. We run our own delivery and collection fleet, including open trucks with tail-lifts, mini buses and vans, providing competitively priced logistics to events anywhere in the UAE.",
   },
 ];
 
@@ -174,7 +175,7 @@ export default function AboutPage() {
             <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-body-muted md:text-lg">
               CaterTech Food Catering Services L.L.C. brings food, professional crew, event
               management and a deep inventory of catering, kitchen and furniture equipment
-              together under one roof — delivering flawless events across Dubai, Abu Dhabi,
+              together under one roof, delivering flawless events across Dubai, Abu Dhabi,
               Sharjah, Ras Al Khaimah and the wider UAE from our base in Ras Al Khor.
             </p>
 
@@ -225,7 +226,7 @@ export default function AboutPage() {
                     className="mt-1 block font-normal italic text-ink"
                     style={{ fontFamily: 'Georgia, "Times New Roman", Times, serif' }}
                   >
-                    a great event shouldn&apos;t need five different suppliers.
+                    a great hospitality operation shouldn&apos;t need five different suppliers.
                   </span>
                 </h2>
 
@@ -240,39 +241,45 @@ export default function AboutPage() {
                 </div>
 
                 <p className="mt-6 text-sm text-body-muted">
-                  CaterTech · Since 2016 · Ras Al Khor, Dubai
+                  CaterTech · Since 2005 · Ras Al Khor, Dubai
                 </p>
               </aside>
 
               {/* right: article body */}
               <div className="min-w-0 lg:pl-2 xl:pl-4">
                 <p className="mb-10 border-l-[3px] border-primary/30 pl-5 text-[1.125rem] font-medium leading-[1.75] text-[#2a2a32] md:text-[1.25rem] md:leading-[1.72]">
-                  So we became all of them — food, crew, equipment and logistics under one
-                  roof for hosts across the UAE.
+                  Founded in 2005, CaterTech began with just 200 chairs and a single rented
+                  van. What started as a small family venture has grown into one of the
+                  region&apos;s trusted names in hospitality equipment and catering solutions,
+                  today operating with a capacity of over 20,000 and a fleet of 40+ owned
+                  logistics vehicles serving hotels, venues, and corporate clients across the
+                  UAE, Qatar, and Oman.
                 </p>
 
                 <div className="text-[17px] leading-[1.85] text-[#3d3d45]">
                   <p className="mb-6">
-                    Catertech Food Catering Services L.L.C. was built to take the friction
-                    out of hosting in the Emirates. From an intimate private dinner in Dubai
-                    to a full corporate banquet in Abu Dhabi or a wedding in Sharjah, our
-                    role is the same — combine genuinely good food, dependable equipment and
-                    a professional team into one seamless catering service, at a price that
-                    makes sense.
+                    So we became all of it, food, crew, equipment and logistics under one
+                    roof for hotels, venues and event teams across the region.
                   </p>
                   <p className="mb-6">
-                    Our management team carries years of hands-on experience across
+                    Over the years, we&apos;ve earned the trust of leading five-star hotel groups
+                    and major venues across Dubai and the wider UAE, not by chasing every
+                    client, but by consistently showing up the way hospitality demands: on
+                    time, done right, no excuses.
+                  </p>
+                  <p className="mb-6">
+                    Our management team carries two decades of hands-on experience across
                     hospitality, catering and event logistics in the Gulf. That depth is why
-                    hoteliers, professional caterers, conference organisers and private hosts
-                    across the UAE trust us not just to supply, but to advise — recommending
-                    the right setup for the room, the guest count and the occasion.
+                    hoteliers, event organisers and F&amp;B teams trust us not just to supply,
+                    but to advise, recommending the right setup for the venue, the guest
+                    count and the occasion.
                   </p>
                   <blockquote className="my-8 border-l-4 border-primary/25 bg-[#faf9f7] py-4 pl-5 pr-4 text-[1.05rem] italic leading-[1.75] text-[#2a2a32]">
-                    Need coloured linen for a theme? A mobile kitchen for an outdoor feast in
-                    Ras Al Khaimah? Open trucks with tail-lifts to move it all? It&apos;s handled.
+                    Need coloured linen for a themed activation? A mobile kitchen for an outdoor
+                    corporate event? Open trucks with tail-lifts to move it all? It&apos;s handled.
                   </blockquote>
                   <p>
-                    And if there&apos;s something you can&apos;t find on our site, call us — we&apos;ll
+                    And if there&apos;s something you can&apos;t find on our site, call us. We&apos;ll
                     source it at no extra cost. You&apos;re always welcome to visit our Ras Al Khor
                     premises in Dubai to see your hire before you commit.
                   </p>
@@ -298,10 +305,10 @@ export default function AboutPage() {
               <div className="relative flex h-full min-h-[380px] flex-col overflow-hidden rounded-3xl border border-[#e8e4df] bg-[#faf9f7] shadow-[0_20px_60px_rgba(20,19,31,0.08)] sm:min-h-[440px] lg:min-h-[620px]">
                 <div className="relative h-full min-h-0 w-full flex-1">
                   <Image
-                    src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=800&q=85"
-                    alt="CaterTech founder"
+                    src={founderPortrait}
+                    alt="Mr. Imamuddin Shaikh, Founder and Managing Director of CaterTech"
                     fill
-                    className="object-cover object-top"
+                    className="object-cover object-center"
                     sizes="(max-width: 1024px) 90vw, 480px"
                   />
                   <div
@@ -311,7 +318,7 @@ export default function AboutPage() {
                 </div>
 
                 <div className="absolute bottom-4 right-4 z-10 rounded-2xl border border-[#e8e4df] bg-white px-4 py-3 shadow-[0_12px_40px_rgba(20,19,31,0.1)]">
-                  <p className="text-xl font-bold tracking-tight text-primary">20+</p>
+                  <p className="text-xl font-bold tracking-tight text-primary">21+</p>
                   <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-body-muted">
                     Years in UAE hospitality
                   </p>
@@ -336,15 +343,17 @@ export default function AboutPage() {
               </h2>
 
               <p className="mt-6 text-base leading-[1.85] text-body-muted">
-                CaterTech was founded on a straightforward idea: hosts in the UAE deserve one
-                reliable partner for food, crew, equipment and logistics — not a patchwork of
-                suppliers. From a small Dubai operation to a full-service catering and events
-                company, our founder has stayed hands-on in every part of the business.
+                CaterTech was founded in 2005 by a family of brothers who started with just 200
+                chairs and one rented van. What began as a small Dubai operation has grown into
+                a full-service catering and events company, today running a capacity of over
+                20,000 and a fleet of 40+ owned logistics vehicles. Mr. Imamuddin Shaikh, Founder
+                &amp; Managing Director, has stayed hands-on in every part of the business since
+                day one.
               </p>
               <p className="mt-4 text-base leading-[1.85] text-body-muted">
-                That same founder-led approach still shapes how we work today — visiting venues,
-                advising on setups, and making sure every event is delivered to a standard we
-                would put our own name on.
+                That same hands-on approach still shapes how we work today, visiting venues,
+                advising on setups, and making sure every event is delivered to a standard
+                we&apos;d put our own name on.
               </p>
 
               <blockquote className="mt-8 flex gap-4 rounded-2xl border border-[#e8e4df] bg-[#faf9f7] p-6">
@@ -354,11 +363,17 @@ export default function AboutPage() {
                   style={{ fontFamily: 'Georgia, "Times New Roman", Times, serif' }}
                 >
                   &ldquo;An event is only as good as the team behind it. We built CaterTech so
-                  clients never have to wonder who is showing up — or whether they will.&rdquo;
+                  clients never have to wonder who is showing up or whether they will.&rdquo;
                 </p>
               </blockquote>
 
               <div className="mt-8 flex flex-wrap gap-8 border-t border-[#e8e4df] pt-8">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-body-muted">
+                    Name
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-ink">Mr. Imamuddin Shaikh</p>
+                </div>
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-body-muted">
                     Role
@@ -369,7 +384,7 @@ export default function AboutPage() {
                   <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-body-muted">
                     Founded
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-ink">2016 · Dubai, UAE</p>
+                  <p className="mt-1 text-sm font-semibold text-ink">2005 · Dubai, UAE</p>
                 </div>
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-body-muted">
@@ -483,7 +498,7 @@ export default function AboutPage() {
               </h2>
               <p className="mt-5 text-base leading-relaxed text-body-muted">
                 From our Ras Al Khor base in Dubai, CaterTech delivers catering, event
-                management and equipment rental to clients in every emirate of the UAE —
+                management and equipment rental to clients in every emirate of the UAE,
                 and supports partners across the wider GCC and Middle East.
               </p>
               <div className="mt-6 flex items-start gap-3 rounded-xl border border-[#e8e4df] bg-[#faf9f7] px-5 py-4">

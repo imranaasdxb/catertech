@@ -162,8 +162,8 @@ export default function TrustBar() {
         <p className="w-full text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-accent-dark">
           Trusted across the UAE &amp; GCC
         </p>
-        <h2 className="mt-3 w-full text-left font-display text-lg font-medium leading-snug tracking-tight text-ink sm:text-xl sm:leading-tight md:text-2xl lg:text-[1.85rem] lg:whitespace-nowrap xl:text-3xl">
-          Numbers that reflect how far venues rely on us.
+        <h2 className="mt-3 w-full text-left font-display text-lg font-medium leading-snug tracking-tight text-ink sm:text-xl sm:leading-tight md:text-2xl lg:text-[1.85rem] xl:text-3xl">
+          Built on years of trust, measured in results
         </h2>
 
         <div className="mt-8 grid w-full grid-cols-2 gap-2 max-sm:mt-auto max-sm:mb-20 sm:mt-10 sm:gap-5 md:gap-6 lg:mt-20 lg:flex lg:flex-nowrap lg:items-stretch lg:justify-between lg:gap-8">

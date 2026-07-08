@@ -29,7 +29,7 @@ export function ContactForm() {
       return;
     }
     setStatus("ok");
-    setMsg("Thank you — we will get back to you shortly.");
+    setMsg("Thank you. We will get back to you shortly.");
     e.currentTarget.reset();
   }
 

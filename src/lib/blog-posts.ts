@@ -41,6 +41,8 @@ type SanityPostResult = Omit<BlogPostPublic, "dateLabel" | "content"> & {
 const DEFAULT_COVER =
   "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=1400&h=800&fit=crop&q=80";
 
+const EXCLUDED_BLOG_SLUGS = new Set(["how-to-plan-a-corporate-event-dubai"]);
+
 function paragraph(...texts: string[]) {
   return texts.map((t) => `<p>${t}</p>`).join("");
 }
@@ -59,22 +61,6 @@ export const STATIC_BLOG_POSTS: BlogPostPublic[] = [
       "UAE event caterers are investing in modular buffet systems, induction holding equipment and durable serveware that travels well between hotel ballrooms, outdoor venues and corporate atriums.",
       "Sustainability is no longer optional for many tenders: compostable platters, refillable beverage stations and energy-efficient combi ovens are appearing on specification sheets across Dubai and Abu Dhabi.",
       "Smart monitoring from probe thermometers linked to holding cabinets to inventory tags on high-rotation GN pans helps teams reduce waste during peak Ramadan and year-end seasons."
-    ),
-  },
-  {
-    slug: "how-to-plan-a-corporate-event-dubai",
-    category: "Corporate",
-    dateLabel: "March 2, 2025",
-    title: "How to Plan a Flawless Corporate Event in Dubai",
-    excerpt:
-      "A practical guide to venue selection, equipment rental, and coordination for corporate events.",
-    coverImage:
-      "https://images.unsplash.com/photo-1511578314322-379afb476865?w=1400&h=800&fit=crop&q=80",
-    coverImageAlt: "Corporate conference and event setup",
-    content: paragraph(
-      "Start with guest flow: registration footprint, coffee-break stations and main-room reset times should drive your equipment list, not the other way around.",
-      "Build a hire schedule that separates delivery, strike and overnight holds. Clarify power, water and access lifts with the venue before confirming chafers, bars or live cooking modules.",
-      "Assign one equipment captain and one F&B lead. Shared checklists for linen, glassware and backup fuel reduce last-minute courier runs on Sheikh Zayed Road."
     ),
   },
   {
@@ -201,12 +187,18 @@ function sortPostsByDate(posts: BlogPostPublic[]) {
   return [...posts].sort((left, right) => parsePostDate(right) - parsePostDate(left));
 }
 
+function filterExcludedPosts(posts: BlogPostPublic[]) {
+  return posts.filter((post) => !EXCLUDED_BLOG_SLUGS.has(post.slug));
+}
+
 function mergeWithStaticPosts(posts: BlogPostPublic[]) {
   const seenSlugs = new Set(posts.map((post) => post.slug));
-  return sortPostsByDate([
-    ...posts,
-    ...STATIC_BLOG_POSTS.filter((post) => !seenSlugs.has(post.slug)),
-  ]);
+  return filterExcludedPosts(
+    sortPostsByDate([
+      ...posts,
+      ...STATIC_BLOG_POSTS.filter((post) => !seenSlugs.has(post.slug)),
+    ]),
+  );
 }
 
 function mergeSlugs(primary: string[], fallback: string[]) {
@@ -216,20 +208,22 @@ function mergeSlugs(primary: string[], fallback: string[]) {
 
 export async function getAllBlogPosts(): Promise<BlogPostPublic[]> {
   const client = getSanityClient();
-  if (!client) return sortPostsByDate([...STATIC_BLOG_POSTS]);
+  if (!client) return filterExcludedPosts(sortPostsByDate([...STATIC_BLOG_POSTS]));
 
   try {
     const rows = await client.fetch<SanityPostResult[]>(allBlogPostsQuery);
     return mergeWithStaticPosts(rows.map(mapSanityPost));
   } catch (error) {
     console.error("[blog-posts] Sanity fetch failed, using static posts:", error);
-    return sortPostsByDate([...STATIC_BLOG_POSTS]);
+    return filterExcludedPosts(sortPostsByDate([...STATIC_BLOG_POSTS]));
   }
 }
 
 export async function getBlogPostBySlug(
   slug: string
 ): Promise<BlogPostPublic | null> {
+  if (EXCLUDED_BLOG_SLUGS.has(slug)) return null;
+
   const client = getSanityClient();
   if (client) {
     try {
@@ -252,7 +246,9 @@ export async function getAllBlogSlugs(): Promise<string[]> {
 
   try {
     const rows = await client.fetch<string[]>(allBlogSlugsQuery);
-    return mergeSlugs(rows.filter(Boolean), staticSlugs);
+    return mergeSlugs(rows.filter(Boolean), staticSlugs).filter(
+      (slug) => !EXCLUDED_BLOG_SLUGS.has(slug),
+    );
   } catch (error) {
     console.error("[blog-posts] Sanity slug fetch failed, using static slugs:", error);
     return staticSlugs;
@@ -278,7 +274,10 @@ export async function getRelatedPosts(
     }
   }
 
-  return STATIC_BLOG_POSTS.filter((p) => p.slug !== slug).slice(0, limit);
+  return filterExcludedPosts(STATIC_BLOG_POSTS.filter((p) => p.slug !== slug)).slice(
+    0,
+    limit,
+  );
 }
 
 export async function getLatestBlogPosts(limit = 4): Promise<BlogPostPublic[]> {

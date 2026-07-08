@@ -103,14 +103,8 @@ export default function HeroSection() {
           <Container className="hero-section__container flex min-h-0 flex-1 flex-col justify-center py-3 sm:py-4 md:py-5 lg:justify-start lg:py-3 xl:justify-center">
             <div className="hero-section__grid grid grid-cols-1 items-center gap-4 sm:gap-5 md:grid-cols-[minmax(0,1fr)_minmax(260px,50%)] md:gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,46%)] lg:items-start lg:gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(480px,50%)] xl:items-center xl:gap-10 2xl:gap-12">
               <div className="hero-section__copy relative z-10 max-w-4xl">
-                <p className="hero-section__eyebrow flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-accent-dark sm:text-[11px]">
-                  <span className="h-px w-8 bg-accent" aria-hidden />
-                  Powering Hospitality Across the UAE
-                </p>
-
-                <h1 className="hero-section__title mt-2.5 font-display text-[clamp(1.65rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-tight text-ink md:mt-3">
-                  Powering Hospitality
-                  <span className="block">for a New Era in the UAE</span>
+                <h1 className="hero-section__title font-display text-[clamp(1.65rem,5vw,3rem)] font-extrabold leading-[1.05] tracking-tight text-ink">
+                  Powering Hospitality Across the Region
                 </h1>
 
                 <p className="hero-section__lead mt-3 max-w-md text-[13px] leading-relaxed text-body-muted sm:text-sm">

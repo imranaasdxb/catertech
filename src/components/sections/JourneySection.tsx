@@ -200,7 +200,7 @@ export default function JourneySection({
               From bold ideas to performance-driven partnerships
             </h2>
             <p className="mt-6 max-w-md text-[17px] leading-relaxed text-[#6b7280]">
-              A scroll through the milestones that shaped Catertech — from a single Dubai
+              A scroll through the milestones that shaped Catertech, from a single Dubai
               warehouse to trusted equipment, events and kitchen supply across the UAE.
             </p>
             <BrandCtaWithIcon
@@ -243,7 +243,7 @@ export default function JourneySection({
             From bold ideas to performance-driven partnerships
           </h2>
           <p className="mt-5 max-w-lg text-base leading-relaxed text-[#6b7280]">
-            The milestones that shaped Catertech — from one Dubai warehouse to a UAE-wide
+            The milestones that shaped Catertech, from one Dubai warehouse to a UAE-wide
             partner.
           </p>
           <BrandCtaWithIcon href={ctaHref} className="mt-8">

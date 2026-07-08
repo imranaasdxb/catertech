@@ -19,7 +19,7 @@ const syne = Syne({
 });
 
 export const metadata: Metadata = {
-  title: "Catertech — Premium Catering & Event Equipment Dubai",
+  title: "Catertech | Premium Catering & Event Equipment Dubai",
   description:
     "Dubai's trusted partner for catering equipment, event equipment rental, and kitchen equipment since 2005. Serving hotels, venues & events across UAE.",
   keywords: "catering equipment Dubai, event equipment rental, kitchen equipment UAE, Catertech",

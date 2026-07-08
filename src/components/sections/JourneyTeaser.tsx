@@ -50,7 +50,7 @@ const MILESTONES = [
     year: "2010",
     title: "Events Division",
     description:
-      "Event rentals joined the offer — tables, chairs, linen, staging and decor with disciplined delivery for corporate and wedding teams.",
+      "Event rentals joined the offer: tables, chairs, linen, staging and decor with disciplined delivery for corporate and wedding teams.",
     image:
       "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?w=900&h=640&fit=crop&q=80",
     alt: "Grand banquet and event setup",
@@ -59,7 +59,7 @@ const MILESTONES = [
     year: "2015",
     title: "Kitchen Equipment",
     description:
-      "Commercial kitchen lines for restaurants, hotel back-of-house and institutional clients — ovens, refrigeration and prep systems.",
+      "Commercial kitchen lines for restaurants, hotel back-of-house and institutional clients: ovens, refrigeration and prep systems.",
     image:
       "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=900&h=640&fit=crop&q=80",
     alt: "Professional commercial kitchen",
@@ -77,7 +77,7 @@ const MILESTONES = [
     year: "2024",
     title: "Full-Service Partner",
     description:
-      "End-to-end support for 500+ clients — catering hire, kitchen supply, event management and digital quoting across the UAE.",
+      "End-to-end support for 500+ clients: catering hire, kitchen supply, event management and digital quoting across the UAE.",
     image:
       "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=900&h=640&fit=crop&q=80",
     alt: "Large-scale corporate event",

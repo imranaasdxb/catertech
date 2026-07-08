@@ -8,6 +8,12 @@ import { Marquee } from "@/components/ui/marquee";
 import servicesDesktop from "@/assets/servicesdesktop.png";
 import servicesTablet from "@/assets/servicestablet.png";
 import servicesMobile from "@/assets/servicesmobile.png";
+import service1Image from "@/assets/service1.png";
+import service2Image from "@/assets/service2.png";
+import service3Image from "@/assets/service3.png";
+import service4Image from "@/assets/service4.png";
+import service5Image from "@/assets/service5.png";
+import type { StaticImageData } from "next/image";
 
 const marqueeData = [
   "What chafing dish capacity do I need for a 300-guest buffet?",
@@ -24,13 +30,18 @@ const marqueeData = [
   "Can I mix purchase and rental in one order?",
 ];
 
-const features = [
+const features: {
+  description: string;
+  icon: typeof Package;
+  image: string | StaticImageData;
+  title: string;
+  href: string;
+}[] = [
   {
     description:
-      "From chafing dishes to banquet seating — one trade desk for procurement, rental and logistics across the UAE.",
+      "From chafing dishes to banquet seating, one trade desk for procurement, rental and logistics across the UAE.",
     icon: Package,
-    image:
-      "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=85",
+    image: service1Image,
     title: "Full-range supply",
     href: "/services/catering-equipment",
   },
@@ -38,8 +49,7 @@ const features = [
     description:
       "Hotel-grade equipment, pre-commissioned kitchen units and white-glove delivery so your service day runs smoothly.",
     icon: Sparkles,
-    image:
-      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&q=85",
+    image: service2Image,
     title: "Built for hospitality",
     href: "/services/kitchen-equipment",
   },
@@ -47,17 +57,15 @@ const features = [
     description:
       "Same-week delivery, venue setup and post-event collection handled by our in-house logistics team.",
     icon: Truck,
-    image:
-      "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&q=85",
+    image: service3Image,
     title: "Logistics you can trust",
     href: "/services/event-rental",
   },
   {
     description:
-      "End-to-end coordination — styling, equipment, on-site management and wrap-up for corporate and private events.",
+      "End-to-end coordination: styling, equipment, on-site management and wrap-up for corporate and private events.",
     icon: Layers,
-    image:
-      "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=800&q=85",
+    image: service4Image,
     title: "Event management",
     href: "/services/event-management",
   },
@@ -65,8 +73,7 @@ const features = [
     description:
       "Volume pricing, formal quotations and dedicated account support for hotels, venues and F&B teams.",
     icon: Handshake,
-    image:
-      "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=85",
+    image: service5Image,
     title: "Trade & corporate",
     href: "/trade",
   },
@@ -160,9 +167,9 @@ export default function VercepFeaturesDemo() {
             Everything your venue needs, in one place
           </h2>
           <p className="max-w-xl text-base text-body-muted md:text-lg">
-            Whether you are scaling a hotel kitchen, dressing a wedding venue or stocking a
-            high-volume buffet, Catertech filters the complexity  so you get the right equipment,
-            on time, across Dubai and the UAE.
+            Whether you&apos;re scaling a hotel kitchen, styling an event, or managing trade
+            procurement for a portfolio of venues, Catertech simplifies the process, the right
+            equipment, delivered on time, backed by a team that understands hospitality.
           </p>
 
           <div className="relative mx-auto max-w-4xl overflow-hidden">

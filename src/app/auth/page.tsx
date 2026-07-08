@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import AuthPageClient from "./AuthPageClient";
 
 export const metadata = {
-  title: "Team access — Catertech",
+  title: "Team access | Catertech",
   description: "Log in or request access to the Catertech team portal.",
 };
 

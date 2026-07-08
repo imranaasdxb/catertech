@@ -38,7 +38,7 @@ function CartIconLink({
     <Link
       href="/cart"
       className={`relative inline-flex items-center justify-center text-ink/75 transition-colors duration-200 hover:text-ink ${className}`}
-      aria-label={`Cart — ${totalItems} item${totalItems !== 1 ? "s" : ""}`}
+      aria-label={`Cart, ${totalItems} item${totalItems !== 1 ? "s" : ""}`}
     >
       <ShoppingBasket className="size-7 lg:size-8" strokeWidth={1.65} aria-hidden />
       {showBadge ? (

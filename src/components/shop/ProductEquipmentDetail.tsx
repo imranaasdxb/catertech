@@ -685,7 +685,7 @@ export default function ProductEquipmentDetail({
                 <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
               </svg>
               <span className="text-[12px] text-sand font-semibold tracking-wide">
-                Pricing available on quote — request yours below
+                Pricing available on quote. Request yours below
               </span>
             </div>
 
@@ -828,7 +828,7 @@ export default function ProductEquipmentDetail({
                 <span className="font-semibold text-charcoal">
                   {CHAIR_RENTAL_STOCK.toLocaleString()} chairs
                 </span>{" "}
-                available for rent — type your required quantity in the box above or use + / −.
+                available for rent. Type your required quantity in the box above or use + / −.
               </p>
             ) : null}
 
@@ -890,10 +890,10 @@ export default function ProductEquipmentDetail({
           >
             <div className="mb-4 px-1">
               <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-sand mb-1">
-                This product — sizes & finishes
+                This product: sizes & finishes
               </p>
               <p className="text-[13px] text-muted leading-snug max-w-3xl">
-                Scrolls automatically — hover to pause. Tap a card to update the selectors above before you add to
+                Scrolls automatically. Hover to pause. Tap a card to update the selectors above before you add to
                 quote.
               </p>
             </div>

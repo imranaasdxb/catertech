@@ -17,7 +17,7 @@ export const defaultTestimonialsMarquee: TestimonialMarqueeItem[] = [
       "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&h=200&fit=crop&crop=faces&q=85",
   },
   {
-    text: "We rely on Catertech for banquet equipment—the range is excellent, service is professional, and they truly understand hospitality operations.",
+    text: "We rely on Catertech for banquet equipment. The range is excellent, service is professional, and they truly understand hospitality operations.",
     name: "Sarah Mitchell",
     role: "F&B Manager, Jumeirah Beach Hotel",
     image:
@@ -31,7 +31,7 @@ export const defaultTestimonialsMarquee: TestimonialMarqueeItem[] = [
       "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=faces&q=85",
   },
   {
-    text: "Their logistics team respects venue timelines—we get clear communication, clean handovers, and equipment that arrives stage-ready.",
+    text: "Their logistics team respects venue timelines. We get clear communication, clean handovers, and equipment that arrives stage-ready.",
     name: "Omar Hassan",
     role: "Venue Operations Lead, Madinat Arena",
     image:

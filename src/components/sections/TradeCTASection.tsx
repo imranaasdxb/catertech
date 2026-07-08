@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 
 const PERKS = [
-  { value: "4 hrs", label: "Enquiry response time", icon: Clock },
+  { value: "2-4 hrs", label: "Enquiry response time", icon: Clock },
   { value: "All UAE", label: "Delivery coverage", icon: Truck },
   { value: "No minimum", label: "Order requirement", icon: Award },
   { value: "Flexible", label: "Payment terms for trade", icon: CreditCard },
@@ -146,7 +146,7 @@ export default function TradeCTASection() {
                   strokeWidth={1.5}
                 />
                 <p className="font-display text-sm font-medium leading-snug text-primary sm:text-base md:text-lg">
-                  Supplying hotels, venues &amp; F&amp;B brands across the UAE.
+                  Supplying hotels, venues &amp; F&amp;B brands at scale.
                 </p>
               </div>
 

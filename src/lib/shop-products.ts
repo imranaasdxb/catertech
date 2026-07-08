@@ -32,7 +32,7 @@ export type ProductSize = {
 };
 
 export type ShopProductDetail = ShopProductCard & {
-  /** Storefront slug — set for live catalogue products */
+  /** Storefront slug, set for live catalogue products */
   slug?: string;
   shortDescription: string;
   longDescription: string;
@@ -137,7 +137,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 4,
-    name: "Beverage Urn — 30L",
+    name: "Beverage Urn, 30L",
     category: "Catering",
     familyId: "beverage-service",
     price: "AED 190",
@@ -147,7 +147,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 5,
-    name: "Chiavari Chair — Gold",
+    name: "Chiavari Chair, Gold",
     category: "Events",
     familyId: "seating-chiavari",
     price: "AED 25 / day",
@@ -167,7 +167,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 7,
-    name: "Serving Tray Set — 5pc",
+    name: "Serving Tray Set, 5pc",
     category: "Catering",
     familyId: "serveware-trays",
     price: "AED 120",
@@ -187,7 +187,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 13,
-    name: "Heavy-Duty Blender 2 L — Sound Enclosure",
+    name: "Heavy-Duty Blender 2 L, Sound Enclosure",
     category: "Kitchen",
     familyId: "blend-heavy",
     cardSubtitle: "2 L jug · tamper · NSF-rated jar",
@@ -231,7 +231,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 17,
-    name: "Espresso Machine — Two Group",
+    name: "Espresso Machine, Two Group",
     category: "Catering",
     familyId: "espresso-2grp",
     cardSubtitle: "Rotary pump · volumetric dosing",
@@ -242,7 +242,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 18,
-    name: "Undercounter Ice Maker — 120 kg",
+    name: "Undercounter Ice Maker, 120 kg",
     category: "Kitchen",
     familyId: "ice-uc120",
     cardSubtitle: "Half-dice · air-cooled · drain pump optional",
@@ -264,7 +264,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 20,
-    name: "Twin Tank Deep Fat Fryer — 2 × 8 L",
+    name: "Twin Tank Deep Fat Fryer, 2 × 8 L",
     category: "Kitchen",
     familyId: "fryer-twin",
     cardSubtitle: "Millivolt safety · basket timers",
@@ -286,7 +286,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 22,
-    name: "Planetary Mixer — 20 qt",
+    name: "Planetary Mixer, 20 qt",
     category: "Kitchen",
     familyId: "mixer-20qt",
     cardSubtitle: "Guard interlock · hook & whip incl.",
@@ -297,7 +297,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 23,
-    name: "Stainless Prep Table — 180 × 60 cm",
+    name: "Stainless Prep Table, 180 × 60 cm",
     category: "Kitchen",
     familyId: "prep-18060",
     cardSubtitle: "Undershelf · backsplash · leveling feet",
@@ -308,7 +308,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 24,
-    name: "Gas Range — Six Burner + Oven",
+    name: "Gas Range, Six Burner + Oven",
     category: "Kitchen",
     familyId: "range-6burn",
     cardSubtitle: "Cast iron grates · convection base",
@@ -319,7 +319,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 25,
-    name: "Portable LED Service Bar — Fold Flat",
+    name: "Portable LED Service Bar, Fold Flat",
     category: "Events",
     familyId: "bar-led-fold",
     cardSubtitle: "Branding panels · cable ports · lock casters",
@@ -330,7 +330,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 26,
-    name: "Pipe & Drape Kit — Black Velvet",
+    name: "Pipe & Drape Kit, Black Velvet",
     category: "Events",
     familyId: "pipe-drape-k",
     cardSubtitle: "3 m uprights · crossbars · base plates",
@@ -341,7 +341,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 27,
-    name: "Modular Dance Floor — Oak Finish",
+    name: "Modular Dance Floor, Oak Finish",
     category: "Events",
     familyId: "floor-mod-oak",
     cardSubtitle: "Clip-lock tiles · ramp edging incl.",
@@ -352,7 +352,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 28,
-    name: "Stretch Tent — 15 × 10 m White",
+    name: "Stretch Tent, 15 × 10 m White",
     category: "Events",
     familyId: "tent-stretch",
     cardSubtitle: "Wind-rated rig · sidewalls optional",
@@ -363,7 +363,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 29,
-    name: "Moving Head Beam — Pair Flight Case",
+    name: "Moving Head Beam, Pair Flight Case",
     category: "Events",
     familyId: "beam-pair",
     cardSubtitle: "DMX · prism · frost inserts",
@@ -374,7 +374,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 30,
-    name: "Banquet Linens — Round Ivory Pack",
+    name: "Banquet Linens, Round Ivory Pack",
     category: "Events",
     familyId: "linens-ivory",
     cardSubtitle: "fits 180 cm rounds · pressed fold",
@@ -385,7 +385,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 31,
-    name: "Stemware Crate — Champagne Flutes ×120",
+    name: "Stemware Crate, Champagne Flutes ×120",
     category: "Catering",
     familyId: "stemware-flute",
     cardSubtitle: "machine-polished · compartment trays",
@@ -396,7 +396,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 32,
-    name: "Cross-Back Dining Chair — Walnut",
+    name: "Cross-Back Dining Chair, Walnut",
     category: "Events",
     familyId: "chair-crossback",
     cardSubtitle: "stack 8 · felt pad feet",
@@ -407,7 +407,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 33,
-    name: "Utility Bus Cart — Three Shelf SS",
+    name: "Utility Bus Cart, Three Shelf SS",
     category: "Catering",
     familyId: "cart-bus-ss",
     cardSubtitle: "300 kg rated · bumper wrap",
@@ -418,7 +418,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 34,
-    name: "Combi Steam Oven — 6 GN",
+    name: "Combi Steam Oven, 6 GN",
     category: "Kitchen",
     familyId: "combi-6gn",
     cardSubtitle: "Touch controls · automated cleaning",
@@ -429,7 +429,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 35,
-    name: "Salamander Grill — Quartz Elements",
+    name: "Salamander Grill, Quartz Elements",
     category: "Kitchen",
     familyId: "salamander-q",
     cardSubtitle: "Pass-through gantry · minute timer",
@@ -440,7 +440,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 36,
-    name: "Hot Holding Cabinet — 16 Tray",
+    name: "Hot Holding Cabinet, 16 Tray",
     category: "Catering",
     familyId: "hold-cab16",
     cardSubtitle: "Humidity drawer · banquet castors",
@@ -462,7 +462,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
   {
     id: 38,
-    name: "Banquet Plate Warmer Cabinet — 120 pc",
+    name: "Banquet Plate Warmer Cabinet, 120 pc",
     category: "Catering",
     familyId: "plate-warmer120",
     cardSubtitle: "Sliding racks · insulated door",
@@ -473,7 +473,7 @@ export const SHOP_PRODUCT_CARDS: ShopProductCard[] = [
   },
 ];
 
-/** Sidebar checkbox lists per catalogue tab — strings must match `equipmentFilters` on products */
+/** Sidebar checkbox lists per catalogue tab, strings must match `equipmentFilters` on products */
 export const FEATURED_EQUIPMENT_OPTIONS_BY_TAB: Record<
   "Catering" | "Events" | "Kitchen",
   readonly string[]
@@ -553,7 +553,7 @@ export function getFeaturedSidebarEquipmentFilters(
 export const PRODUCT_FAMILY_META: Record<string, { title: string; blurb: string }> = {
   "crockery-plates": {
     title: "This crockery collection",
-    blurb: "Different diameters and profiles — open any tile to set quantity, finish, then add to your quote basket.",
+    blurb: "Different diameters and profiles. Open any tile to set quantity, finish, then add to your quote basket.",
   },
   "buffet-chafing": {
     title: "Buffet warming line",
@@ -598,7 +598,7 @@ export function getFamilyMeta(familyId: string) {
   );
 }
 
-/** Same `familyId` as current product — Netflix-style collection strip */
+/** Same `familyId` as current product, Netflix-style collection strip */
 export function getCollectionSiblings(productId: number, familyId: string): ShopProductCard[] {
   return SHOP_PRODUCT_CARDS.filter((p) => p.familyId === familyId && p.id !== productId);
 }
@@ -617,7 +617,7 @@ export function getCrossSellProducts(productId: number, category: string, family
 const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = {
   1: {
     shortDescription:
-      "Mirror-finish stainless set with tempered glass lids and fuel holders—built for banquet lines, buffets and high-volume catering.",
+      "Mirror-finish stainless set with tempered glass lids and fuel holders,built for banquet lines, buffets and high-volume catering.",
     longDescription:
       "Engineered for even heat retention and effortless service, this chafing set pairs stackable frames with deep food pans so you can run a clean, consistent buffet line all evening. Polished pans wipe down quickly between services.",
     compareAtPrice: "AED 320",
@@ -636,7 +636,7 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
       { id: "round7", label: "Round 7 qt" },
     ],
     packaging: "Each set is carton-packed with protective corner inserts and pan separators. Frames ship flat; quick tool-free assembly on site.",
-    shipping: "Available for UAE delivery and venue drop-off. Express slots for event dates subject to fleet availability—confirm at checkout enquiry.",
+    shipping: "Available for UAE delivery and venue drop-off. Express slots for event dates subject to fleet availability,confirm at checkout enquiry.",
     specs: {
       height: 'Full stack: 17" seated',
       width: '9.5" per unit (fourth pan add-on)',
@@ -655,14 +655,14 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
         name: "Marcus Reid",
         date: "03 Feb 2026",
         rating: 4.8,
-        text: "We ordered twelve sets for a corporate gala. Fuel trays aligned perfectly—no rattling during transport.",
+        text: "We ordered twelve sets for a corporate gala. Fuel trays aligned perfectly,no rattling during transport.",
         initial: "M",
       },
     ],
   },
   2: {
     shortDescription:
-      'Heavy-duty blow-molded top with steel folding legs—light to move, steady when locked, ideal for indoor and covered outdoor setups.',
+      'Heavy-duty blow-molded top with steel folding legs,light to move, steady when locked, ideal for indoor and covered outdoor setups.',
     longDescription:
       "Banquet-tested folding mechanism with reinforced hinges. Seats linens and full place settings without flex. Ships with non-marring feet to protect ballroom floors.",
     compareAtPrice: "AED 175 / day",
@@ -700,7 +700,7 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
   },
   3: {
     shortDescription:
-      "Dual-fan convection with intuitive digital controls—consistent browning for pastries, poultry and banquet prep at scale.",
+      "Dual-fan convection with intuitive digital controls,consistent browning for pastries, poultry and banquet prep at scale.",
     longDescription:
       "AISI 304 interior, cool-touch glass and programmable routines for busy expo kitchens. Energy-efficient recuperation cycles help manage peak-load bills.",
     compareAtPrice: "AED 4,650",
@@ -737,7 +737,7 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
   },
   4: {
     shortDescription:
-      "Brushed stainless urn with ergonomic tap and drip tray—steady pour for receptions, gala coffee and concierge stations.",
+      "Brushed stainless urn with ergonomic tap and drip tray,steady pour for receptions, gala coffee and concierge stations.",
     longDescription:
       "Integrated sight glass, concealed element, and insulated body keep beverages hot without scorching bases. Concealed cord channel keeps lines tidy.",
     rating: 4.7,
@@ -753,7 +753,7 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
       { id: "50l", label: "50 L" },
     ],
     packaging: "Double-boxed drum with locking lid strap.",
-    shipping: "Compatible with courier or venue staging—mention floor access for weight.",
+    shipping: "Compatible with courier or venue staging,mention floor access for weight.",
     specs: {
       height: '26" total height',
       width: '16" Ø base',
@@ -765,14 +765,14 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
         name: "Priya N.",
         date: "02 Mar 2026",
         rating: 4.7,
-        text: "Ran two units back-to-back for a product launch—no dribble after the second refill.",
+        text: "Ran two units back-to-back for a product launch,no dribble after the second refill.",
         initial: "P",
       },
     ],
   },
   5: {
     shortDescription:
-      "Chiavari profile with plush cushion optional—classic ballroom silhouette photographed beautifully under warm lighting.",
+      "Chiavari profile with plush cushion optional,classic ballroom silhouette photographed beautifully under warm lighting.",
     longDescription:
       "Structural resin core with metallic finish layering resists scratching during transport carts. Stacks 10 high on compatible dollies.",
     compareAtPrice: "AED 30 / day",
@@ -802,7 +802,7 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
         name: "Danielle K.",
         date: "19 Feb 2026",
         rating: 4.9,
-        text: "Photographer-friendly finish—no hotspots under LED uplighting.",
+        text: "Photographer-friendly finish,no hotspots under LED uplighting.",
         initial: "D",
       },
       {
@@ -816,7 +816,7 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
   },
   6: {
     shortDescription:
-      "Forced-air cooling with digital thermostat—perfect for satellite bars and back-of-house prep islands.",
+      "Forced-air cooling with digital thermostat,perfect for satellite bars and back-of-house prep islands.",
     longDescription:
       "Ventilated front grille, reversible door and LED interior simplify tight galley installs. Energy label tuned for UAE climate loads.",
     compareAtPrice: "AED 3,050",
@@ -846,14 +846,14 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
         name: "Ronan Malik",
         date: "30 Mar 2026",
         rating: 4.8,
-        text: "Held 2 °C variance through service—quiet enough for guest-facing counters.",
+        text: "Held 2 °C variance through service,quiet enough for guest-facing counters.",
         initial: "R",
       },
     ],
   },
   7: {
     shortDescription:
-      "Five mirrored trays with anti-slip silicone feet—staging canapés, desserts and banquet displays elegantly.",
+      "Five mirrored trays with anti-slip silicone feet,staging canapés, desserts and banquet displays elegantly.",
     longDescription:
       "Brushed underside hides fingerprints during carry. Edges softly rolled so linens glide without snagging threads.",
     rating: 4.6,
@@ -881,14 +881,14 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
         name: "Elena Torres",
         date: "06 Apr 2026",
         rating: 4.6,
-        text: "Gorgeous mirror polish—reflection read clean in venue photography.",
+        text: "Gorgeous mirror polish,reflection read clean in venue photography.",
         initial: "E",
       },
     ],
   },
   8: {
     shortDescription:
-      "Tour-grade LED riser tiles with diffusion lens—rapid stage builds for launches, gala reveals and experiential sets.",
+      "Tour-grade LED riser tiles with diffusion lens,rapid stage builds for launches, gala reveals and experiential sets.",
     longDescription:
       "Modular interconnect, cable spine channels and quick-lock edging reduce install time without sacrificing safety inspection compliance.",
     compareAtPrice: "AED 520 / day",
@@ -918,14 +918,14 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
         name: "JP Audio House",
         date: "22 Feb 2026",
         rating: 4.9,
-        text: "Power harnessing snapped in straight—no hotspots after a 36-hour expo build.",
+        text: "Power harnessing snapped in straight,no hotspots after a 36-hour expo build.",
         initial: "J",
       },
     ],
   },
   9: {
     shortDescription:
-      "Bright coupe profile stacks cleanly on banquet carts — dishwasher-safe glaze suited to high-turn catered mains.",
+      "Bright coupe profile stacks cleanly on banquet carts, dishwasher-safe glaze suited to high-turn catered mains.",
     longDescription:
       "Fired porcelain with reinforced rim resists chips during rack washing. Matte underside reduces tabletop scratching while the coupe well keeps sauces centred for elegant plating.",
     rating: 4.8,
@@ -946,7 +946,7 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
       { id: "10", label: '10" coupe' },
     ],
     packaging: "12 pcs per sleeve; export carton 48 pcs with divider grids.",
-    shipping: "Compact parcels — combine with other crockery SKUs on one skid.",
+    shipping: "Compact parcels, combine with other crockery SKUs on one skid.",
     specs: {
       height: '1.1" coupe depth',
       width: '12" Ø face',
@@ -958,14 +958,14 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
         name: "Amira K.",
         date: "02 Apr 2026",
         rating: 4.9,
-        text: "Held plating temps through buffet photography — coupe rim photographed beautifully.",
+        text: "Held plating temps through buffet photography, coupe rim photographed beautifully.",
         initial: "A",
       },
     ],
   },
   10: {
     shortDescription:
-      "Traditional rolled rim dinner plate — sturdy stack height for airline catering and ballroom resets.",
+      "Traditional rolled rim dinner plate, sturdy stack height for airline catering and ballroom resets.",
     longDescription:
       "Balanced weight distribution avoids tipping on oval chargers. Compatible with induction warmers via spacer discs.",
     rating: 4.7,
@@ -984,7 +984,7 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
       { id: "9", label: '9" rim plate' },
     ],
     packaging: "Foam disk separators every 10 pcs.",
-    shipping: "Pallet MOQ-friendly — consolidates with bowls below.",
+    shipping: "Pallet MOQ-friendly, consolidates with bowls below.",
     specs: {
       height: '0.95" rim rise',
       width: '10.25" Ø',
@@ -1003,7 +1003,7 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
   },
   11: {
     shortDescription:
-      "Compact bread & butter plate — pairs with coupe mains for formal five-course layouts.",
+      "Compact bread & butter plate, pairs with coupe mains for formal five-course layouts.",
     longDescription:
       "Microwave tolerant for butter melts during VIP tastings. Feather-light for tray-pass programs.",
     rating: 4.8,
@@ -1038,7 +1038,7 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
   },
   12: {
     shortDescription:
-      "Deep coupe bowl for pasta, salads and dessert compositions — elevated gallery lip reduces spill during tray carry.",
+      "Deep coupe bowl for pasta, salads and dessert compositions, elevated gallery lip reduces spill during tray carry.",
     longDescription:
       "Thermal shock resistant between blast chill and hot pass. Designed for spoon-forward plating styles.",
     rating: 4.9,
@@ -1069,7 +1069,7 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
         name: "Chef Rahul",
         date: "27 Apr 2026",
         rating: 4.9,
-        text: "Deep enough for ramen tastings without splash — glaze cleans fast.",
+        text: "Deep enough for ramen tastings without splash, glaze cleans fast.",
         initial: "R",
       },
     ],
@@ -1078,9 +1078,9 @@ const DETAILS: Record<number, Omit<ShopProductDetail, keyof ShopProductCard>> = 
 
 function defaultShopDetail(card: ShopProductCard): Omit<ShopProductDetail, keyof ShopProductCard> {
   return {
-    shortDescription: `${card.name} — commercial-grade equipment for ${card.category.toLowerCase()} programmes. Final specs ship with your CaterTech quotation.`,
+    shortDescription: `${card.name}, commercial-grade equipment for ${card.category.toLowerCase()} programmes. Final specs ship with your CaterTech quotation.`,
     longDescription:
-      "Imagery is representative of hospitality-grade inventory we rotate across UAE venues. Availability, finishes and bundled services are confirmed after RFQ review — mention venue access and timeline when you submit your basket.",
+      "Imagery is representative of hospitality-grade inventory we rotate across UAE venues. Availability, finishes and bundled services are confirmed after RFQ review. Mention venue access and timeline when you submit your basket.",
     rating: 4.75,
     reviewCountLabel: "Quote-ready SKU",
     colors: [
@@ -1093,7 +1093,7 @@ function defaultShopDetail(card: ShopProductCard): Omit<ShopProductDetail, keyof
     ],
     packaging: "QC-checked prior to warehouse dispatch or venue staging.",
     shipping:
-      "UAE-wide delivery and installation slots subject to survey — include dock height and floor loads in your enquiry.",
+      "UAE-wide delivery and installation slots subject to survey. Include dock height and floor loads in your enquiry.",
     specs: {
       height: "Datasheet issued with quotation",
       width: "Datasheet issued with quotation",
@@ -1105,7 +1105,7 @@ function defaultShopDetail(card: ShopProductCard): Omit<ShopProductDetail, keyof
         name: "Venue Ops Team",
         date: "Apr 2026",
         rating: 5,
-        text: "Responsive quoting — staging matched our PO timeline.",
+        text: "Responsive quoting. Staging matched our PO timeline.",
         initial: "V",
       },
     ],

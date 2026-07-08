@@ -37,7 +37,7 @@ export const SERVICES_LIST: ServiceData[] = [
     description:
       "Banquet tables, Chiavari chairs, linen, staging and AV for corporate galas, weddings and private functions across the UAE.",
     longDescription:
-      "Our event rental fleet includes over 5,000 individual items available for daily or weekly hire. White-glove delivery and collection included. Our logistics team handles setup for larger events — just tell us the venue and we handle the rest.",
+      "Our event rental fleet includes over 5,000 individual items available for daily or weekly hire. White-glove delivery and collection included. Our logistics team handles setup for larger events. Just tell us the venue and we handle the rest.",
     image:
       "https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=1200&q=80",
     includes: [
