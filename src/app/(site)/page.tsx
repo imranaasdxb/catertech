@@ -6,7 +6,6 @@ import TradeCTASection from "@/components/sections/TradeCTASection";
 
 import JourneySection from "@/components/sections/JourneySection";
 import TestimonialsSection from "@/components/sections/TestimonialsSection";
-import DeseriPartner from "@/components/sections/DeseriPartner";
 import BlogPreview from "@/components/sections/BlogPreview";
 import JourneyTeaser from "@/components/sections/JourneyTeaser";
 
@@ -23,7 +22,6 @@ export default function Home() {
       <JourneyTeaser />
       {/* <JourneySection /> */}
       <TestimonialsSection />
-      <DeseriPartner />
       <BlogPreview />
     </>
   );

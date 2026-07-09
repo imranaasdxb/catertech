@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FEATURED_PRODUCTS_SECTION_ID } from "@/lib/connect-us-sections";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -652,7 +653,10 @@ export default function FeaturedProductsClient({
   }
 
   return (
-    <section className={`bg-offwhite pb-24 ${compactTop ? "pt-0" : "pt-24"}`}>
+    <section
+      id={FEATURED_PRODUCTS_SECTION_ID}
+      className={`bg-offwhite pb-24 ${compactTop ? "pt-0" : "pt-24"}`}
+    >
       <Container>
         <div
           className={`min-w-0 ${isShopCatalogue ? "p-3 sm:p-5 md:p-8 lg:p-10" : "p-5 md:p-8 lg:p-10"}`}

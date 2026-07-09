@@ -14,6 +14,7 @@ import service3Image from "@/assets/service3.png";
 import service4Image from "@/assets/service4.png";
 import service5Image from "@/assets/service5.png";
 import type { StaticImageData } from "next/image";
+import { SERVICES_FEATURES_SECTION_ID } from "@/lib/connect-us-sections";
 
 const marqueeData = [
   "What chafing dish capacity do I need for a 300-guest buffet?",
@@ -35,7 +36,7 @@ const features: {
   icon: typeof Package;
   image: string | StaticImageData;
   title: string;
-  href: string;
+  href?: string;
 }[] = [
   {
     description:
@@ -51,7 +52,6 @@ const features: {
     icon: Sparkles,
     image: service2Image,
     title: "Built for hospitality",
-    href: "/services/kitchen-equipment",
   },
   {
     description:
@@ -83,12 +83,16 @@ type FeatureItem = (typeof features)[number];
 
 function ServiceFeatureCard({ feature }: { feature: FeatureItem }) {
   const Icon = feature.icon;
+  const isStatic = !feature.href;
 
-  return (
-    <Link
-      href={feature.href}
-      className="service-feature-card group flex h-full w-[calc(50vw-1.375rem)] max-w-[280px] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.10),0_2px_8px_rgba(0,0,0,0.06)] transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(0,0,0,0.12),0_4px_12px_rgba(0,0,0,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a1a2e]/15 min-[420px]:w-[calc(50vw-1.5rem)] md:w-[calc(33.333vw-1.35rem)] xl:w-full xl:max-w-[280px] xl:shrink xl:snap-align-none"
-    >
+  const cardClass =
+    "service-feature-card group flex h-full w-[calc(50vw-1.375rem)] max-w-[280px] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-[rgba(0,0,0,0.08)] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.10),0_2px_8px_rgba(0,0,0,0.06)] transition-[box-shadow,transform] duration-300 min-[420px]:w-[calc(50vw-1.5rem)] md:w-[calc(33.333vw-1.35rem)] xl:w-full xl:max-w-[280px] xl:shrink xl:snap-align-none " +
+    (isStatic
+      ? "cursor-default"
+      : "hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(0,0,0,0.12),0_4px_12px_rgba(0,0,0,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a1a2e]/15");
+
+  const content = (
+    <>
       <div className="flex flex-1 flex-col items-center px-6 pt-7 text-center">
         <Icon
           size={32}
@@ -122,6 +126,16 @@ function ServiceFeatureCard({ feature }: { feature: FeatureItem }) {
           aria-hidden
         />
       </div>
+    </>
+  );
+
+  if (!feature.href) {
+    return <div className={cardClass}>{content}</div>;
+  }
+
+  return (
+    <Link href={feature.href} className={cardClass}>
+      {content}
     </Link>
   );
 }
@@ -133,7 +147,10 @@ export default function VercepFeaturesDemo() {
   const m3 = marqueeData.slice(third * 2);
 
   return (
-    <section className="relative overflow-hidden bg-[#f5f4f0] pt-16 pb-16 sm:pt-28 sm:pb-28">
+    <section
+      id={SERVICES_FEATURES_SECTION_ID}
+      className="relative overflow-hidden bg-[#f5f4f0] pt-16 pb-16 sm:pt-28 sm:pb-28"
+    >
       <div className="pointer-events-none absolute inset-0 min-h-full w-full">
         <Image
           src={servicesMobile}

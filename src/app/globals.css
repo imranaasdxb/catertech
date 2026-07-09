@@ -1179,6 +1179,10 @@ h3 {
   border-radius: 3px;
 }
 
+.connect-us-tab .connect-us-tab__pill:active {
+  transform: none;
+}
+
 @theme inline {
   --animate-marquee: marquee var(--duration) infinite linear;
   --animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;

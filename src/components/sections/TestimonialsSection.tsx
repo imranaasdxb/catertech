@@ -1,9 +1,13 @@
 import Container from "@/components/Container";
 import TestimonialsMarquee from "@/components/ui/testimonials-marquee";
+import { TESTIMONIALS_SECTION_ID } from "@/lib/connect-us-sections";
 
 export default function TestimonialsSection() {
   return (
-    <section className="overflow-hidden border-t border-primary-soft/80 bg-[#f4f6f9] py-16 md:py-20">
+    <section
+      id={TESTIMONIALS_SECTION_ID}
+      className="overflow-hidden border-t border-primary-soft/80 bg-[#f4f6f9] py-16 md:py-20"
+    >
       <Container>
         <div className="mx-auto mb-10 max-w-3xl text-center md:mb-12">
           <div className="mb-3 inline-block rounded-full border border-border bg-white px-4 py-1">
