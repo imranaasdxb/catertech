@@ -1179,6 +1179,15 @@ h3 {
   transform: none;
 }
 
+.quote-basket-tab .quote-basket-tab__pill:active {
+  transform: none;
+}
+
+.quote-basket-tab:hover .quote-basket-tab__label,
+.quote-basket-tab .btn-brand:hover .quote-basket-tab__label {
+  color: #c9a84c;
+}
+
 @theme inline {
   --animate-marquee: marquee var(--duration) infinite linear;
   --animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;

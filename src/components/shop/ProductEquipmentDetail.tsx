@@ -18,47 +18,6 @@ import { useCart } from "@/lib/cart-context";
 
 type AccordionKey = "description";
 
-/* ─── Star Rating ──────────────────────────────────────────────────── */
-function StarRating({
-  rating,
-  size = "md",
-}: {
-  rating: number;
-  size?: "sm" | "md" | "lg";
-}) {
-  const full = Math.floor(rating);
-  const partial = rating - full >= 0.5;
-  const px = size === "sm" ? 12 : size === "lg" ? 20 : 15;
-  const stars = Array.from({ length: 5 }, (_, i) => {
-    if (i < full) return "full";
-    if (i === full && partial) return "half";
-    return "empty";
-  });
-  return (
-    <span className="inline-flex items-center gap-0.5" aria-label={`${rating} out of 5`}>
-      {stars.map((type, i) => (
-        <svg key={i} width={px} height={px} viewBox="0 0 24 24">
-          {type === "full" ? (
-            <path fill="#c21722" d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 5 2-7L2 9h7l3-7z" />
-          ) : type === "half" ? (
-            <>
-              <defs>
-                <linearGradient id={`h${i}`} x1="0" x2="1" y1="0" y2="0">
-                  <stop offset="50%" stopColor="#c21722" />
-                  <stop offset="50%" stopColor="#dee2e6" />
-                </linearGradient>
-              </defs>
-              <path fill={`url(#h${i})`} d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 5 2-7L2 9h7l3-7z" />
-            </>
-          ) : (
-            <path fill="#dee2e6" d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 5 2-7L2 9h7l3-7z" />
-          )}
-        </svg>
-      ))}
-    </span>
-  );
-}
-
 /* ─── Trust Pill ───────────────────────────────────────────────────── */
 function TrustItem({
   icon,
@@ -381,6 +340,22 @@ export default function ProductEquipmentDetail({
   const [openSection, setOpenSection] = useState<AccordionKey>("description");
   const [cartAdded, setCartAdded] = useState(false);
 
+  const dimensionSpecRows = useMemo(
+    () =>
+      (product.specs.dimensionRows ?? []).filter(
+        (row) => row.label.trim() && row.value.trim(),
+      ),
+    [product.specs.dimensionRows],
+  );
+  const detailSpecRows = useMemo(
+    () =>
+      (product.specs.detailRows ?? []).filter(
+        (row) => row.label.trim() && row.value.trim(),
+      ),
+    [product.specs.detailRows],
+  );
+  const hasSpecCards = dimensionSpecRows.length > 0 || detailSpecRows.length > 0;
+
   useEffect(() => {
     setActiveSlug(productSlug || initialProduct.slug || "");
   }, [productSlug, initialProduct.slug]);
@@ -655,24 +630,9 @@ export default function ProductEquipmentDetail({
             </div>
 
             {/* Title */}
-            <h1 className="font-serif text-[1.9rem] sm:text-[2.25rem] leading-[1.1] tracking-[-0.02em] text-navy mb-4">
+            <h1 className="font-serif text-[1.9rem] sm:text-[2.25rem] leading-[1.1] tracking-[-0.02em] text-navy mb-5">
               {product.name}
             </h1>
-
-            {/* Rating */}
-            <div className="flex flex-wrap items-center gap-2.5 mb-5">
-              <StarRating rating={product.rating} />
-              <span className="text-sm font-bold text-charcoal tabular-nums">
-                {product.rating.toFixed(1)}
-              </span>
-              <span className="h-4 w-px bg-border" />
-              <a
-                href="#reviews"
-                className="text-[12px] text-muted hover:text-sand underline underline-offset-4 decoration-border transition-colors"
-              >
-                {product.reviewCountLabel}
-              </a>
-            </div>
 
             {/* Short description */}
             <p className="text-[14px] leading-[1.8] text-muted pb-6 border-b border-border mb-6">
@@ -976,51 +936,54 @@ export default function ProductEquipmentDetail({
                     {key === "description" && (
                       <div className="space-y-7">
                         <p>{product.longDescription}</p>
-                        {/* Specs cards */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="rounded-xl border border-border bg-offwhite p-5">
-                            <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-sand mb-4">
-                              Dimensions & Capacity
-                            </p>
-                            <div className="space-y-3">
-                              {(product.specs.dimensionRows ?? [
-                                { label: "Height", value: product.specs.height },
-                                { label: "Width", value: product.specs.width },
-                              ]).map((row, index, rows) => (
-                                <div key={`${row.label}-${row.value}`}>
-                                  <div className="flex items-start justify-between gap-4">
-                                    <span className="text-[12px] text-muted">{row.label}</span>
-                                    <span className="text-[12px] font-semibold text-charcoal text-right max-w-[64%] leading-snug">
-                                      {row.value}
-                                    </span>
-                                  </div>
-                                  {index < rows.length - 1 ? <div className="mt-3 h-px bg-border" /> : null}
+                        {hasSpecCards ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {dimensionSpecRows.length > 0 ? (
+                              <div className="rounded-xl border border-border bg-offwhite p-5">
+                                <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-sand mb-4">
+                                  Dimensions & Capacity
+                                </p>
+                                <div className="space-y-3">
+                                  {dimensionSpecRows.map((row, index, rows) => (
+                                    <div key={`${row.label}-${row.value}`}>
+                                      <div className="flex items-start justify-between gap-4">
+                                        <span className="text-[12px] text-muted">{row.label}</span>
+                                        <span className="text-[12px] font-semibold text-charcoal text-right max-w-[64%] leading-snug">
+                                          {row.value}
+                                        </span>
+                                      </div>
+                                      {index < rows.length - 1 ? (
+                                        <div className="mt-3 h-px bg-border" />
+                                      ) : null}
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
-                          </div>
-                          <div className="rounded-xl border border-border bg-offwhite p-5">
-                            <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-sand mb-4">
-                              Product Details
-                            </p>
-                            <div className="space-y-3">
-                              {(product.specs.detailRows ?? [
-                                { label: "Material", value: product.specs.materialLine1 },
-                                { label: "Specification", value: product.specs.materialLine2 },
-                              ]).map((row, index, rows) => (
-                                <div key={`${row.label}-${row.value}`}>
-                                  <div className="flex items-start justify-between gap-4">
-                                    <span className="text-[12px] text-muted">{row.label}</span>
-                                    <span className="text-[12px] font-semibold text-charcoal text-right max-w-[64%] leading-snug">
-                                      {row.value}
-                                    </span>
-                                  </div>
-                                  {index < rows.length - 1 ? <div className="mt-3 h-px bg-border" /> : null}
+                              </div>
+                            ) : null}
+                            {detailSpecRows.length > 0 ? (
+                              <div className="rounded-xl border border-border bg-offwhite p-5">
+                                <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-sand mb-4">
+                                  Product Details
+                                </p>
+                                <div className="space-y-3">
+                                  {detailSpecRows.map((row, index, rows) => (
+                                    <div key={`${row.label}-${row.value}`}>
+                                      <div className="flex items-start justify-between gap-4">
+                                        <span className="text-[12px] text-muted">{row.label}</span>
+                                        <span className="text-[12px] font-semibold text-charcoal text-right max-w-[64%] leading-snug">
+                                          {row.value}
+                                        </span>
+                                      </div>
+                                      {index < rows.length - 1 ? (
+                                        <div className="mt-3 h-px bg-border" />
+                                      ) : null}
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
+                              </div>
+                            ) : null}
                           </div>
-                        </div>
+                        ) : null}
                       </div>
                     )}
                   </div>
@@ -1029,58 +992,6 @@ export default function ProductEquipmentDetail({
             );
           })}
         </div>
-
-        {/* ── Reviews ─────────────────────────────────────────────────── */}
-        <section id="reviews" className="mt-20">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5 mb-10">
-            <div>
-              <p className="text-[10px] font-bold tracking-[0.25em] uppercase text-sand mb-2">
-                Verified Reviews
-              </p>
-              <h2 className="font-serif text-2xl md:text-3xl text-navy tracking-tight">
-                What Our Clients Say
-              </h2>
-            </div>
-            <div className="flex items-center gap-5">
-              <div className="text-right">
-                <div className="text-4xl font-bold text-navy tabular-nums leading-none mb-1">
-                  {product.rating.toFixed(1)}
-                </div>
-                <StarRating rating={product.rating} />
-                <p className="text-[11px] text-muted mt-1">{product.reviewCountLabel}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {product.reviews.map((r, i) => (
-              <article
-                key={`${r.name}-${i}`}
-                className="group bg-white rounded-2xl border border-border p-6 hover:border-sand/30 hover:shadow-[0_4px_24px_rgba(196,162,101,0.1)] transition-all duration-300"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  {/* Avatar */}
-                  <div
-                    className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
-                    style={{
-                      background: "linear-gradient(135deg, #c21722 0%, #322b81 100%)",
-                    }}
-                  >
-                    {r.initial}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-sm text-charcoal truncate">{r.name}</p>
-                    <p className="text-[11px] text-muted mt-0.5">{r.date}</p>
-                  </div>
-                  <StarRating rating={Math.min(5, r.rating)} size="sm" />
-                </div>
-                <p className="text-[13px] leading-relaxed text-muted">
-                  &ldquo;{r.text}&rdquo;
-                </p>
-              </article>
-            ))}
-          </div>
-        </section>
 
         {collectionSiblings.length > 0 ? (
           <section className="mt-16 pt-12 border-t border-border">

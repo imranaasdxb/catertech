@@ -408,7 +408,7 @@ function CartItemCard({
           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-soft text-xs font-bold tabular-nums text-primary">
             {String(index + 1).padStart(2, "0")}
           </span>
-          <div className="relative h-24 w-24 overflow-hidden rounded-2xl bg-[#f5f2ee] sm:h-28 sm:w-28">
+          <div className="relative h-24 w-24 overflow-hidden rounded-2xl border border-[#e5e7eb] bg-[#FEFEFE] sm:h-28 sm:w-28">
             {item.image ? (
               <Image
                 src={item.image}

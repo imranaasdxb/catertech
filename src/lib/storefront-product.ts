@@ -82,10 +82,6 @@ function normalizeSpecLabel(label: string) {
   return label.toLowerCase().replace(/[^a-z0-9]+/g, "");
 }
 
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
 function pushUniqueSpecRow(rows: SpecRow[], seen: Set<string>, row: SpecRow) {
   const label = row.label.trim();
   const value = row.value.replace(/\s+/g, " ").trim();
@@ -98,11 +94,21 @@ function pushUniqueSpecRow(rows: SpecRow[], seen: Set<string>, row: SpecRow) {
   rows.push({ label, value });
 }
 
+function isSpecAttributeKey(key: string) {
+  const normalized = normalizeSpecLabel(humanizeAttributeKey(key));
+  return KNOWN_SPEC_LABELS.some((label) => {
+    const known = normalizeSpecLabel(label);
+    return normalized === known || normalized.includes(known) || known.includes(normalized);
+  });
+}
+
 function extractAttributeSpecRows(attributes: Record<string, ProductAttributeValue>) {
   const rows: SpecRow[] = [];
   const seen = new Set<string>();
 
   for (const [key, rawValue] of Object.entries(attributes ?? {})) {
+    if (!isSpecAttributeKey(key)) continue;
+
     const value = formatAttributeValue(rawValue);
     pushUniqueSpecRow(rows, seen, {
       label: humanizeAttributeKey(key),
@@ -113,78 +119,13 @@ function extractAttributeSpecRows(attributes: Record<string, ProductAttributeVal
   return rows;
 }
 
-function extractTextSpecRows(text: string, seen: Set<string>) {
-  const rows: SpecRow[] = [];
-  const segments = text
-    .replace(/\s+/g, " ")
-    .split(/[,;|\n]+/)
-    .map((segment) => segment.trim())
-    .filter(Boolean);
-
-  for (const segment of segments) {
-    let foundKnownLabel = false;
-
-    for (const label of KNOWN_SPEC_LABELS) {
-      const pattern = new RegExp(
-        `(?:^|[^a-z0-9])(${escapeRegExp(label)})\\s*[-:]\\s*([^,;|]+)`,
-        "i",
-      );
-      const match = segment.match(pattern);
-      if (!match) continue;
-
-      foundKnownLabel = true;
-      pushUniqueSpecRow(rows, seen, {
-        label: humanizeAttributeKey(match[1]),
-        value: match[2],
-      });
-    }
-
-    if (foundKnownLabel) continue;
-
-    const genericMatch = segment.match(/^([A-Za-z][A-Za-z0-9 /&().]{1,36})\s*[-:]\s*(.{1,90})$/);
-    if (!genericMatch || /[-:]/.test(genericMatch[2])) continue;
-
-    pushUniqueSpecRow(rows, seen, {
-      label: genericMatch[1],
-      value: genericMatch[2],
-    });
-  }
-
-  return rows;
+function buildProductSpecRows(product: DbProductRow) {
+  return extractAttributeSpecRows(product.attributes);
 }
 
-function buildProductSpecRows(product: DbProductRow, description: string) {
-  const rows = extractAttributeSpecRows(product.attributes);
-  const seen = new Set(rows.map((row) => normalizeSpecLabel(row.label)));
-
-  for (const row of extractTextSpecRows(product.title, seen)) {
-    rows.push(row);
-  }
-
-  for (const row of extractTextSpecRows(description, seen)) {
-    rows.push(row);
-  }
-
-  return rows;
-}
-
-function splitSpecRows(rows: SpecRow[], shortDescription: string) {
+function splitSpecRows(rows: SpecRow[]) {
   const dimensionRows = rows.filter((row) => DIMENSION_LABEL_PATTERN.test(row.label));
   const detailRows = rows.filter((row) => !DIMENSION_LABEL_PATTERN.test(row.label));
-
-  if (!dimensionRows.length) {
-    dimensionRows.push({
-      label: "Specification",
-      value: shortDescription || "Final specification confirmed with quotation",
-    });
-  }
-
-  if (!detailRows.length) {
-    detailRows.push({
-      label: "Commercial use",
-      value: "Final material and finish confirmed with quotation",
-    });
-  }
 
   return { dimensionRows, detailRows };
 }
@@ -213,23 +154,14 @@ export function toProductDetail(product: DbProductRow): ShopProductDetail {
   const description = plainText(product.description);
   const shortDescription =
     description || "Product details available on request.";
-  const specRows = buildProductSpecRows(product, description);
-  const { dimensionRows, detailRows } = splitSpecRows(specRows, shortDescription);
-  const height =
-    dimensionRows.find((row) => /height/i.test(row.label))?.value ??
-    dimensionRows[0]?.value ??
-    "Final specification confirmed with quotation";
-  const width =
-    dimensionRows.find((row) => /width/i.test(row.label))?.value ??
-    dimensionRows.find((row) => row.value !== height)?.value ??
-    dimensionRows[0]?.value ??
-    "Final specification confirmed with quotation";
+  const specRows = buildProductSpecRows(product);
+  const { dimensionRows, detailRows } = splitSpecRows(specRows);
+  const height = dimensionRows.find((row) => /height/i.test(row.label))?.value ?? "";
+  const width = dimensionRows.find((row) => /width/i.test(row.label))?.value ?? "";
   const material =
-    detailRows.find((row) => /material|finish|color|colour/i.test(row.label)) ??
-    detailRows[0];
+    detailRows.find((row) => /material|finish|color|colour/i.test(row.label)) ?? null;
   const secondaryDetail =
-    detailRows.find((row) => row.label !== material?.label) ??
-    detailRows[0];
+    detailRows.find((row) => row.label !== material?.label) ?? null;
 
   return {
     id: numericIdFromSlug(product.slug),
@@ -253,10 +185,10 @@ export function toProductDetail(product: DbProductRow): ShopProductDetail {
     specs: {
       height,
       width,
-      materialLine1: material ? `${material.label}: ${material.value}` : "Commercial hospitality specification",
+      materialLine1: material ? `${material.label}: ${material.value}` : "",
       materialLine2: secondaryDetail
         ? `${secondaryDetail.label}: ${secondaryDetail.value}`
-        : "Final specification confirmed with quotation",
+        : "",
       dimensionRows,
       detailRows,
     },
