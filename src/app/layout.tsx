@@ -1,21 +1,14 @@
 import type { Metadata } from "next";
-import { DM_Sans, Syne } from "next/font/google";
+import { Nunito } from "next/font/google";
 import type { ReactNode } from "react";
 import "./globals.css";
 import ClientProviders from "@/components/layout/ClientProviders";
 
-const dmSans = DM_Sans({
+const nunito = Nunito({
   subsets: ["latin"],
-  variable: "--font-dm-sans",
-  weight: ["400", "500", "600", "700"],
+  variable: "--font-nunito",
   display: "swap",
-});
-
-const syne = Syne({
-  subsets: ["latin"],
-  variable: "--font-syne",
-  weight: ["600", "700", "800"],
-  display: "swap",
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
@@ -31,8 +24,8 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${dmSans.variable} ${syne.variable} font-sans antialiased`}>
+    <html lang="en" className={nunito.variable}>
+      <body className="font-sans antialiased">
         <ClientProviders>{children}</ClientProviders>
       </body>
     </html>

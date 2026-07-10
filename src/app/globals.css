@@ -42,9 +42,9 @@
   --color-navy: #1b2b4b;
   --color-charcoal: #1b2b4b;
 
-  --font-display: var(--font-syne);
-  --font-serif: var(--font-syne);
-  --font-sans: var(--font-dm-sans);
+  --font-display: var(--font-nunito);
+  --font-serif: var(--font-nunito);
+  --font-sans: var(--font-nunito);
 
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
@@ -87,7 +87,8 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-sans), "Nunito", sans-serif;
+  font-optical-sizing: auto;
   font-size: 15px;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
@@ -98,7 +99,7 @@ h1,
 h2,
 h3,
 h4 {
-  font-family: var(--font-display), var(--font-serif), sans-serif;
+  font-family: var(--font-display), "Nunito", sans-serif;
   line-height: 1.2;
   letter-spacing: -0.01em;
   color: var(--color-ink);
