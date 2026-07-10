@@ -36,7 +36,7 @@ export default function ContactPage() {
 
             <p className="mt-5 max-w-md text-base leading-relaxed text-body-muted md:text-lg">
               Relax, we are ready to support hotels, caterers, and event teams across
-              the UAE.
+              the UAE. Submit the form and our team will respond within 10 minutes.
             </p>
 
             <div className="mt-8 flex justify-center lg:justify-start">

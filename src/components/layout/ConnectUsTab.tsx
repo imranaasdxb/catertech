@@ -7,18 +7,31 @@ import { CONNECT_US_TRIGGER_SECTION_IDS } from "@/lib/connect-us-sections";
 
 export { SERVICES_FEATURES_SECTION_ID } from "@/lib/connect-us-sections";
 
-function isSectionInView(section: HTMLElement) {
-  const rect = section.getBoundingClientRect();
-  const viewportHeight = window.innerHeight;
-  const focusLine = rect.top + rect.height * 0.32;
+function getActivationLine() {
+  if (typeof window === "undefined") return 118;
 
-  return focusLine >= viewportHeight * 0.18 && focusLine <= viewportHeight * 0.72;
+  const headerHeight = getComputedStyle(document.documentElement).getPropertyValue(
+    "--header-height",
+  );
+  const parsed = Number.parseFloat(headerHeight);
+  return Number.isFinite(parsed) ? parsed : 118;
 }
 
-function isAnyTriggerSectionInView() {
+function isSectionActive(section: HTMLElement) {
+  const rect = section.getBoundingClientRect();
+  const topLine = getActivationLine();
+
+  // Show once the section top reaches the header line, keep until the whole section scrolls past it.
+  const hasReachedTop = rect.top <= topLine;
+  const notFullyScrolledPast = rect.bottom > topLine;
+
+  return hasReachedTop && notFullyScrolledPast;
+}
+
+function isAnyTriggerSectionActive() {
   return CONNECT_US_TRIGGER_SECTION_IDS.some((id) => {
     const section = document.getElementById(id);
-    return section ? isSectionInView(section) : false;
+    return section ? isSectionActive(section) : false;
   });
 }
 
@@ -46,7 +59,7 @@ export default function ConnectUsTab() {
         return;
       }
 
-      setVisible(isAnyTriggerSectionInView());
+      setVisible(isAnyTriggerSectionActive());
     };
 
     const onScrollOrResize = () => {

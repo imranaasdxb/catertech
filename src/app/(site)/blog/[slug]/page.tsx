@@ -7,7 +7,10 @@ import {
   getRelatedPosts,
 } from "@/lib/blog-posts";
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 export const revalidate = 60;
 
@@ -26,8 +29,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function PublicBlogPostPage({ params }: Props) {
-  const { slug } = await params;
+export default async function PublicBlogPostPage({ params, searchParams }: Props) {
+  const [{ slug }] = await Promise.all([params, searchParams]);
   const post = await getBlogPostBySlug(slug);
 
   if (!post) notFound();

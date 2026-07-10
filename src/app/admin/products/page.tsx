@@ -8,7 +8,7 @@ import { getDb } from "@/db";
 import { productCategories, products } from "@/db/schema";
 
 type SearchProps = {
-  searchParams?: Promise<{ q?: string }> | { q?: string };
+  searchParams: Promise<{ q?: string }>;
 };
 
 const RETRY_DELAYS_MS = [150, 400];
@@ -50,7 +50,7 @@ async function retryBusyDatabase<T>(query: () => Promise<T>) {
 }
 
 export default async function AdminProductsPage({ searchParams }: SearchProps) {
-  const sp = searchParams ? await Promise.resolve(searchParams) : {};
+  const sp = await searchParams;
   const rawQ = typeof sp.q === "string" ? sp.q.trim() : "";
   const q = rawQ.slice(0, 120);
 

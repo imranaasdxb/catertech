@@ -51,7 +51,7 @@ export default function EnquiryPage() {
               </span>
             </h1>
             <p className="mt-5 max-w-md text-base leading-relaxed text-body-muted md:text-lg">
-              Share the basics and our team will respond within four business hours.
+              Share the basics and our team will respond within 10 minutes.
             </p>
 
             <div className="mt-8 space-y-5">

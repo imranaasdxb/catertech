@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image, { type StaticImageData } from "next/image";
 import Link from "next/link";
 import { Fragment } from "react";
 import { ArrowRight, BadgeCheck, Globe2, Handshake, Truck } from "lucide-react";
@@ -8,6 +8,23 @@ import HeroShopCategories from "@/components/sections/HeroShopCategories";
 import heroDesktop from "@/assets/heroplane4.png";
 import heroTablet from "@/assets/herotablet2.png";
 import heroMobile from "@/assets/heromobile2.png";
+import abuDhabiNationalHotels from "@/assets/clientslogo/Abu Dhabi National Hotels.jpg";
+import aasLogo from "@/assets/clientslogo/aaslogo.png";
+import alHabibiLogo from "@/assets/clientslogo/alhabibilogo.png";
+import armLogo from "@/assets/clientslogo/arm.png";
+import dubaiWorldTradeCentre from "@/assets/clientslogo/Dubai World Trade Centre.jpg";
+import emiratesFlightCatering from "@/assets/clientslogo/Emirates_Flight_Catering_logo.svg.png";
+import fifaQatar from "@/assets/clientslogo/fifa_qatar.png";
+import hiltonHotels from "@/assets/clientslogo/Hilton Hotels.png";
+import hyattGroup from "@/assets/clientslogo/Hyatt Group.png";
+import jaTheResortGroup from "@/assets/clientslogo/JA The Resort Group.jpg";
+import jumeirahHospitality from "@/assets/clientslogo/Jumeirah Hospitality Group.png";
+import jwMarriottGroup from "@/assets/clientslogo/JW Marriott Group.png";
+import leMeridienGroup from "@/assets/clientslogo/Le Méridien Group.png";
+import meydanLogo from "@/assets/clientslogo/meydan.png";
+import oneAndOnlyRoyalMirage from "@/assets/clientslogo/One&Only Royal Mirage.png";
+import ramadaGroup from "@/assets/clientslogo/Ramada Group.jpg";
+import rotanaGroup from "@/assets/clientslogo/Rotana Group.jpg";
 
 const HERO_CHIPS = [
   { icon: BadgeCheck, title: "Commercial Quality", sub: "Built for Performance" },
@@ -16,31 +33,58 @@ const HERO_CHIPS = [
   { icon: Globe2, title: "Local Expertise", sub: "Global Standards" },
 ];
 
-const PARTNERS = [
-  { name: "ATLANTIS", sub: "THE PALM, DUBAI" },
-  { name: "Jumeirah", sub: "HOTELS & RESORTS" },
-  { name: "ADDRESS", sub: "HOTELS + RESORTS" },
-  { name: "MARRIOTT" },
-  { name: "RAFFLES", sub: "HOTELS & RESORTS" },
-  { name: "RIXOS", sub: "HOTELS" },
-  { name: "ROTANA", sub: "HOTELS & RESORTS" },
-  { name: "HILTON" },
+const CLIENT_LOGOS: { src: StaticImageData; alt: string; scale?: number }[] = [
+  { src: abuDhabiNationalHotels, alt: "Abu Dhabi National Hotels" },
+  { src: aasLogo, alt: "AAS" },
+  { src: alHabibiLogo, alt: "Al Habibi" },
+  { src: armLogo, alt: "ARM" },
+  { src: dubaiWorldTradeCentre, alt: "Dubai World Trade Centre" },
+  { src: emiratesFlightCatering, alt: "Emirates Flight Catering" },
+  { src: fifaQatar, alt: "FIFA World Cup Qatar 2022", scale: 2.15 },
+  { src: hiltonHotels, alt: "Hilton Hotels" },
+  { src: hyattGroup, alt: "Hyatt Group" },
+  { src: jaTheResortGroup, alt: "JA The Resort Group" },
+  { src: jumeirahHospitality, alt: "Jumeirah Hospitality Group" },
+  { src: jwMarriottGroup, alt: "JW Marriott Group" },
+  { src: leMeridienGroup, alt: "Le Méridien Group" },
+  { src: meydanLogo, alt: "Meydan" },
+  { src: oneAndOnlyRoyalMirage, alt: "One&Only Royal Mirage" },
+  { src: ramadaGroup, alt: "Ramada Group" },
+  { src: rotanaGroup, alt: "Rotana Group" },
 ];
 
 const HERO_ALT = "Catertech hospitality supplies across the Dubai skyline";
 
-function PartnerLogo({ name, sub }: { name: string; sub?: string }) {
+function ClientLogo({
+  src,
+  alt,
+  scale = 1,
+}: {
+  src: StaticImageData;
+  alt: string;
+  scale?: number;
+}) {
+  const image = (
+    <Image
+      src={src}
+      alt={alt}
+      className="h-full w-auto max-w-[120px] object-contain object-center sm:max-w-[145px] md:max-w-[170px]"
+      sizes="170px"
+    />
+  );
+
   return (
-    <div className="flex shrink-0 flex-col items-center text-center text-white/85">
-      <span
-        className="text-sm font-semibold uppercase leading-none tracking-[0.16em] sm:text-base"
-        style={{ fontFamily: 'Georgia, "Times New Roman", Times, serif' }}
-      >
-        {name}
-      </span>
-      {sub ? (
-        <span className="mt-0.5 text-[8px] uppercase tracking-[0.22em] text-white/45">{sub}</span>
-      ) : null}
+    <div className="flex h-9 shrink-0 items-center sm:h-10 md:h-12">
+      {scale > 1 ? (
+        <div
+          className="flex h-full items-center"
+          style={{ transform: `scale(${scale})`, transformOrigin: "center center" }}
+        >
+          {image}
+        </div>
+      ) : (
+        image
+      )}
     </div>
   );
 }
@@ -170,20 +214,25 @@ export default function HeroSection() {
           </Container>
         </div>
 
-        <div className="hero-partner-bar__shell relative z-20 mt-2 flex min-h-[56px] w-full shrink-0 items-stretch sm:min-h-[62px] sm:mt-3 md:min-h-[70px] xl:mt-0">
-          <div className="hero-partner-side-panel hidden items-center border-r border-white/15 px-4 py-3 sm:flex sm:px-5 sm:py-4 md:px-6 lg:px-8">
-            <p className="text-[8px] font-semibold uppercase leading-tight tracking-[0.18em] text-white/85 sm:text-[9px]">
+        <div className="hero-partner-bar__shell relative z-20 mt-2 flex min-h-[68px] w-full shrink-0 items-stretch bg-[#f6f6f6] sm:min-h-[76px] sm:mt-3 md:min-h-[88px] xl:mt-0">
+          <div className="hero-partner-side-panel hidden items-center border-r border-black/8 bg-[#f6f6f6] px-4 py-3.5 sm:flex sm:px-5 sm:py-4 md:px-6 md:py-5 lg:px-8">
+            <p className="text-[8px] font-semibold uppercase leading-tight tracking-[0.18em] text-ink sm:text-[9px]">
               Trusted by leading
               <br />
               hospitality brands
             </p>
           </div>
 
-          <div className="hero-partner-glass relative min-w-0 flex-1 overflow-hidden">
-            <div className="flex min-h-full items-center py-2.5 sm:py-3 md:py-4">
+          <div className="hero-partner-glass relative min-w-0 flex-1 overflow-hidden bg-[#f6f6f6]">
+            <div className="flex min-h-full items-center py-3.5 sm:py-4 md:py-5">
               <div className="hero-partner-marquee-track items-center gap-6 sm:gap-8 md:gap-12">
-                {[...PARTNERS, ...PARTNERS].map((partner, i) => (
-                  <PartnerLogo key={`${partner.name}-${i}`} {...partner} />
+                {[...CLIENT_LOGOS, ...CLIENT_LOGOS].map((client, i) => (
+                  <ClientLogo
+                    key={`${client.alt}-${i}`}
+                    src={client.src}
+                    alt={client.alt}
+                    scale={client.scale}
+                  />
                 ))}
               </div>
             </div>
@@ -191,7 +240,7 @@ export default function HeroSection() {
               className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 sm:w-10 md:w-14"
               style={{
                 background:
-                  "linear-gradient(90deg, rgba(27, 43, 75, 0.88) 0%, rgba(27, 43, 75, 0.45) 55%, transparent 100%)",
+                  "linear-gradient(90deg, #f6f6f6 0%, rgba(246, 246, 246, 0.85) 55%, transparent 100%)",
               }}
               aria-hidden
             />
@@ -199,14 +248,14 @@ export default function HeroSection() {
               className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 sm:w-10 md:w-14"
               style={{
                 background:
-                  "linear-gradient(270deg, rgba(27, 43, 75, 0.88) 0%, rgba(27, 43, 75, 0.45) 55%, transparent 100%)",
+                  "linear-gradient(270deg, #f6f6f6 0%, rgba(246, 246, 246, 0.85) 55%, transparent 100%)",
               }}
               aria-hidden
             />
           </div>
 
-          <div className="hero-partner-side-panel hidden items-center border-l border-white/15 px-4 py-3 sm:flex sm:px-5 sm:py-4 md:px-6 lg:px-8">
-            <p className="text-[8px] font-medium uppercase leading-tight tracking-[0.18em] text-white/60 sm:text-[9px]">
+          <div className="hero-partner-side-panel hidden items-center border-l border-black/8 bg-[#f6f6f6] px-4 py-3.5 sm:flex sm:px-5 sm:py-4 md:px-6 md:py-5 lg:px-8">
+            <p className="text-[8px] font-medium uppercase leading-tight tracking-[0.18em] text-body-muted sm:text-[9px]">
               And many
               <br />
               more

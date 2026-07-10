@@ -143,7 +143,7 @@ export default function TradePage() {
             <h2 className="mt-6 text-2xl font-bold tracking-tight text-ink">Quick Enquiry</h2>
             <p className="mt-3 max-w-lg text-sm leading-relaxed text-body-muted">
               Send a short message about your requirement and our team will reply within
-              four business hours.
+              10 minutes.
             </p>
             <span className="mt-6 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-primary">
               Submit enquiry

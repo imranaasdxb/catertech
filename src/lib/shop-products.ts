@@ -49,6 +49,8 @@ export type ShopProductDetail = ShopProductCard & {
     width: string;
     materialLine1: string;
     materialLine2: string;
+    dimensionRows?: { label: string; value: string }[];
+    detailRows?: { label: string; value: string }[];
   };
   reviews: ProductReview[];
   /** Extra angles for gallery thumbnails (hero stays `image`) */

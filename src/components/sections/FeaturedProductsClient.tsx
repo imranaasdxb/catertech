@@ -214,9 +214,9 @@ export default function FeaturedProductsClient({
   const skipFilterScrollRef = useRef(true);
   const isShopCatalogue = compactTop;
   const searchParams = useSearchParams();
+  const categoryParam = searchParams.get("category");
 
   useEffect(() => {
-    const categoryParam = searchParams.get("category");
     if (!categoryParam || categories.length === 0) return;
 
     const normalized = categoryParam.toLowerCase();
@@ -232,7 +232,7 @@ export default function FeaturedProductsClient({
       setVisibleCount(SHOP_INITIAL_VISIBLE);
       setLoadingMore(false);
     }
-  }, [categories, searchParams]);
+  }, [categories, categoryParam]);
 
   const activeCategory = useMemo(
     () => categories.find((category) => category.id === activeTab),

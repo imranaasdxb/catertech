@@ -17,6 +17,7 @@ import type { ProductAttributeValue } from "@/lib/category-template";
 
 type Props = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 function numericIdFromUuid(id: string) {
@@ -124,8 +125,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function ShopPresetProductPage({ params }: Props) {
-  const { id } = await params;
+export default async function ShopPresetProductPage({ params, searchParams }: Props) {
+  const [{ id }] = await Promise.all([params, searchParams]);
   const product = await getPresetProduct(id);
   if (!product) notFound();
 

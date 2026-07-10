@@ -43,7 +43,7 @@ const STEPS: ProcessStep[] = [
     title: "Receive Quote",
     headline: "Get a clear quote fast",
     description:
-      "We send you a detailed quote within 4 business hours, with transparent pricing, availability, and delivery options across the UAE.",
+      "We send you a detailed quote within 10 minutes, with transparent pricing, availability, and delivery options across the UAE.",
     Icon: FileText,
     iconRing: "bg-[#4f46c5]",
     image:

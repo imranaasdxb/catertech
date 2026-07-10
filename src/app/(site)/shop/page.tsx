@@ -9,7 +9,12 @@ import Image from "next/image";
 
 export const revalidate = 60;
 
-export default async function ShopPage() {
+export default async function ShopPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  await searchParams;
   const catalogueData = await getCatalogueProductData();
 
   return (

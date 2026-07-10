@@ -223,7 +223,7 @@ function QuoteModal({
                 </h3>
                 <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-body-muted">
                   Your request for {items.length} item{items.length !== 1 ? "s" : ""} is saved.
-                  Our team will respond within four business hours.
+                  Our team will respond within 10 minutes.
                 </p>
               </div>
             ) : (
@@ -338,7 +338,7 @@ function QuoteModal({
                 </button>
 
                 <p className="text-center text-xs text-body-muted">
-                  Free quote. No obligation. Response within four business hours.
+                  Free quote. No obligation. Response within 10 minutes.
                 </p>
               </form>
             )}
@@ -653,7 +653,7 @@ export default function CartClient() {
 
                   <div className="mt-6 space-y-3 rounded-2xl bg-surface-card p-4">
                     {[
-                      { icon: Clock3, text: "Response within four business hours" },
+                      { icon: Clock3, text: "Response within 10 minutes" },
                       { icon: ShieldCheck, text: "Free quote with no obligation" },
                       { icon: PackageCheck, text: "UAE delivery and coordination available" },
                     ].map(({ icon: Icon, text }) => (

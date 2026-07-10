@@ -969,7 +969,7 @@ export default function ProductEquipmentDetail({
 
                 <div
                   className={`overflow-hidden transition-all duration-300 ${
-                    open ? "max-h-[900px]" : "max-h-0"
+                    open ? "max-h-[1400px]" : "max-h-0"
                   }`}
                 >
                   <div className="px-6 md:px-8 pb-8 text-[14px] leading-[1.8] text-muted">
@@ -980,36 +980,44 @@ export default function ProductEquipmentDetail({
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="rounded-xl border border-border bg-offwhite p-5">
                             <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-sand mb-4">
-                              Dimensions
+                              Dimensions & Capacity
                             </p>
                             <div className="space-y-3">
-                              <div className="flex items-center justify-between">
-                                <span className="text-[12px] text-muted">Height</span>
-                                <span className="text-[12px] font-semibold text-charcoal text-right max-w-[60%]">
-                                  {product.specs.height}
-                                </span>
-                              </div>
-                              <div className="h-px bg-border" />
-                              <div className="flex items-center justify-between">
-                                <span className="text-[12px] text-muted">Width</span>
-                                <span className="text-[12px] font-semibold text-charcoal text-right max-w-[60%]">
-                                  {product.specs.width}
-                                </span>
-                              </div>
+                              {(product.specs.dimensionRows ?? [
+                                { label: "Height", value: product.specs.height },
+                                { label: "Width", value: product.specs.width },
+                              ]).map((row, index, rows) => (
+                                <div key={`${row.label}-${row.value}`}>
+                                  <div className="flex items-start justify-between gap-4">
+                                    <span className="text-[12px] text-muted">{row.label}</span>
+                                    <span className="text-[12px] font-semibold text-charcoal text-right max-w-[64%] leading-snug">
+                                      {row.value}
+                                    </span>
+                                  </div>
+                                  {index < rows.length - 1 ? <div className="mt-3 h-px bg-border" /> : null}
+                                </div>
+                              ))}
                             </div>
                           </div>
                           <div className="rounded-xl border border-border bg-offwhite p-5">
                             <p className="text-[10px] font-bold tracking-[0.22em] uppercase text-sand mb-4">
-                              Materials
+                              Product Details
                             </p>
                             <div className="space-y-3">
-                              <p className="text-[12px] text-charcoal font-medium">
-                                {product.specs.materialLine1}
-                              </p>
-                              <div className="h-px bg-border" />
-                              <p className="text-[12px] text-muted">
-                                {product.specs.materialLine2}
-                              </p>
+                              {(product.specs.detailRows ?? [
+                                { label: "Material", value: product.specs.materialLine1 },
+                                { label: "Specification", value: product.specs.materialLine2 },
+                              ]).map((row, index, rows) => (
+                                <div key={`${row.label}-${row.value}`}>
+                                  <div className="flex items-start justify-between gap-4">
+                                    <span className="text-[12px] text-muted">{row.label}</span>
+                                    <span className="text-[12px] font-semibold text-charcoal text-right max-w-[64%] leading-snug">
+                                      {row.value}
+                                    </span>
+                                  </div>
+                                  {index < rows.length - 1 ? <div className="mt-3 h-px bg-border" /> : null}
+                                </div>
+                              ))}
                             </div>
                           </div>
                         </div>

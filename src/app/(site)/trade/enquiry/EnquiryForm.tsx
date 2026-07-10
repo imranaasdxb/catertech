@@ -3,6 +3,7 @@
 import { ArrowRight } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import FormResponseTimeNote from "@/components/ui/FormResponseTimeNote";
 
 export function EnquiryForm() {
   const [status, setStatus] = useState<"idle" | "sending" | "ok" | "err">("idle");
@@ -81,7 +82,7 @@ export function EnquiryForm() {
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-body-muted">
               Thank you - we have received your enquiry and emailed our team. Expect a
-              reply within four business hours.
+              reply within 10 minutes.
             </p>
             <button
               type="button"
@@ -95,9 +96,12 @@ export function EnquiryForm() {
       ) : null}
 
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-ink md:text-[1.75rem]">
-          Send your enquiry
-        </h2>
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="text-2xl font-bold tracking-tight text-ink md:text-[1.75rem]">
+            Send your enquiry
+          </h2>
+          <FormResponseTimeNote />
+        </div>
 
         <form onSubmit={onSubmit} className="mt-8 space-y-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

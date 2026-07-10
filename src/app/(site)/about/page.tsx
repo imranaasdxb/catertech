@@ -1,5 +1,5 @@
 import Container from "@/components/Container";
-import founderPortrait from "@/assets/imam_sir.png";
+import founderPortrait from "@/assets/imamsir2.jpeg";
 import {
   ArrowRight,
   Globe,
@@ -295,33 +295,67 @@ export default function AboutPage() {
           ══════════════════════════════════════════════════ */}
       <section className="border-t border-[#e8e4df] bg-white py-16 md:py-24">
         <Container>
-          <div className="mx-auto grid max-w-6xl grid-cols-1 items-stretch gap-8 lg:grid-cols-2 lg:gap-10 xl:gap-12">
-            {/* portrait — stretches to match text column height */}
+          <div className="mx-auto grid max-w-6xl grid-cols-1 items-start gap-8 lg:grid-cols-2 lg:gap-10 xl:gap-12">
             <div className="relative mx-auto w-full max-w-sm lg:mx-0 lg:max-w-none lg:pr-4">
               <div
-                className="pointer-events-none absolute -left-3 top-6 bottom-6 w-[88%] rounded-3xl bg-primary-soft/60"
+                className="pointer-events-none absolute -left-3 top-6 h-[72%] w-[88%] rounded-3xl bg-primary-soft/60"
                 aria-hidden
               />
-              <div className="relative flex h-full min-h-[380px] flex-col overflow-hidden rounded-3xl border border-[#e8e4df] bg-[#faf9f7] shadow-[0_20px_60px_rgba(20,19,31,0.08)] sm:min-h-[440px] lg:min-h-[620px]">
-                <div className="relative h-full min-h-0 w-full flex-1">
+              <div className="relative flex flex-col overflow-hidden rounded-3xl border border-[#e8e4df]/90 bg-[#faf9f7] shadow-[0_24px_64px_rgba(20,19,31,0.1)] ring-1 ring-[#C9A84C]/10">
+                <div className="relative w-full">
                   <Image
                     src={founderPortrait}
                     alt="Mr. Imamuddin Shaikh, Founder and Managing Director of CaterTech"
-                    fill
-                    className="object-cover object-center"
+                    className="h-auto w-full object-contain"
                     sizes="(max-width: 1024px) 90vw, 480px"
                   />
-                  <div
-                    className="pointer-events-none absolute inset-0 bg-linear-to-t from-[#1a1a2e]/50 via-transparent to-transparent"
-                    aria-hidden
-                  />
+
+                  <div className="absolute bottom-4 right-4 z-10 rounded-2xl border border-[#C9A84C]/25 bg-white/95 px-4 py-3 shadow-[0_12px_40px_rgba(20,19,31,0.12)] backdrop-blur-sm">
+                    <p className="text-xl font-bold tracking-tight text-primary">21+</p>
+                    <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-body-muted">
+                      Years in UAE hospitality
+                    </p>
+                  </div>
                 </div>
 
-                <div className="absolute bottom-4 right-4 z-10 rounded-2xl border border-[#e8e4df] bg-white px-4 py-3 shadow-[0_12px_40px_rgba(20,19,31,0.1)]">
-                  <p className="text-xl font-bold tracking-tight text-primary">21+</p>
-                  <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-body-muted">
-                    Years in UAE hospitality
-                  </p>
+                <div className="grid grid-cols-2 gap-x-0 border-t border-[#e8e4df] bg-[#faf9f7]">
+                  <div className="flex flex-col gap-6 border-r border-[#e8e4df] px-5 py-6 sm:px-6 sm:py-7">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C9A84C]">
+                        Name
+                      </p>
+                      <p className="mt-1.5 text-sm font-semibold leading-snug text-ink">
+                        Mr. Imamuddin Shaikh
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C9A84C]">
+                        Founded
+                      </p>
+                      <p className="mt-1.5 text-sm font-semibold leading-snug text-ink">
+                        2005 · Dubai, UAE
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-6 px-5 py-6 sm:px-6 sm:py-7">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C9A84C]">
+                        Role
+                      </p>
+                      <p className="mt-1.5 text-sm font-semibold leading-snug text-ink">
+                        Founder &amp; Managing Director
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C9A84C]">
+                        Base
+                      </p>
+                      <p className="mt-1.5 text-sm font-semibold leading-snug text-ink">
+                        Ras Al Khor, Dubai
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -366,33 +400,6 @@ export default function AboutPage() {
                   clients never have to wonder who is showing up or whether they will.&rdquo;
                 </p>
               </blockquote>
-
-              <div className="mt-8 flex flex-wrap gap-8 border-t border-[#e8e4df] pt-8">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-body-muted">
-                    Name
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-ink">Mr. Imamuddin Shaikh</p>
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-body-muted">
-                    Role
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-ink">Founder &amp; Managing Director</p>
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-body-muted">
-                    Founded
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-ink">2005 · Dubai, UAE</p>
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-body-muted">
-                    Base
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-ink">Ras Al Khor, Dubai</p>
-                </div>
-              </div>
             </div>
           </div>
         </Container>

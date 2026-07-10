@@ -3,6 +3,7 @@
 import { ArrowRight } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { cn } from "@/lib/utils";
+import FormResponseTimeNote from "@/components/ui/FormResponseTimeNote";
 
 export function ContactForm() {
   const [status, setStatus] = useState<"idle" | "sending" | "ok" | "err">("idle");
@@ -29,7 +30,7 @@ export function ContactForm() {
       return;
     }
     setStatus("ok");
-    setMsg("Thank you. We will get back to you shortly.");
+    setMsg("Thank you. Our team will respond within 10 minutes.");
     e.currentTarget.reset();
   }
 
@@ -38,9 +39,12 @@ export function ContactForm() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold tracking-tight text-ink md:text-[1.75rem]">
-        Drop us a line
-      </h2>
+      <div className="flex flex-wrap items-center gap-3">
+        <h2 className="text-2xl font-bold tracking-tight text-ink md:text-[1.75rem]">
+          Drop us a line
+        </h2>
+        <FormResponseTimeNote />
+      </div>
 
       <form onSubmit={onSubmit} className="mt-8 space-y-6">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">

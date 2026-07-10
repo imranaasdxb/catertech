@@ -73,9 +73,16 @@ export default function ServiceDetailClient({ service }: { service: ServiceData 
               <h2 className="text-2xl font-bold tracking-tight text-ink md:text-3xl">
                 About this service
               </h2>
-              <p className="mt-5 text-base leading-[1.8] text-body-muted">
-                {service.longDescription}
-              </p>
+              <div className="mt-5 space-y-4">
+                {service.aboutParagraphs.map((paragraph) => (
+                  <p
+                    key={paragraph.slice(0, 48)}
+                    className="text-base leading-[1.8] text-body-muted"
+                  >
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
 
               <h3 className="mt-12 text-xs font-bold uppercase tracking-[0.2em] text-primary">
                 What&apos;s included
@@ -101,23 +108,26 @@ export default function ServiceDetailClient({ service }: { service: ServiceData 
                   Interested in {service.title}?
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-body-muted">
-                  Contact our team and we&apos;ll send a detailed proposal within 4
-                  business hours.
+                  Contact our team and we&apos;ll send a detailed proposal within 10
+                  minutes.
                 </p>
 
                 <ul className="mt-6 space-y-3 border-t border-[#e8e4df] pt-6">
-                  <li className="flex items-center gap-2.5 text-xs text-body-muted">
-                    <Clock className="h-4 w-4 shrink-0 text-accent" strokeWidth={1.75} />
-                    Response within 4 business hours
-                  </li>
-                  <li className="flex items-center gap-2.5 text-xs text-body-muted">
-                    <Shield className="h-4 w-4 shrink-0 text-accent" strokeWidth={1.75} />
-                    Quality assured since 2005
-                  </li>
-                  <li className="flex items-center gap-2.5 text-xs text-body-muted">
-                    <Truck className="h-4 w-4 shrink-0 text-accent" strokeWidth={1.75} />
-                    UAE-wide delivery available
-                  </li>
+                  {service.sidebarBullets.map((bullet) => (
+                    <li
+                      key={bullet}
+                      className="flex items-center gap-2.5 text-xs text-body-muted"
+                    >
+                      {bullet.includes("Response") ? (
+                        <Clock className="h-4 w-4 shrink-0 text-accent" strokeWidth={1.75} />
+                      ) : bullet.includes("Quality") ? (
+                        <Shield className="h-4 w-4 shrink-0 text-accent" strokeWidth={1.75} />
+                      ) : (
+                        <Truck className="h-4 w-4 shrink-0 text-accent" strokeWidth={1.75} />
+                      )}
+                      {bullet}
+                    </li>
+                  ))}
                 </ul>
               </div>
             </div>

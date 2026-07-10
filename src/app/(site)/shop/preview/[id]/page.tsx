@@ -6,7 +6,10 @@ import { getDb } from "@/db";
 import { products, type ProductAttributeValue } from "@/db/schema";
 import { isAdminGuestAuthed } from "@/lib/admin-guest-auth";
 
-type Props = { params: Promise<{ id: string }> };
+type Props = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 export const metadata: Metadata = {
   title: "Product preview | CaterTech",
@@ -19,10 +22,10 @@ function formatAttributeValue(attribute: ProductAttributeValue) {
 }
 
 /** Catalogue preview for logged-in admin only (guest cookie). */
-export default async function AdminProductPreviewPage({ params }: Props) {
+export default async function AdminProductPreviewPage({ params, searchParams }: Props) {
   if (!(await isAdminGuestAuthed())) notFound();
 
-  const { id } = await params;
+  const [{ id }] = await Promise.all([params, searchParams]);
   const db = getDb();
   if (!db) notFound();
 
