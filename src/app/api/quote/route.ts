@@ -34,11 +34,11 @@ export async function POST(request: Request) {
   const d = parsed.data;
   const source = d.source === "whatsapp" ? "whatsapp" : "email";
 
-  const itemsNoPrice = d.items.map((i) => ({
-    name: i.name,
-    category: i.category,
-    qty: i.qty,
-    price: "",
+  const itemsForStore = d.items.map((item) => ({
+    name: item.name,
+    category: item.category,
+    qty: item.qty,
+    price: item.price?.trim() || "",
   }));
 
   const [row] = await db
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       address: d.address,
       source,
       message: d.message || null,
-      items: itemsNoPrice,
+      items: itemsForStore,
     })
     .returning({ id: quotations.id });
 
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
     company: d.company || null,
     message: d.message || null,
     source,
-    items: itemsNoPrice,
+    items: itemsForStore,
   });
   if (!mail.ok) {
     console.error("[quote] notify email failed:", mail.reason);

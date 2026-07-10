@@ -8,6 +8,7 @@ import { useCart, type CartItem } from "@/lib/cart-context";
 import {
   buildQuoteWhatsAppMessage,
   buildWhatsAppUrl,
+  openWhatsAppChat,
 } from "@/lib/whatsapp-quote";
 import {
   ArrowLeft,
@@ -106,6 +107,7 @@ function QuoteModal({
           name: item.name,
           category: item.category,
           qty: item.quantity,
+          price: item.price || undefined,
         })),
       }),
     });
@@ -120,6 +122,51 @@ function QuoteModal({
     }
 
     setSending(true);
+
+    const trimmedForm = {
+      customerName: form.name.trim(),
+      email: form.email.trim(),
+      phone: form.phone.trim(),
+      address: form.address.trim(),
+      message: form.message,
+    };
+    const quoteItems = items.map((item) => ({
+      name: item.name,
+      category: item.category,
+      qty: item.quantity,
+      price: item.price || undefined,
+    }));
+
+    const waText = isWhatsApp
+      ? buildQuoteWhatsAppMessage({ ...trimmedForm, items: quoteItems })
+      : null;
+    const waUrl = waText ? buildWhatsAppUrl(waText) : null;
+
+    if (isWhatsApp && waUrl) {
+      openWhatsAppChat(waUrl);
+
+      try {
+        const res = await postQuote();
+        if (!res.ok) {
+          setErrors({
+            email: "WhatsApp opened, but we could not save your request. Please try again or contact us directly.",
+          });
+          setSending(false);
+          return;
+        }
+
+        setSending(false);
+        setSent(true);
+        setTimeout(onSuccess, 4000);
+      } catch {
+        setErrors({
+          email: "WhatsApp opened, but we could not save your request. Please try again or contact us directly.",
+        });
+        setSending(false);
+      }
+      return;
+    }
+
     try {
       const res = await postQuote();
       if (!res.ok) {
@@ -128,77 +175,101 @@ function QuoteModal({
         return;
       }
 
-      if (isWhatsApp) {
-        const waText = buildQuoteWhatsAppMessage({
-          customerName: form.name.trim(),
-          email: form.email.trim(),
-          phone: form.phone.trim(),
-          address: form.address.trim(),
-          message: form.message,
-          items: items.map((item) => ({
-            name: item.name,
-            category: item.category,
-            qty: item.quantity,
-          })),
-        });
-        window.open(buildWhatsAppUrl(waText), "_blank", "noopener,noreferrer");
-      }
-
       setSending(false);
       setSent(true);
-      setTimeout(onSuccess, isWhatsApp ? 4000 : 2800);
+      setTimeout(onSuccess, 2800);
     } catch {
       setErrors({ email: "Network error. Please try again." });
       setSending(false);
     }
   };
 
+  const renderField = (
+    field: keyof QuoteFormFields,
+    label: string,
+    Icon: typeof User,
+    type: string,
+    placeholder: string,
+  ) => (
+    <div>
+      <label className="mb-1.5 block text-sm text-body-muted">
+        {label} <span className="text-accent">*</span>
+      </label>
+      <div className="relative">
+        <Icon
+          className={`pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 ${fieldIconClass(Boolean(errors[field]))}`}
+          strokeWidth={1.8}
+        />
+        <input
+          type={type}
+          value={form[field]}
+          onChange={(event) => {
+            setForm((current) => ({ ...current, [field]: event.target.value }));
+            setErrors((current) => ({ ...current, [field]: undefined }));
+          }}
+          placeholder={placeholder}
+          className={`${inputClass} pl-10 ${errors[field] ? "border-accent bg-accent-soft/30" : ""}`}
+        />
+      </div>
+      {errors[field] ? <p className="mt-1 text-xs text-accent">{errors[field]}</p> : null}
+    </div>
+  );
+
+  const itemsSummary = (
+    <div className="rounded-2xl border border-[#e5e7eb] bg-white/85 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Items in request</p>
+        <span className="rounded-full bg-surface-card px-3 py-1 text-xs font-bold text-ink">
+          {totalQty} unit{totalQty !== 1 ? "s" : ""}
+        </span>
+      </div>
+      <div className="mt-3 max-h-32 space-y-2 overflow-y-auto">
+        {items.map((item) => (
+          <div key={item.id} className="flex items-center justify-between gap-3 text-sm">
+            <span className="line-clamp-1 font-semibold text-ink">{item.name}</span>
+            <span className="shrink-0 text-body-muted">x {item.quantity}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center sm:p-6" role="dialog" aria-modal>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5"
+      style={{ paddingTop: "max(0.75rem, var(--header-height))" }}
+      role="dialog"
+      aria-modal
+    >
       <button className="absolute inset-0 bg-ink/55 backdrop-blur-sm" onClick={onClose} aria-label="Close quote dialog" />
 
-      <div className="relative grid max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-3xl border border-white/70 bg-white shadow-[0_28px_90px_rgba(20,19,31,0.24)] lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="relative hidden overflow-hidden bg-surface-card p-8 lg:block">
+      <div className="relative grid max-h-[min(88vh,calc(100dvh-var(--header-height)-1.5rem))] w-full max-w-5xl overflow-hidden rounded-3xl border border-white/70 bg-white shadow-[0_28px_90px_rgba(20,19,31,0.24)] md:grid-cols-[0.9fr_1.1fr]">
+        <div className="relative hidden overflow-hidden bg-surface-card p-6 md:block">
           <div
             className="pointer-events-none absolute -left-24 -top-24 h-[340px] w-[340px] rounded-full"
             style={{ background: purpleRadial }}
             aria-hidden
           />
-          <div className="relative z-10 flex h-full flex-col justify-between">
-            <div>
-              <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-primary shadow-sm">
-                {isWhatsApp ? <MessageCircle className="h-6 w-6" /> : <ClipboardList className="h-6 w-6" />}
-              </div>
-              <h2 className="mt-6 text-3xl font-bold tracking-tight text-ink">
-                {isWhatsApp ? "Send quote via WhatsApp" : "Request your formal quote"}
-              </h2>
-              <p className="mt-4 text-sm leading-relaxed text-body-muted">
-                We will save your basket details, notify our team, and prepare a
-                quotation based on the items, quantities, delivery address, and notes.
-              </p>
+          <div className="relative z-10 flex h-full flex-col">
+            <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-primary shadow-sm">
+              {isWhatsApp ? <MessageCircle className="h-5 w-5" /> : <ClipboardList className="h-5 w-5" />}
             </div>
-
-            <div className="rounded-2xl border border-[#e5e7eb] bg-white/85 p-5">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Basket snapshot</p>
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="rounded-xl bg-surface-card p-4">
-                  <p className="text-2xl font-bold text-ink">{items.length}</p>
-                  <p className="mt-1 text-xs text-body-muted">Unique items</p>
-                </div>
-                <div className="rounded-xl bg-surface-card p-4">
-                  <p className="text-2xl font-bold text-ink">{totalQty}</p>
-                  <p className="mt-1 text-xs text-body-muted">Total units</p>
-                </div>
-              </div>
-            </div>
+            <h2 className="mt-4 text-2xl font-bold tracking-tight text-ink">
+              {isWhatsApp ? "Send quote via WhatsApp" : "Request your formal quote"}
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-body-muted">
+              We will save your basket details, notify our team, and prepare a
+              quotation based on the items, quantities, delivery address, and notes.
+            </p>
+            <div className="mt-5">{itemsSummary}</div>
           </div>
         </div>
 
-        <div className="flex max-h-[92vh] flex-col">
-          <div className="flex items-start justify-between border-b border-[#e5e7eb] px-5 py-5 sm:px-7">
+        <div className="flex min-h-0 flex-col">
+          <div className="flex shrink-0 items-start justify-between border-b border-[#e5e7eb] px-5 py-4 sm:px-6">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Quote Request</p>
-              <h2 className="mt-1 text-2xl font-bold tracking-tight text-ink">
+              <h2 className="mt-1 text-xl font-bold tracking-tight text-ink">
                 {isWhatsApp ? "WhatsApp details" : "Contact details"}
               </h2>
             </div>
@@ -212,77 +283,36 @@ function QuoteModal({
             </button>
           </div>
 
-          <div className="overflow-y-auto px-5 py-6 sm:px-7">
+          <div className="min-h-0 overflow-y-auto px-5 py-4 sm:px-6 sm:py-5">
             {sent ? (
-              <div className="py-12 text-center">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-green-100 bg-green-50 text-green-700">
-                  <CheckCircle2 className="h-8 w-8" strokeWidth={2} />
+              <div className="py-10 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-green-100 bg-green-50 text-green-700">
+                  <CheckCircle2 className="h-7 w-7" strokeWidth={2} />
                 </div>
-                <h3 className="mt-5 text-2xl font-bold tracking-tight text-ink">
-                  {isWhatsApp ? "Saved. Check WhatsApp" : "Quote request sent"}
+                <h3 className="mt-4 text-xl font-bold tracking-tight text-ink">
+                  {isWhatsApp ? "WhatsApp opened" : "Quote request sent"}
                 </h3>
-                <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-body-muted">
-                  Your request for {items.length} item{items.length !== 1 ? "s" : ""} is saved.
-                  Our team will respond within 10 minutes.
+                <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-body-muted">
+                  {isWhatsApp
+                    ? `Your request for ${items.length} item${items.length !== 1 ? "s" : ""} is saved and our team has been notified by email. Send the message in WhatsApp to complete your quote.`
+                    : `Your request for ${items.length} item${items.length !== 1 ? "s" : ""} is saved. Our team will respond within 10 minutes.`}
                 </p>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-                <div className="rounded-2xl border border-[#e5e7eb] bg-surface-card p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
-                      Items in request
-                    </p>
-                    <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-ink">
-                      {totalQty} unit{totalQty !== 1 ? "s" : ""}
-                    </span>
-                  </div>
-                  <div className="mt-3 max-h-28 space-y-2 overflow-y-auto">
-                    {items.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between gap-3 text-sm">
-                        <span className="line-clamp-1 font-semibold text-ink">{item.name}</span>
-                        <span className="shrink-0 text-body-muted">x {item.quantity}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+                <div className="md:hidden">{itemsSummary}</div>
 
                 <input type="hidden" name="items" value={itemLines} readOnly />
 
-                {[
-                  { key: "name", label: "Full Name", icon: User, type: "text", placeholder: "Your full name" },
-                  { key: "email", label: "Email Address", icon: Mail, type: "email", placeholder: "you@company.com" },
-                  { key: "phone", label: "Phone Number", icon: Phone, type: "tel", placeholder: "+971 5X XXX XXXX" },
-                ].map(({ key, label, icon: Icon, type, placeholder }) => {
-                  const field = key as keyof QuoteFormFields;
-                  return (
-                    <div key={key}>
-                      <label className="mb-2 block text-sm text-body-muted">
-                        {label} <span className="text-accent">*</span>
-                      </label>
-                      <div className="relative">
-                        <Icon
-                          className={`pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 ${fieldIconClass(Boolean(errors[field]))}`}
-                          strokeWidth={1.8}
-                        />
-                        <input
-                          type={type}
-                          value={form[field]}
-                          onChange={(event) => {
-                            setForm((current) => ({ ...current, [field]: event.target.value }));
-                            setErrors((current) => ({ ...current, [field]: undefined }));
-                          }}
-                          placeholder={placeholder}
-                          className={`${inputClass} pl-10 ${errors[field] ? "border-accent bg-accent-soft/30" : ""}`}
-                        />
-                      </div>
-                      {errors[field] ? <p className="mt-1 text-xs text-accent">{errors[field]}</p> : null}
-                    </div>
-                  );
-                })}
+                {renderField("name", "Full Name", User, "text", "Your full name")}
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {renderField("email", "Email Address", Mail, "email", "you@company.com")}
+                  {renderField("phone", "Phone Number", Phone, "tel", "+971 5X XXX XXXX")}
+                </div>
 
                 <div>
-                  <label className="mb-2 block text-sm text-body-muted">
+                  <label className="mb-1.5 block text-sm text-body-muted">
                     Delivery Address <span className="text-accent">*</span>
                   </label>
                   <div className="relative">
@@ -305,9 +335,9 @@ function QuoteModal({
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm text-body-muted">Additional Requirements</label>
+                  <label className="mb-1.5 block text-sm text-body-muted">Additional Requirements</label>
                   <textarea
-                    rows={3}
+                    rows={2}
                     value={form.message}
                     onChange={(event) => setForm((current) => ({ ...current, message: event.target.value }))}
                     placeholder="Event date, venue, timing, or special requirements..."
@@ -318,12 +348,12 @@ function QuoteModal({
                 <button
                   type="submit"
                   disabled={sending}
-                  className={`inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                  className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
                     isWhatsApp ? "bg-[#25D366] hover:bg-[#1ebe5d]" : "bg-primary hover:bg-primary-dark"
                   }`}
                 >
                   {sending ? (
-                    isWhatsApp ? "Saving and opening WhatsApp..." : "Sending request..."
+                    isWhatsApp ? "Saving your request..." : "Sending request..."
                   ) : isWhatsApp ? (
                     <>
                       <MessageCircle className="h-4 w-4" strokeWidth={2} />

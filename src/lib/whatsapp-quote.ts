@@ -11,13 +11,15 @@ export function getWhatsAppDigits(): string {
 }
 
 export function buildWhatsAppUrl(prefilledMessage: string): string {
-  return `https://wa.me/${getWhatsAppDigits()}?text=${encodeURIComponent(prefilledMessage)}`;
+  const phone = getWhatsAppDigits();
+  return `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(prefilledMessage)}`;
 }
 
 export type QuoteLineForMessage = {
   name: string;
   category: string;
   qty: number;
+  price?: string;
 };
 
 export function buildQuoteWhatsAppMessage(opts: {
@@ -38,12 +40,34 @@ export function buildQuoteWhatsAppMessage(opts: {
     `Address: ${opts.address}`,
     "",
     "Items requested:",
-    ...opts.items.map(
-      (i, idx) => `${idx + 1}. ${i.name} × ${i.qty} (${i.category})`
-    ),
+    ...opts.items.map((item, idx) => {
+      const pricePart = item.price?.trim() ? ` — ${item.price.trim()}` : "";
+      return `${idx + 1}. ${item.name} × ${item.qty}${pricePart} (${item.category})`;
+    }),
   ];
   if (opts.message?.trim()) {
     lines.push("", "Additional notes:", opts.message.trim());
   }
   return lines.join("\n");
+}
+
+export function openWhatsAppChat(url: string): boolean {
+  const win = window.open(url, "_blank");
+  if (win) {
+    try {
+      win.opener = null;
+    } catch {
+      // ignore
+    }
+    return true;
+  }
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  return false;
 }

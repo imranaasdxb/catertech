@@ -33,11 +33,11 @@ const HERO_CHIPS = [
   { icon: Globe2, title: "Local Expertise", sub: "Global Standards" },
 ];
 
-const CLIENT_LOGOS: { src: StaticImageData; alt: string; scale?: number }[] = [
+const CLIENT_LOGOS: { src: StaticImageData; alt: string; scale?: number; trimRight?: number }[] = [
   { src: abuDhabiNationalHotels, alt: "Abu Dhabi National Hotels" },
   { src: aasLogo, alt: "AAS" },
   { src: alHabibiLogo, alt: "Al Habibi" },
-  { src: armLogo, alt: "ARM" },
+  { src: armLogo, alt: "ARM", trimRight: 3 },
   { src: dubaiWorldTradeCentre, alt: "Dubai World Trade Centre" },
   { src: emiratesFlightCatering, alt: "Emirates Flight Catering" },
   { src: fifaQatar, alt: "FIFA World Cup Qatar 2022", scale: 2.15 },
@@ -59,10 +59,12 @@ function ClientLogo({
   src,
   alt,
   scale = 1,
+  trimRight = 0,
 }: {
   src: StaticImageData;
   alt: string;
   scale?: number;
+  trimRight?: number;
 }) {
   const image = (
     <Image
@@ -73,18 +75,24 @@ function ClientLogo({
     />
   );
 
+  const logoContent =
+    scale > 1 ? (
+      <div
+        className="flex h-full items-center"
+        style={{ transform: `scale(${scale})`, transformOrigin: "center center" }}
+      >
+        {image}
+      </div>
+    ) : (
+      image
+    );
+
   return (
-    <div className="flex h-9 shrink-0 items-center sm:h-10 md:h-12">
-      {scale > 1 ? (
-        <div
-          className="flex h-full items-center"
-          style={{ transform: `scale(${scale})`, transformOrigin: "center center" }}
-        >
-          {image}
-        </div>
-      ) : (
-        image
-      )}
+    <div
+      className="flex h-9 shrink-0 items-center overflow-hidden sm:h-10 md:h-12"
+      style={trimRight > 0 ? { clipPath: `inset(0 ${trimRight}px 0 0)` } : undefined}
+    >
+      {logoContent}
     </div>
   );
 }
@@ -232,6 +240,7 @@ export default function HeroSection() {
                     src={client.src}
                     alt={client.alt}
                     scale={client.scale}
+                    trimRight={client.trimRight}
                   />
                 ))}
               </div>

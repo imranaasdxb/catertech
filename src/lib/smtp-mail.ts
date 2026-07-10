@@ -156,6 +156,7 @@ export type QuoteNotifyItem = {
   name: string;
   category: string;
   qty: number;
+  price?: string;
 };
 
 /** Notify admin inbox about a cart quotation (SMTP must be configured). */
@@ -187,11 +188,14 @@ export async function sendQuoteRequestEmail(opts: {
   ).trim();
 
   const sourceLabel = opts.source === "whatsapp" ? "WhatsApp" : "Email form";
+  const hasPrice = opts.items.some((item) => item.price?.trim());
   const itemRows = opts.items
-    .map(
-      (i) =>
-        `<tr><td style="padding:6px;border:1px solid #eee">${escapeHtml(i.name)}</td><td style="padding:6px;border:1px solid #eee">${escapeHtml(i.category)}</td><td style="padding:6px;border:1px solid #eee;text-align:center">${i.qty}</td></tr>`
-    )
+    .map((item) => {
+      const priceCell = hasPrice
+        ? `<td style="padding:6px;border:1px solid #eee">${escapeHtml(item.price?.trim() || "—")}</td>`
+        : "";
+      return `<tr><td style="padding:6px;border:1px solid #eee">${escapeHtml(item.name)}</td><td style="padding:6px;border:1px solid #eee">${escapeHtml(item.category)}</td><td style="padding:6px;border:1px solid #eee;text-align:center">${item.qty}</td>${priceCell}</tr>`;
+    })
     .join("");
 
   const html = `
@@ -208,7 +212,7 @@ ${opts.company ? `<tr><td style="padding:4px 8px 4px 0"><strong>Company</strong>
 ${opts.message ? `<p><strong>Notes</strong></p><p style="white-space:pre-wrap">${escapeHtml(opts.message)}</p>` : ""}
 <p><strong>Items</strong></p>
 <table style="border-collapse:collapse;font-size:13px;width:100%;max-width:640px">
-<thead><tr style="background:#f5f5f5"><th style="padding:8px;border:1px solid #eee;text-align:left">Product</th><th style="padding:8px;border:1px solid #eee;text-align:left">Category</th><th style="padding:8px;border:1px solid #eee;text-align:center">Qty</th></tr></thead>
+<thead><tr style="background:#f5f5f5"><th style="padding:8px;border:1px solid #eee;text-align:left">Product</th><th style="padding:8px;border:1px solid #eee;text-align:left">Category</th><th style="padding:8px;border:1px solid #eee;text-align:center">Qty</th>${hasPrice ? '<th style="padding:8px;border:1px solid #eee;text-align:left">Price</th>' : ""}</tr></thead>
 <tbody>${itemRows}</tbody></table>
 `;
 
@@ -224,7 +228,10 @@ ${opts.message ? `<p><strong>Notes</strong></p><p style="white-space:pre-wrap">$
     ...(opts.message ? ["", "Notes:", opts.message] : []),
     "",
     "Items:",
-    ...opts.items.map((i) => `- ${i.name} × ${i.qty} (${i.category})`),
+    ...opts.items.map((item) => {
+      const pricePart = item.price?.trim() ? ` — ${item.price.trim()}` : "";
+      return `- ${item.name} × ${item.qty}${pricePart} (${item.category})`;
+    }),
   ];
 
   try {
