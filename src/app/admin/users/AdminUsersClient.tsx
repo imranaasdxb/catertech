@@ -1,5 +1,6 @@
 "use client";
 
+import { formatUtcDateTime } from "@/lib/format-datetime";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Ban,
@@ -85,14 +86,6 @@ function initials(name: string) {
       .slice(0, 2)
       .toUpperCase() || "?"
   );
-}
-
-function formatDate(value: string | null) {
-  if (!value) return "Never";
-  return new Date(value).toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
 }
 
 function roleLabel(role: AdminUserRow["role"]) {
@@ -736,8 +729,8 @@ export default function AdminUsersClient() {
                   </div>
 
                   <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <Meta icon={Calendar} label="Created" value={formatDate(user.createdAt)} />
-                    <Meta icon={Clock} label="Last login" value={formatDate(user.lastLoginAt)} />
+                    <Meta icon={Calendar} label="Created" value={user.createdAt ? formatUtcDateTime(user.createdAt) : "Never"} />
+                    <Meta icon={Clock} label="Last login" value={user.lastLoginAt ? formatUtcDateTime(user.lastLoginAt) : "Never"} />
                   </div>
 
                   {isEditing ? (

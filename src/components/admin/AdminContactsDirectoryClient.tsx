@@ -1,5 +1,6 @@
 "use client";
 
+import { formatUtcDateTime } from "@/lib/format-datetime";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 export type ContactDirectoryRow = {
@@ -258,10 +259,7 @@ export default function AdminContactsDirectoryClient({
                       </span>
                     </td>
                     <td className="px-4 py-3 align-top text-muted whitespace-nowrap tabular-nums text-[13px]">
-                      {new Date(r.createdAt).toLocaleString(undefined, {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })}
+                      {formatUtcDateTime(r.createdAt)}
                     </td>
                   </tr>
                 ))

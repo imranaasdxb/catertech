@@ -11,6 +11,7 @@ import type { InferSelectModel } from "drizzle-orm";
 import { Check, ChevronLeft, ChevronRight, Eye, Loader2, Pencil, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { formatUtcDate } from "@/lib/format-datetime";
 import { useEffect, useMemo, useState } from "react";
 
 export type AdminProductListRow = {
@@ -65,30 +66,6 @@ function Thumb({ url }: { url: string | null }) {
 function formatAttribute(value: ProductAttributeValue) {
   if (typeof value === "string") return value || "Not set";
   return `${value.value || "Not set"}${value.unit ? ` ${value.unit}` : ""}`;
-}
-
-const SHORT_MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-] as const;
-
-function formatUpdatedAt(value: Date | string) {
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  const day = String(date.getUTCDate()).padStart(2, "0");
-  const month = SHORT_MONTHS[date.getUTCMonth()];
-  const year = date.getUTCFullYear();
-  return `${day} ${month} ${year}`;
 }
 
 function Specifications({
@@ -665,7 +642,7 @@ export default function AdminProductsTable({
                           Updated
                         </p>
                         <p className="whitespace-nowrap text-xs font-medium text-admin-ink/55">
-                          {formatUpdatedAt(r.updatedAt)}
+                          {formatUtcDate(r.updatedAt)}
                         </p>
                       </div>
                     </div>

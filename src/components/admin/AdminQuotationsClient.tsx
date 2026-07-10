@@ -1,5 +1,6 @@
 "use client";
 
+import { formatUtcDateTime } from "@/lib/format-datetime";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 export type QuotationAdminRow = {
@@ -296,10 +297,7 @@ export default function AdminQuotationsClient({
                 </div>
                 <div className="text-right space-y-0.5">
                   <p className="text-xs font-medium text-charcoal tabular-nums">
-                    {new Date(r.createdAt).toLocaleString(undefined, {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
+                    {formatUtcDateTime(r.createdAt)}
                   </p>
                   <p className="text-[10px] text-muted font-mono select-all">
                     ID {r.id.slice(0, 8)}…

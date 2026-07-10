@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { FEATURED_PRODUCTS_SECTION_ID } from "@/lib/connect-us-sections";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
@@ -117,12 +118,16 @@ function CategoryTabStrip({
   size?: "shop" | "featured";
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef({ active: false, startX: 0, scrollLeft: 0 });
   const [scrollEdges, setScrollEdges] = useState({ left: false, right: false });
+  const [canScroll, setCanScroll] = useState(false);
 
   const updateScrollEdges = useCallback(() => {
     const node = scrollRef.current;
     if (!node) return;
     const { scrollLeft, scrollWidth, clientWidth } = node;
+    const overflow = scrollWidth > clientWidth + 2;
+    setCanScroll(overflow);
     setScrollEdges({
       left: scrollLeft > 6,
       right: scrollLeft + clientWidth < scrollWidth - 6,
@@ -144,48 +149,141 @@ function CategoryTabStrip({
     };
   }, [tabs, updateScrollEdges]);
 
+  useEffect(() => {
+    const node = scrollRef.current;
+    if (!node) return;
+    const activeButton = node.querySelector<HTMLButtonElement>(`[data-tab-id="${activeTab}"]`);
+    activeButton?.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
+  }, [activeTab, tabs]);
+
+  const scrollTabs = useCallback((direction: "left" | "right") => {
+    const node = scrollRef.current;
+    if (!node) return;
+    const amount = Math.max(180, Math.round(node.clientWidth * 0.72));
+    node.scrollBy({
+      left: direction === "left" ? -amount : amount,
+      behavior: "smooth",
+    });
+  }, []);
+
+  const handleWheel = useCallback((event: React.WheelEvent<HTMLDivElement>) => {
+    const node = scrollRef.current;
+    if (!node || node.scrollWidth <= node.clientWidth + 2) return;
+
+    const delta =
+      Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+    if (delta === 0) return;
+
+    event.preventDefault();
+    node.scrollLeft += delta;
+  }, []);
+
+  const handlePointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    const node = scrollRef.current;
+    if (!node || node.scrollWidth <= node.clientWidth + 2) return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if ((event.target as HTMLElement).closest("button")) return;
+
+    dragRef.current = {
+      active: true,
+      startX: event.clientX,
+      scrollLeft: node.scrollLeft,
+    };
+    node.setPointerCapture(event.pointerId);
+  }, []);
+
+  const handlePointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragRef.current.active) return;
+    const node = scrollRef.current;
+    if (!node) return;
+
+    node.scrollLeft = dragRef.current.scrollLeft - (event.clientX - dragRef.current.startX);
+  }, []);
+
+  const endDrag = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragRef.current.active) return;
+    dragRef.current.active = false;
+    scrollRef.current?.releasePointerCapture(event.pointerId);
+  }, []);
+
   const buttonClass =
     size === "featured"
       ? "relative shrink-0 cursor-pointer px-5 py-2.5 text-xs font-semibold tracking-wider uppercase transition-all duration-200"
       : "relative shrink-0 cursor-pointer px-2.5 py-2 text-[10px] font-semibold uppercase tracking-wide transition-all duration-200 sm:px-3 sm:text-xs lg:px-5 lg:py-2.5 lg:tracking-wider";
 
+  const navButtonClass =
+    "inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-white text-charcoal shadow-sm transition-colors hover:border-ink/20 hover:bg-offwhite disabled:cursor-not-allowed disabled:opacity-35";
+
   return (
-    <div className="relative min-w-0 flex-1">
-      {scrollEdges.left ? (
-        <span
-          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-offwhite via-offwhite/80 to-transparent"
-          aria-hidden
-        />
-      ) : null}
-      {scrollEdges.right ? (
-        <span
-          className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-offwhite via-offwhite/80 to-transparent"
-          aria-hidden
-        />
-      ) : null}
-      <div
-        ref={scrollRef}
-        className="flex min-w-0 gap-0.5 overflow-x-auto overscroll-x-contain scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-1"
-      >
-        {tabs.map((tab) => {
-          const active = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => onSelect(tab.id)}
-              className={`${buttonClass} ${
-                active ? "text-charcoal" : "text-muted hover:text-charcoal"
-              }`}
-            >
-              {tab.name}
-              {active ? (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#322b81]" />
-              ) : null}
-            </button>
-          );
-        })}
+    <div className="flex min-w-0 flex-1 items-end gap-1 sm:gap-2">
+      <div className="relative min-w-0 flex-1">
+        {scrollEdges.left ? (
+          <span
+            className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-offwhite via-offwhite/80 to-transparent"
+            aria-hidden
+          />
+        ) : null}
+        {scrollEdges.right ? (
+          <span
+            className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-offwhite via-offwhite/80 to-transparent"
+            aria-hidden
+          />
+        ) : null}
+        <div
+          ref={scrollRef}
+          onWheel={handleWheel}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          className={`flex min-w-0 gap-0.5 overflow-x-auto overscroll-x-contain scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-1 ${
+            canScroll ? "cursor-grab touch-pan-x active:cursor-grabbing" : ""
+          }`}
+        >
+          {tabs.map((tab) => {
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                data-tab-id={tab.id}
+                onClick={() => onSelect(tab.id)}
+                className={`${buttonClass} ${
+                  active ? "text-charcoal" : "text-muted hover:text-charcoal"
+                }`}
+              >
+                {tab.name}
+                {active ? (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#322b81]" />
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
       </div>
+
+      {canScroll ? (
+        <div className="flex shrink-0 items-center gap-0.5 pb-1">
+          <button
+            type="button"
+            aria-label="Scroll categories back"
+            disabled={!scrollEdges.left}
+            onClick={() => scrollTabs("left")}
+            className={navButtonClass}
+          >
+            <ChevronLeft className="h-4 w-4" strokeWidth={2.25} aria-hidden />
+          </button>
+          <button
+            type="button"
+            aria-label="Scroll categories forward"
+            disabled={!scrollEdges.right}
+            onClick={() => scrollTabs("right")}
+            className={navButtonClass}
+          >
+            <ChevronRight className="h-4 w-4" strokeWidth={2.25} aria-hidden />
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

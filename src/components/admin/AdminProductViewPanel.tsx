@@ -19,33 +19,10 @@ import {
   Tag,
   X,
 } from "lucide-react";
+import { formatUtcDate, formatUtcDateTime } from "@/lib/format-datetime";
 import { useEffect, useMemo, useState } from "react";
 
 type ProductRow = InferSelectModel<typeof products>;
-
-function formatDate(value: Date | string | null | undefined) {
-  if (!value) return "—";
-  const d = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString(undefined, {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-function formatDateTime(value: Date | string | null | undefined) {
-  if (!value) return "—";
-  const d = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString(undefined, {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 function formatAttrValue(raw: ProductAttributeValue | undefined): string {
   if (raw == null || raw === "") return "—";
@@ -206,11 +183,11 @@ export default function AdminProductViewPanel({
             <div className="grid grid-cols-2 gap-2 text-center lg:text-right">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-admin-ink/40">Created</p>
-                <p className="text-[11px] font-medium text-admin-ink/70">{formatDate(product.createdAt)}</p>
+                <p className="text-[11px] font-medium text-admin-ink/70">{formatUtcDate(product.createdAt)}</p>
               </div>
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-admin-ink/40">Updated</p>
-                <p className="text-[11px] font-medium text-admin-ink/70">{formatDate(product.updatedAt)}</p>
+                <p className="text-[11px] font-medium text-admin-ink/70">{formatUtcDate(product.updatedAt)}</p>
               </div>
             </div>
           </div>
@@ -267,7 +244,7 @@ export default function AdminProductViewPanel({
           <Cell label="Product ID" value={product.productId} mono />
           <Cell label="Photos" value={images.length} />
           <Cell label="Keywords" value={keywords.length || "—"} />
-          <Cell label="Last edit" value={formatDateTime(product.updatedAt)} mono />
+          <Cell label="Last edit" value={formatUtcDateTime(product.updatedAt)} mono />
         </div>
       </div>
 

@@ -3,6 +3,7 @@
 import { admin } from "@/components/admin/adminTheme";
 import { AdminPanelModal } from "@/components/admin/AdminPanelModal";
 import { MessageSquare, Search } from "lucide-react";
+import { formatUtcDateTime } from "@/lib/format-datetime";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 export type TradeEnquiryAdminRow = {
@@ -40,12 +41,6 @@ function rowMatchesSearch(row: TradeEnquiryAdminRow, q: string) {
     .join(" ")
     .toLowerCase();
   return hay.includes(n);
-}
-
-function formatDateTime(value: string) {
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return value;
-  return d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
 
 export default function AdminEnquiriesClient({
@@ -288,7 +283,7 @@ export default function AdminEnquiriesClient({
                     } hover:bg-admin-accent/[0.07]`}
                   >
                     <td className="min-w-0 px-2 py-3 align-top text-xs tabular-nums leading-snug text-gray-500 sm:px-3">
-                      {formatDateTime(r.createdAt)}
+                      {formatUtcDateTime(r.createdAt)}
                     </td>
                     <td className="min-w-0 px-2 py-3 align-top sm:px-3">
                       <p className="truncate text-sm font-semibold leading-snug text-gray-900">

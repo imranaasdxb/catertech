@@ -58,7 +58,8 @@ function isNavLinkActive(href: string, pathname: string) {
 
 export default function Header() {
   const pathname = usePathname();
-  const { totalItems } = useCart();
+  const { totalItems, isHydrated } = useCart();
+  const cartCount = isHydrated ? totalItems : 0;
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -151,11 +152,11 @@ export default function Header() {
               Sign up
             </Link>
 
-            <CartIconLink totalItems={totalItems} showEmptyBadge />
+            <CartIconLink totalItems={cartCount} showEmptyBadge />
           </div>
 
           <div className="flex items-center gap-4 lg:hidden">
-            <CartIconLink totalItems={totalItems} />
+            <CartIconLink totalItems={cartCount} />
 
             <button
               className="flex flex-col gap-1.5 p-1 text-ink transition-colors duration-200"

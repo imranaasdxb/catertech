@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { formatInteger } from "@/lib/format-datetime";
 import { useCallback, useEffect, useState } from "react";
 import { AdminLeadStatsChart } from "./AdminLeadStatsChart";
 import { AdminWidgetCard } from "./AdminWidgetCard";
@@ -37,10 +38,6 @@ const CARD_SUBTITLES: Record<string, string> = {
 
 const WEEK_LABELS = ["W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10"];
 const ADMIN_STATS_CHANGED_EVENT = "admin:stats-changed";
-
-function formatNum(n: number) {
-  return n.toLocaleString();
-}
 
 function asCount(value: unknown) {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
@@ -132,7 +129,7 @@ export function AdminDashboardView(initialMetrics: DashboardMetrics) {
         }
       : null,
     {
-      title: `${formatNum(productCount)} products live in catalogue`,
+      title: `${formatInteger(productCount)} products live in catalogue`,
       sub: "Products",
       href: "/admin/products",
     },
@@ -141,7 +138,7 @@ export function AdminDashboardView(initialMetrics: DashboardMetrics) {
   const quickLinks = [
     {
       title: "Products",
-      meta: `${formatNum(productCount)} items`,
+      meta: `${formatInteger(productCount)} items`,
       excerpt: "Manage catalogue, pricing, and availability.",
       href: "/admin/products",
       tag: "CATALOGUE",
@@ -151,7 +148,7 @@ export function AdminDashboardView(initialMetrics: DashboardMetrics) {
     },
     {
       title: "Quotations",
-      meta: `${formatNum(quoteCount)} quotes`,
+      meta: `${formatInteger(quoteCount)} quotes`,
       excerpt: "Review carts sent for formal pricing.",
       href: "/admin/quotations",
       tag: "SALES",
@@ -162,11 +159,11 @@ export function AdminDashboardView(initialMetrics: DashboardMetrics) {
   ];
 
   const modules = [
-    { name: "Products", meta: `${formatNum(productCount)} SKUs`, href: "/admin/products", color: "#f87941" },
-    { name: "Contacts", meta: `${formatNum(messageCount)} threads`, href: "/admin/contacts", color: "#ec6326" },
+    { name: "Products", meta: `${formatInteger(productCount)} SKUs`, href: "/admin/products", color: "#f87941" },
+    { name: "Contacts", meta: `${formatInteger(messageCount)} threads`, href: "/admin/contacts", color: "#ec6326" },
     {
       name: "Events RFQ enquiry",
-      meta: `${formatNum(rfqCount)} RFQs`,
+      meta: `${formatInteger(rfqCount)} RFQs`,
       href: "/admin/rfq",
       color: "#2f3035",
     },
@@ -186,7 +183,7 @@ export function AdminDashboardView(initialMetrics: DashboardMetrics) {
           <AdminWidgetCard
             key={c.label}
             title={c.label}
-            value={formatNum(c.value)}
+            value={formatInteger(c.value)}
             subtitle={CARD_SUBTITLES[c.label]}
             href={c.href}
             icon={<StatIcon kind={i % 4} />}

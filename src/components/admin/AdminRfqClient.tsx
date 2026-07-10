@@ -24,6 +24,7 @@ import {
   User,
   Users,
 } from "lucide-react";
+import { formatUtcDate, formatUtcDateTime } from "@/lib/format-datetime";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
 export type EventsRfqAdminRow = {
@@ -94,19 +95,6 @@ function rowMatchesSearch(row: EventsRfqAdminRow, q: string) {
     .join(" ")
     .toLowerCase();
   return hay.includes(n);
-}
-
-function formatDate(value: string | null) {
-  if (!value?.trim()) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return value;
-  return d.toLocaleDateString(undefined, { dateStyle: "medium" });
-}
-
-function formatDateTime(value: string) {
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return value;
-  return d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
 
 function isImageAttachment(file: { name: string; type: string }) {
@@ -468,7 +456,7 @@ export default function AdminRfqClient({ dbConfigured }: { dbConfigured: boolean
                         <p className="truncate text-sm leading-snug text-gray-700">{r.companyName}</p>
                       </td>
                       <td className="px-2 py-3 align-top text-xs tabular-nums leading-snug text-gray-500 sm:px-3">
-                        {formatDate(r.eventDate)}
+                        {formatUtcDate(r.eventDate)}
                       </td>
                       <td className="px-2 py-3 align-top sm:px-3">
                         <p className="truncate text-sm leading-snug text-gray-800">{r.eventName}</p>
@@ -501,7 +489,7 @@ export default function AdminRfqClient({ dbConfigured }: { dbConfigured: boolean
       <AdminPanelModal
         open={Boolean(selected)}
         title={selected?.eventName ?? "RFQ details"}
-        subtitle={selected ? `${selected.referenceNo} · ${formatDateTime(selected.createdAt)}` : undefined}
+        subtitle={selected ? `${selected.referenceNo} · ${formatUtcDateTime(selected.createdAt)}` : undefined}
         onClose={() => setSelected(null)}
         widthClass="max-w-[min(100%-1.5rem,56rem)]"
       >
@@ -534,7 +522,7 @@ export default function AdminRfqClient({ dbConfigured }: { dbConfigured: boolean
               <DetailGrid>
                 <DetailRow icon={Tag} label="Event name" value={selected.eventName} />
                 <DetailRow icon={Briefcase} label="Event type" value={selected.eventType} />
-                <DetailRow icon={Calendar} label="Event date" value={formatDate(selected.eventDate)} />
+                <DetailRow icon={Calendar} label="Event date" value={formatUtcDate(selected.eventDate)} />
                 <DetailRow icon={Clock} label="Event duration" value={selected.eventDuration} />
                 <DetailRow icon={MapPinned} label="Venue name" value={selected.venueName} />
                 <DetailRow icon={MapPin} label="Venue location" value={selected.venueLocation} />

@@ -24,7 +24,7 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en" className={nunito.variable}>
+    <html lang="en" className={nunito.variable} data-scroll-behavior="smooth">
       <body className="font-sans antialiased">
         <ClientProviders>{children}</ClientProviders>
       </body>
