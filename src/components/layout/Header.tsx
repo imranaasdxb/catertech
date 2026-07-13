@@ -16,7 +16,6 @@ const NAV_LINKS = [
   { label: "Products", href: "/shop" },
   { label: "Partners", href: "/partners" },
   { label: "Trade", href: "/trade" },
-  { label: "Events", href: "/event-management" },
   { label: "Blog", href: "/blog" },
   { label: "Contact", href: "/contact" },
 ];

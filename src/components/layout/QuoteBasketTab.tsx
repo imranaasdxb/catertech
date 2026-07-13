@@ -16,12 +16,14 @@ export default function QuoteBasketTab() {
     !HIDDEN_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 
   const countLabel = isHydrated ? (totalItems > 99 ? "99+" : String(totalItems)) : "0";
-  const itemLabel = isHydrated ? totalItems : 0;
+  const ariaLabel = isHydrated
+    ? `${totalItems} item${totalItems !== 1 ? "s" : ""} in quote basket. Request a quote.`
+    : "Quote basket. Request a quote.";
 
   return (
     <Link
       href="/cart"
-      aria-label={`${itemLabel} item${itemLabel !== 1 ? "s" : ""} in quote basket. Request a quote.`}
+      aria-label={ariaLabel}
       aria-hidden={!visible}
       tabIndex={visible ? 0 : -1}
       className={`quote-basket-tab group fixed right-0 top-[calc(50%+7rem)] z-40 transition-transform duration-[900ms] ease-[cubic-bezier(0.33,1,0.68,1)] motion-reduce:transition-none ${

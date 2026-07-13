@@ -37,7 +37,6 @@ const data = {
     shop: "/shop",
     trade: "/trade",
     contact: "/contact",
-    events: "/event-management",
   },
   contact: {
     emails: ["info@catertech.ae", "sales@catertech.ae"],
@@ -90,7 +89,6 @@ const helpfulLinks: FooterLink[] = [
   { text: "Browse & Rent", href: data.help.shop },
   { text: "Trade & Corporate", href: data.help.trade },
   { text: "Contact Us", href: data.help.contact, hasIndicator: true },
-  { text: "Event Services", href: data.help.events },
 ];
 
 const contactInfo: FooterContact[] = [
