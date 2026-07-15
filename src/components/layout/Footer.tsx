@@ -30,7 +30,7 @@ const data = {
   about: {
     about: "/about",
     journey: "/about/journey",
-    accreditations: "/about/accreditations",
+    // accreditations: "/about/accreditations",
     blog: "/blog",
   },
   help: {
@@ -61,7 +61,7 @@ const socialLinks = [
 const aboutLinks = [
   { text: "About Us", href: data.about.about },
   { text: "Company Journey", href: data.about.journey },
-  { text: "Accreditations", href: data.about.accreditations },
+  // { text: "Accreditations", href: data.about.accreditations },
   { text: "Blog", href: data.about.blog },
 ] as const;
 
