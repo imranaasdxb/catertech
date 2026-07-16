@@ -1,22 +1,29 @@
 import Link from "next/link";
 import Container from "@/components/Container";
 import BlogCoverImage from "@/components/blog/BlogCoverImage";
+import WaterRiseCta from "@/components/ui/WaterRiseCta";
 import { getLatestBlogPosts } from "@/lib/blog-posts";
 
 export default async function BlogPreview() {
   const posts = await getLatestBlogPosts(4);
+  if (posts.length === 0) return null;
 
   return (
     <section className="bg-white py-16 md:py-24">
       <Container>
-        <header className="mb-12 max-w-2xl md:mb-16">
-          <h2 className="text-3xl font-bold tracking-tight text-[#0a0a0a] md:text-4xl md:leading-tight">
-            Read latest collection
-          </h2>
-          <p className="mt-4 text-base leading-relaxed text-[#6b7280] md:text-lg">
-            Industry news, event guides, and CaterTech insights for hotels, caterers,
-            and event teams across the UAE.
-          </p>
+        <header className="mb-12 flex flex-col gap-6 md:mb-16 md:flex-row md:items-end md:justify-between">
+          <div className="max-w-2xl">
+            <h2 className="text-3xl font-bold tracking-tight text-[#0a0a0a] md:text-4xl md:leading-tight">
+              Read latest collection
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-[#6b7280] md:text-lg">
+              Industry news, event guides, and CaterTech insights for hotels, caterers,
+              and event teams across the UAE.
+            </p>
+          </div>
+          <WaterRiseCta href="/blog" size="md" className="self-start whitespace-nowrap md:self-auto">
+            View all blogs
+          </WaterRiseCta>
         </header>
 
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">

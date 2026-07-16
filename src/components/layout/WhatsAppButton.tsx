@@ -151,6 +151,18 @@ export default function WhatsAppButton() {
     updateLead("need", need);
   }
 
+  function clearChat() {
+    setLead({
+      name: "",
+      phone: "",
+      need: "",
+      details: "",
+    });
+    setIntroMessage("");
+    setSubmittedMessage("");
+    setSaveState("idle");
+  }
+
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
       {open ? (
@@ -163,16 +175,32 @@ export default function WhatsAppButton() {
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#9be7b7]">
                 Catertech Assistant
               </p>
-              <h2 className="mt-1 text-lg font-bold leading-tight text-white">How can we help?</h2>
+              <div
+                role="heading"
+                aria-level={2}
+                className="mt-1 text-lg font-bold leading-tight"
+                style={{ color: "#f6d98f" }}
+              >
+                How can we help?
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              aria-label="Close chat"
-              className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/10 hover:text-white"
-            >
-              <XIcon className="size-4" strokeWidth={2.2} />
-            </button>
+            <div className="flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                onClick={clearChat}
+                className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[#f6d98f]/85 transition hover:bg-white/10 hover:text-[#f6d98f]"
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Close chat"
+                className="inline-flex size-8 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                <XIcon className="size-4" strokeWidth={2.2} />
+              </button>
+            </div>
           </div>
 
           <div className="space-y-4 px-4 py-4">

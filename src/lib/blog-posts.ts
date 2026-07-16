@@ -41,46 +41,6 @@ type SanityPostResult = Omit<BlogPostPublic, "dateLabel" | "content"> & {
 const DEFAULT_COVER =
   "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=1400&h=800&fit=crop&q=80";
 
-const EXCLUDED_BLOG_SLUGS = new Set(["how-to-plan-a-corporate-event-dubai"]);
-
-function paragraph(...texts: string[]) {
-  return texts.map((t) => `<p>${t}</p>`).join("");
-}
-
-export const STATIC_BLOG_POSTS: BlogPostPublic[] = [
-  {
-    slug: "top-catering-equipment-trends-2025",
-    category: "F&B",
-    dateLabel: "April 12, 2025",
-    title: "Top Catering Equipment Trends Shaping UAE Events in 2025",
-    excerpt:
-      "From sustainable serving ware to smart kitchen appliances, what's changing in UAE's catering space.",
-    coverImage: DEFAULT_COVER,
-    coverImageAlt: "Professional chef preparing food in a commercial kitchen",
-    content: paragraph(
-      "UAE event caterers are investing in modular buffet systems, induction holding equipment and durable serveware that travels well between hotel ballrooms, outdoor venues and corporate atriums.",
-      "Sustainability is no longer optional for many tenders: compostable platters, refillable beverage stations and energy-efficient combi ovens are appearing on specification sheets across Dubai and Abu Dhabi.",
-      "Smart monitoring from probe thermometers linked to holding cabinets to inventory tags on high-rotation GN pans helps teams reduce waste during peak Ramadan and year-end seasons."
-    ),
-  },
-  {
-    slug: "wedding-equipment-rental-guide-uae",
-    category: "Wedding",
-    dateLabel: "January 18, 2025",
-    title: "The Complete Wedding Equipment Rental Guide for UAE Couples",
-    excerpt:
-      "Tables, chairs, linen, chafing dishes - everything you need for wedding equipment rental.",
-    coverImage:
-      "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=1400&h=800&fit=crop&q=80",
-    coverImageAlt: "Elegant wedding reception table setting",
-    content: paragraph(
-      "Map your zones early: welcome drinks, main reception, dessert and after-party kits each need distinct furniture, linen and power plans.",
-      "Chafing dish counts should follow menu and service style; plated mains need fewer units than buffet resets with multiple proteins.",
-      "Book tasting-week deliveries separately from event-day installs so florists, AV and catering crews are not competing for the same service lift."
-    ),
-  },
-];
-
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, "&amp;")
@@ -187,43 +147,22 @@ function sortPostsByDate(posts: BlogPostPublic[]) {
   return [...posts].sort((left, right) => parsePostDate(right) - parsePostDate(left));
 }
 
-function filterExcludedPosts(posts: BlogPostPublic[]) {
-  return posts.filter((post) => !EXCLUDED_BLOG_SLUGS.has(post.slug));
-}
-
-function mergeWithStaticPosts(posts: BlogPostPublic[]) {
-  const seenSlugs = new Set(posts.map((post) => post.slug));
-  return filterExcludedPosts(
-    sortPostsByDate([
-      ...posts,
-      ...STATIC_BLOG_POSTS.filter((post) => !seenSlugs.has(post.slug)),
-    ]),
-  );
-}
-
-function mergeSlugs(primary: string[], fallback: string[]) {
-  const seen = new Set(primary);
-  return [...primary, ...fallback.filter((slug) => slug && !seen.has(slug))];
-}
-
 export async function getAllBlogPosts(): Promise<BlogPostPublic[]> {
   const client = getSanityClient();
-  if (!client) return filterExcludedPosts(sortPostsByDate([...STATIC_BLOG_POSTS]));
+  if (!client) return [];
 
   try {
     const rows = await client.fetch<SanityPostResult[]>(allBlogPostsQuery);
-    return mergeWithStaticPosts(rows.map(mapSanityPost));
+    return sortPostsByDate(rows.map(mapSanityPost));
   } catch (error) {
-    console.error("[blog-posts] Sanity fetch failed, using static posts:", error);
-    return filterExcludedPosts(sortPostsByDate([...STATIC_BLOG_POSTS]));
+    console.error("[blog-posts] Sanity fetch failed:", error);
+    return [];
   }
 }
 
 export async function getBlogPostBySlug(
   slug: string
 ): Promise<BlogPostPublic | null> {
-  if (EXCLUDED_BLOG_SLUGS.has(slug)) return null;
-
   const client = getSanityClient();
   if (client) {
     try {
@@ -236,22 +175,19 @@ export async function getBlogPostBySlug(
     }
   }
 
-  return STATIC_BLOG_POSTS.find((p) => p.slug === slug) ?? null;
+  return null;
 }
 
 export async function getAllBlogSlugs(): Promise<string[]> {
-  const staticSlugs = STATIC_BLOG_POSTS.map((post) => post.slug);
   const client = getSanityClient();
-  if (!client) return staticSlugs;
+  if (!client) return [];
 
   try {
     const rows = await client.fetch<string[]>(allBlogSlugsQuery);
-    return mergeSlugs(rows.filter(Boolean), staticSlugs).filter(
-      (slug) => !EXCLUDED_BLOG_SLUGS.has(slug),
-    );
+    return rows.filter(Boolean);
   } catch (error) {
-    console.error("[blog-posts] Sanity slug fetch failed, using static slugs:", error);
-    return staticSlugs;
+    console.error("[blog-posts] Sanity slug fetch failed:", error);
+    return [];
   }
 }
 
@@ -266,7 +202,7 @@ export async function getRelatedPosts(
         slug,
         limit,
       });
-      return mergeWithStaticPosts(rows.map(mapSanityPost))
+      return sortPostsByDate(rows.map(mapSanityPost))
         .filter((p) => p.slug !== slug)
         .slice(0, limit);
     } catch {
@@ -274,10 +210,7 @@ export async function getRelatedPosts(
     }
   }
 
-  return filterExcludedPosts(STATIC_BLOG_POSTS.filter((p) => p.slug !== slug)).slice(
-    0,
-    limit,
-  );
+  return [];
 }
 
 export async function getLatestBlogPosts(limit = 4): Promise<BlogPostPublic[]> {

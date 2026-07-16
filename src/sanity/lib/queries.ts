@@ -15,24 +15,24 @@ const postFields = groq`
 `;
 
 export const allBlogPostsQuery = groq`
-  *[_type == "post" && defined(slug.current) && published == true]
+  *[_type == "post" && defined(slug.current) && !(_id in path("drafts.**"))]
   | order(publishedAt desc, _updatedAt desc) {
     ${postFields}
   }
 `;
 
 export const blogPostBySlugQuery = groq`
-  *[_type == "post" && slug.current == $slug && published == true][0] {
+  *[_type == "post" && slug.current == $slug && !(_id in path("drafts.**"))][0] {
     ${postFields}
   }
 `;
 
 export const allBlogSlugsQuery = groq`
-  *[_type == "post" && defined(slug.current) && published == true].slug.current
+  *[_type == "post" && defined(slug.current) && !(_id in path("drafts.**"))].slug.current
 `;
 
 export const relatedBlogPostsQuery = groq`
-  *[_type == "post" && defined(slug.current) && slug.current != $slug && published == true]
+  *[_type == "post" && defined(slug.current) && slug.current != $slug && !(_id in path("drafts.**"))]
   | order(publishedAt desc, _updatedAt desc)[0...$limit] {
     ${postFields}
   }
