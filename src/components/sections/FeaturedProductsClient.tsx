@@ -36,6 +36,7 @@ export type ProductRow = {
   title: string;
   slug: string;
   description: string;
+  pricePerDayAed: string | null;
   image: string | null;
   tag: "Popular" | "New" | null;
   attributes: Record<string, ProductAttributeValue>;
@@ -53,6 +54,7 @@ type ProductCard = {
   categorySlug: string | null;
   subCategoryName: string | null;
   description: string;
+  pricePerDayAed: string | null;
   attributes: Record<string, ProductAttributeValue>;
   image: string | null;
   tag: "Popular" | "New" | null;
@@ -372,6 +374,7 @@ export default function FeaturedProductsClient({
           categorySlug: resolved?.slug ?? product.categorySlug ?? null,
           subCategoryName: product.subCategoryName,
           description: product.description,
+          pricePerDayAed: product.pricePerDayAed,
           attributes: product.attributes,
           image: product.image,
           tag: product.tag,

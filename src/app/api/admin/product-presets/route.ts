@@ -15,6 +15,7 @@ import {
   normalizeMatchText,
   resolveProductPresetMatch,
 } from "@/lib/product-preset-match";
+import { normalizePricePerDayAed } from "@/lib/product-pricing";
 import { z } from "zod";
 
 const querySchema = z.object({
@@ -34,6 +35,7 @@ const createSchema = z.object({
   title: z.string().trim().min(1).max(240),
   categoryId: z.string().uuid(),
   subCategoryId: z.string().uuid().nullable().optional(),
+  pricePerDayAed: z.union([z.string().max(40), z.null()]).optional(),
 });
 
 export async function GET(request: Request) {
@@ -77,6 +79,7 @@ export async function GET(request: Request) {
           subCategoryId: productTitlePresets.subCategoryId,
           title: productTitlePresets.title,
           sourceLabel: productTitlePresets.sourceLabel,
+          pricePerDayAed: productTitlePresets.pricePerDayAed,
           attributes: productTitlePresets.attributes,
           categoryName: productCategories.name,
           subCategoryName: productSubcategories.name,
@@ -152,6 +155,7 @@ export async function GET(request: Request) {
         id: productTitlePresets.id,
         title: productTitlePresets.title,
         sourceLabel: productTitlePresets.sourceLabel,
+        pricePerDayAed: productTitlePresets.pricePerDayAed,
         attributes: productTitlePresets.attributes,
         subCategoryId: productTitlePresets.subCategoryId,
       })
@@ -255,6 +259,7 @@ export async function POST(request: Request) {
 
   const title = parsed.data.title.trim();
   const subCategoryId = parsed.data.subCategoryId || null;
+  const pricePerDayAed = normalizePricePerDayAed(parsed.data.pricePerDayAed ?? "");
 
   const [category] = await db
     .select({ id: productCategories.id })
@@ -291,6 +296,7 @@ export async function POST(request: Request) {
       id: productTitlePresets.id,
       title: productTitlePresets.title,
       sourceLabel: productTitlePresets.sourceLabel,
+      pricePerDayAed: productTitlePresets.pricePerDayAed,
       attributes: productTitlePresets.attributes,
       created: sql<boolean>`exists (
         select 1
@@ -326,12 +332,14 @@ export async function POST(request: Request) {
       subCategoryId,
       title: cleanPresetProductTitle(title),
       sourceLabel: title,
+      pricePerDayAed,
       attributes: {},
     })
     .returning({
       id: productTitlePresets.id,
       title: productTitlePresets.title,
       sourceLabel: productTitlePresets.sourceLabel,
+      pricePerDayAed: productTitlePresets.pricePerDayAed,
       attributes: productTitlePresets.attributes,
     });
 

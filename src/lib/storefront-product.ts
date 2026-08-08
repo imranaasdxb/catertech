@@ -2,12 +2,14 @@ import type { ShopProductDetail } from "@/lib/shop-products";
 import type { StorefrontProductCardData } from "@/components/shop/StorefrontProductCard";
 import type { CatalogueProductRow } from "@/lib/catalogue-presets";
 import type { ProductAttributeValue } from "@/lib/category-template";
+import { formatPricePerDayAed } from "@/lib/product-pricing";
 
 type DbProductRow = {
   id: string;
   slug: string;
   title: string;
   description: string | null;
+  pricePerDayAed: string | null;
   category: string | null;
   categoryId: string | null;
   subCategoryId: string | null;
@@ -144,6 +146,7 @@ export function toStorefrontProductCard(row: CatalogueProductRow): StorefrontPro
     category: row.categoryName ?? "",
     subCategoryName: row.subCategoryName,
     description: row.description,
+    pricePerDayAed: row.pricePerDayAed,
     attributes: row.attributes,
     image: row.image,
     tag: row.tag,
@@ -171,7 +174,7 @@ export function toProductDetail(product: DbProductRow): ShopProductDetail {
     familyId: product.subCategoryId || product.categoryId || product.slug,
     cardSubtitle: shortDescription,
     equipmentFilters: [],
-    price: "Quote",
+    price: formatPricePerDayAed(product.pricePerDayAed),
     tag: product.isFeatured ? "Popular" : null,
     image: product.images[0] || "",
     shortDescription,
@@ -212,6 +215,7 @@ export function mapTitleVariants(rows: CatalogueProductRow[]): ProductTitleVaria
       slug: row.slug,
       title: row.title,
       description: row.description,
+      pricePerDayAed: row.pricePerDayAed,
       category: row.categoryName,
       categoryId: row.categoryId,
       subCategoryId: row.subCategoryId,

@@ -21,7 +21,7 @@ const NEED_OPTIONS = [
   "Other",
 ];
 
-function CheckIcon(props: SVGProps<SVGSVGElement>) {
+function SuccessCheckIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M20 6 9 17l-5-5" />
@@ -313,7 +313,7 @@ export default function WhatsAppButton() {
 
             {saveState === "saved" ? (
               <p className="flex items-center gap-1.5 text-xs font-medium text-[#147a3f]">
-                <CheckIcon className="size-3.5" strokeWidth={2.4} />
+                <SuccessCheckIcon className="size-3.5" strokeWidth={2.4} />
                 Your details were saved for follow-up.
               </p>
             ) : saveState === "error" ? (

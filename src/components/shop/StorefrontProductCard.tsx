@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import WaterRiseCta from "@/components/ui/WaterRiseCta";
 import type { ProductAttributeValue } from "@/lib/category-template";
+import { formatPricePerDayAed } from "@/lib/product-pricing";
 import { cn } from "@/lib/utils";
 
 export type StorefrontProductCardData = {
@@ -11,6 +12,7 @@ export type StorefrontProductCardData = {
   category: string;
   subCategoryName: string | null;
   description: string;
+  pricePerDayAed?: string | null;
   attributes: Record<string, ProductAttributeValue>;
   image: string | null;
   tag: "Popular" | "New" | null;
@@ -56,6 +58,9 @@ export default function StorefrontProductCard({
 }) {
   const productHref = `/shop/${product.slug}`;
   const sizeSummary = getProductSizeSummary(product.attributes);
+  const priceLabel = formatPricePerDayAed(product.pricePerDayAed);
+  const hasDailyPrice = priceLabel !== "Quote";
+  const priceValue = hasDailyPrice ? priceLabel.replace(/^AED\s+/, "").replace(/\s+\/ day$/, "") : "";
   const cardTitleClass = `font-sans !font-normal tracking-normal text-[#1a1a1a] ${
     shopCompact ? "text-sm lg:text-lg xl:text-xl" : "text-lg sm:text-xl"
   }`;
@@ -149,7 +154,35 @@ export default function StorefrontProductCard({
           {product.description || "Product details available on request."}
         </h2>
 
-        <div className="mt-auto flex justify-end pt-1 lg:pt-2">
+        <div className="mt-auto flex items-end justify-between gap-2 pt-1.5 lg:pt-2">
+          <div className="min-w-0 text-left">
+            {hasDailyPrice ? (
+              <>
+                <p
+                  className={`font-sans font-bold leading-none text-[#1a1a1a] ${
+                    shopCompact ? "text-sm lg:text-lg" : "text-lg"
+                  }`}
+                >
+                  AED {priceValue}
+                </p>
+                <p
+                  className={`mt-0.5 font-sans font-semibold uppercase tracking-wide text-[#888888] ${
+                    shopCompact ? "text-[8px] lg:text-[10px]" : "text-[10px]"
+                  }`}
+                >
+                  per day
+                </p>
+              </>
+            ) : (
+              <p
+                className={`font-sans font-semibold leading-none text-[#888888] ${
+                  shopCompact ? "text-xs lg:text-sm" : "text-sm"
+                }`}
+              >
+                Quote
+              </p>
+            )}
+          </div>
           <WaterRiseCta
             href={productHref}
             size="xs"

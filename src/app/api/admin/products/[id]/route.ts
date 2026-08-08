@@ -8,6 +8,7 @@ import {
   validateSubcategoryForCategory,
 } from "@/lib/product-taxonomy";
 import { generateProductSeo } from "@/lib/product-seo";
+import { normalizePricePerDayAed } from "@/lib/product-pricing";
 import { resolveProductPresetMatch } from "@/lib/product-preset-match";
 import { slugify } from "@/lib/slug";
 import { z } from "zod";
@@ -15,6 +16,7 @@ import { z } from "zod";
 const updateSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().nullable().optional(),
+  pricePerDayAed: z.union([z.string().max(40), z.null()]).optional(),
   categoryId: z.union([z.string().uuid(), z.null()]).optional(),
   subCategoryId: z.union([z.string().uuid(), z.null()]).optional(),
   productTitlePresetId: z.union([z.string().uuid(), z.null()]).optional(),
@@ -104,6 +106,10 @@ export async function PUT(
   if (!nextCat) nextSub = null;
 
   const title = d.title ?? row.title;
+  const pricePerDayAed =
+    d.pricePerDayAed !== undefined
+      ? normalizePricePerDayAed(d.pricePerDayAed ?? "")
+      : row.pricePerDayAed;
   const nextAttributes =
     d.attributes !== undefined
       ? (d.attributes as Record<string, ProductAttributeValue>)
@@ -131,6 +137,7 @@ export async function PUT(
           sourceLabel: productTitlePresets.sourceLabel,
           subCategoryId: productTitlePresets.subCategoryId,
           attributes: productTitlePresets.attributes,
+          pricePerDayAed: productTitlePresets.pricePerDayAed,
         })
         .from(productTitlePresets)
         .where(eq(productTitlePresets.categoryId, nextCat));
@@ -197,6 +204,7 @@ export async function PUT(
           subCategoryId: nextSub,
           title: cleanPresetProductTitle(title),
           sourceLabel: title,
+          pricePerDayAed,
           attributes: nextAttributes,
         })
         .returning({ id: productTitlePresets.id });
@@ -211,6 +219,7 @@ export async function PUT(
         subCategoryId: nextSub,
         title: cleanPresetProductTitle(title),
         sourceLabel: title,
+        pricePerDayAed,
         attributes: nextAttributes,
         updatedAt: new Date(),
       })
@@ -239,6 +248,7 @@ export async function PUT(
         subCategoryId: nextSub,
         title: cleanPresetProductTitle(title),
         sourceLabel: title,
+        pricePerDayAed,
         attributes: nextAttributes,
         updatedAt: new Date(),
       })
@@ -306,6 +316,7 @@ export async function PUT(
       title,
       slug: nextSlug,
       description,
+      pricePerDayAed,
       category: categoryLabel,
       categoryId: nextCat,
       subCategoryId: nextSub,

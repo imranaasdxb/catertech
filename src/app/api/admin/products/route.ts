@@ -13,6 +13,7 @@ import {
 } from "@/lib/product-taxonomy";
 import { generateProductSeo } from "@/lib/product-seo";
 import { buildProductIdPrefix, reserveProductId } from "@/lib/product-id";
+import { normalizePricePerDayAed } from "@/lib/product-pricing";
 import { resolveProductPresetMatch } from "@/lib/product-preset-match";
 import { slugify } from "@/lib/slug";
 import { z } from "zod";
@@ -20,6 +21,7 @@ import { z } from "zod";
 const createSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
+  pricePerDayAed: z.union([z.string().max(40), z.null()]).optional(),
   categoryId: z.union([z.string().uuid(), z.null()]).optional(),
   subCategoryId: z.union([z.string().uuid(), z.null()]).optional(),
   images: z.array(z.string()).optional(),
@@ -73,6 +75,7 @@ export async function POST(request: Request) {
   }
 
   const d = parsed.data;
+  let pricePerDayAed = normalizePricePerDayAed(d.pricePerDayAed ?? "");
   const catId = d.categoryId === undefined ? null : d.categoryId;
   let subId = d.subCategoryId === undefined ? null : d.subCategoryId;
   if (!catId) subId = null;
@@ -87,6 +90,7 @@ export async function POST(request: Request) {
         sourceLabel: productTitlePresets.sourceLabel,
         subCategoryId: productTitlePresets.subCategoryId,
         attributes: productTitlePresets.attributes,
+        pricePerDayAed: productTitlePresets.pricePerDayAed,
       })
       .from(productTitlePresets)
       .where(eq(productTitlePresets.categoryId, catId));
@@ -107,6 +111,7 @@ export async function POST(request: Request) {
   }
 
   let presetAttributes: Record<string, ProductAttributeValue> | null = null;
+  let presetPricePerDayAed: string | null = null;
 
   if (productTitlePresetId) {
     const [preset] = await db
@@ -115,6 +120,7 @@ export async function POST(request: Request) {
         categoryId: productTitlePresets.categoryId,
         subCategoryId: productTitlePresets.subCategoryId,
         attributes: productTitlePresets.attributes,
+        pricePerDayAed: productTitlePresets.pricePerDayAed,
       })
       .from(productTitlePresets)
       .where(eq(productTitlePresets.id, productTitlePresetId))
@@ -139,6 +145,11 @@ export async function POST(request: Request) {
     }
 
     presetAttributes = preset.attributes as Record<string, ProductAttributeValue>;
+    presetPricePerDayAed = preset.pricePerDayAed;
+  }
+
+  if (!pricePerDayAed && presetPricePerDayAed) {
+    pricePerDayAed = presetPricePerDayAed;
   }
 
   const subCheck = await validateSubcategoryForCategory(db, catId, subId);
@@ -154,6 +165,7 @@ export async function POST(request: Request) {
         subCategoryId: subId,
         title: cleanPresetProductTitle(d.title),
         sourceLabel: d.title,
+        pricePerDayAed,
         attributes,
       })
       .returning({ id: productTitlePresets.id });
@@ -161,13 +173,22 @@ export async function POST(request: Request) {
     productTitlePresetId = createdPreset.id;
   } else if (
     productTitlePresetId &&
-    presetAttributes &&
-    !hasSavedAttributes(presetAttributes) &&
-    hasSavedAttributes(attributes)
+    ((presetAttributes &&
+      !hasSavedAttributes(presetAttributes) &&
+      hasSavedAttributes(attributes)) ||
+      (pricePerDayAed && !presetPricePerDayAed))
   ) {
     await db
       .update(productTitlePresets)
-      .set({ attributes, updatedAt: new Date() })
+      .set({
+        ...(presetAttributes &&
+        !hasSavedAttributes(presetAttributes) &&
+        hasSavedAttributes(attributes)
+          ? { attributes }
+          : {}),
+        ...(pricePerDayAed && !presetPricePerDayAed ? { pricePerDayAed } : {}),
+        updatedAt: new Date(),
+      })
       .where(eq(productTitlePresets.id, productTitlePresetId));
   }
 
@@ -220,6 +241,7 @@ export async function POST(request: Request) {
           title: d.title,
           slug,
           description: d.description ?? null,
+          pricePerDayAed,
           category: categoryLabel,
           categoryId: catId,
           subCategoryId: subId,

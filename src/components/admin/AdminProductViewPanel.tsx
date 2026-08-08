@@ -3,6 +3,7 @@
 import { ADMIN_PURPLE, admin } from "@/components/admin/adminTheme";
 import { products } from "@/db/schema";
 import type { ProductAttributeValue, TemplateFieldDef } from "@/lib/category-template";
+import { formatAdminPricePerDayAed } from "@/lib/product-pricing";
 import type { InferSelectModel } from "drizzle-orm";
 import {
   Check,
@@ -242,6 +243,7 @@ export default function AdminProductViewPanel({
         </p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
           <Cell label="Product ID" value={product.productId} mono />
+          <Cell label="Price / day" value={formatAdminPricePerDayAed(product.pricePerDayAed)} />
           <Cell label="Photos" value={images.length} />
           <Cell label="Keywords" value={keywords.length || "—"} />
           <Cell label="Last edit" value={formatUtcDateTime(product.updatedAt)} mono />

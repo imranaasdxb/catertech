@@ -19,6 +19,7 @@ type ProductPreset = {
   id: string;
   title: string;
   sourceLabel: string;
+  pricePerDayAed?: string | null;
   attributes: Record<string, ProductAttributeValue>;
   subCategoryId?: string | null;
   created: boolean;
@@ -31,7 +32,10 @@ type Props = {
   subCategoryName?: string;
   initialTitle?: string;
   initialPresetId?: string | null;
-  onPresetSelected: (attributes: Record<string, ProductAttributeValue>) => void;
+  onPresetSelected: (
+    attributes: Record<string, ProductAttributeValue>,
+    pricePerDayAed?: string | null
+  ) => void;
   onTitleChange?: (title: string) => void;
   onPresetIdentityChange?: (presetId: string | null) => void;
   onAddCustomRequested?: () => void;
@@ -188,8 +192,8 @@ export function ProductTitlePresetInput({
     setSaveError("");
     setSaveStatus("");
     if (categoryChanged) {
-      setSelectedPresetId(null);
-      onPresetIdentityChangeRef.current?.(null);
+    setSelectedPresetId(null);
+    onPresetIdentityChangeRef.current?.(null);
     }
   }, [categoryId, subCategoryId]);
 
@@ -296,7 +300,7 @@ export function ProductTitlePresetInput({
     setCustomPresetOpen(false);
     setSelectedPresetId(preset.id);
     onPresetIdentityChange?.(preset.id);
-    onPresetSelected(preset.attributes);
+    onPresetSelected(preset.attributes, preset.pricePerDayAed ?? null);
   }
 
   function requestCustomPreset() {
@@ -539,6 +543,11 @@ export function ProductTitlePresetInput({
                   {preset.sourceLabel !== preset.title ? (
                     <span className="mt-0.5 block truncate text-xs text-admin-ink/50">
                       {preset.sourceLabel}
+                    </span>
+                  ) : null}
+                  {preset.pricePerDayAed ? (
+                    <span className="mt-0.5 block truncate text-xs font-semibold text-admin-accent">
+                      AED {preset.pricePerDayAed} / day
                     </span>
                   ) : null}
                 </span>

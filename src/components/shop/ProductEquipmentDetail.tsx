@@ -355,6 +355,10 @@ export default function ProductEquipmentDetail({
     [product.specs.detailRows],
   );
   const hasSpecCards = dimensionSpecRows.length > 0 || detailSpecRows.length > 0;
+  const hasDailyPrice = product.price !== "Quote";
+  const priceValue = hasDailyPrice
+    ? product.price.replace(/^AED\s+/, "").replace(/\s+\/ day$/, "")
+    : "";
 
   useEffect(() => {
     setActiveSlug(productSlug || initialProduct.slug || "");
@@ -639,14 +643,32 @@ export default function ProductEquipmentDetail({
               {product.shortDescription}
             </p>
 
-            {/* Enquiry note (replaces price) */}
-            <div className="flex items-center gap-2.5 bg-sand/10 border border-sand/30 rounded-xl px-4 py-3 mb-7">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c21722" strokeWidth="2">
-                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-              </svg>
-              <span className="text-[12px] text-sand font-semibold tracking-wide">
-                Pricing available on quote. Request yours below
-              </span>
+            {/* Price */}
+            <div className="mb-7 rounded-xl border border-sand/30 bg-sand/10 px-4 py-4">
+              {hasDailyPrice ? (
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-sand">
+                    Rental price
+                  </p>
+                  <div className="mt-1 flex items-end gap-2">
+                    <p className="font-serif text-3xl font-semibold leading-none text-navy sm:text-4xl">
+                      AED {priceValue}
+                    </p>
+                    <p className="pb-1 text-sm font-semibold uppercase tracking-wide text-muted">
+                      per day
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2.5">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c21722" strokeWidth="2">
+                    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                  </svg>
+                  <span className="text-[12px] font-semibold tracking-wide text-sand">
+                    Pricing available on quote. Request yours below
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Size selector */}

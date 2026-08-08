@@ -26,6 +26,7 @@ export type CatalogueProductRow = {
   title: string;
   slug: string;
   description: string;
+  pricePerDayAed: string | null;
   image: string | null;
   images?: string[];
   tag: "Popular" | "New" | null;
@@ -80,6 +81,7 @@ function mapStorefrontProduct(product: {
   title: string;
   slug: string;
   description: string | null;
+  pricePerDayAed: string | null;
   images: string[];
   attributes: Record<string, ProductAttributeValue>;
   isFeatured: boolean;
@@ -101,6 +103,7 @@ function mapStorefrontProduct(product: {
     title: product.title,
     slug: product.slug,
     description: plainText(product.description),
+    pricePerDayAed: product.pricePerDayAed,
     image: product.images[0] ?? null,
     tag: isNew ? "New" : product.isFeatured ? "Popular" : null,
     attributes: product.attributes,
@@ -146,6 +149,7 @@ const storefrontProductSelect = {
   title: products.title,
   slug: products.slug,
   description: products.description,
+  pricePerDayAed: products.pricePerDayAed,
   images: products.images,
   attributes: products.attributes,
   isFeatured: products.isFeatured,
@@ -374,6 +378,7 @@ export async function getSimilarCatalogueProducts({
         title: products.title,
         slug: products.slug,
         description: products.description,
+        pricePerDayAed: products.pricePerDayAed,
         images: products.images,
         attributes: products.attributes,
         isFeatured: products.isFeatured,
@@ -449,6 +454,7 @@ export async function getCatalogueProductData({
           title: products.title,
           slug: products.slug,
           description: products.description,
+          pricePerDayAed: products.pricePerDayAed,
           images: products.images,
           attributes: products.attributes,
           isFeatured: products.isFeatured,

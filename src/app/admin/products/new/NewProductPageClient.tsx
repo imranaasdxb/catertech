@@ -63,6 +63,7 @@ export default function NewProductPageClient() {
   );
   const [templateFields, setTemplateFields] = useState<TemplateFieldDef[]>([]);
   const [liveTitle, setLiveTitle] = useState("");
+  const [pricePerDayAed, setPricePerDayAed] = useState("");
   const [liveAttributes, setLiveAttributes] = useState<Record<string, ProductAttributeValue>>({});
   const [descriptionHtml, setDescriptionHtml] = useState("");
   const [isPublished, setIsPublished] = useState(false);
@@ -94,6 +95,7 @@ export default function NewProductPageClient() {
     setSelectedTaxonomy(emptyTaxonomySelection);
     setTemplateFields([]);
     setLiveTitle("");
+    setPricePerDayAed("");
     setLiveAttributes({});
     setDescriptionHtml("");
     setIsPublished(false);
@@ -116,6 +118,7 @@ export default function NewProductPageClient() {
     if (selection.categoryId) setCustomPresetMode(false);
     setSelectedTaxonomy(selection);
     setSelectedProductTitlePresetId(null);
+    setPricePerDayAed("");
 
     if (categoryChanged) {
       setLiveAttributes({});
@@ -131,6 +134,7 @@ export default function NewProductPageClient() {
     setSelectedTaxonomy(emptyTaxonomySelection);
     setSelectedProductTitlePresetId(null);
     setTemplateFields([]);
+    setPricePerDayAed("");
     setLiveAttributes({});
     setPresetFieldKeys(undefined);
     setPresetRevision((revision) => revision + 1);
@@ -142,6 +146,7 @@ export default function NewProductPageClient() {
     setCustomPresetMode(true);
     setSelectedTaxonomy(selection);
     setSelectedProductTitlePresetId(null);
+    setPricePerDayAed("");
 
     if (categoryChanged) {
       setTemplateFields([]);
@@ -213,6 +218,7 @@ export default function NewProductPageClient() {
       const payload = {
         title,
         description,
+        pricePerDayAed: String(fd.get("pricePerDayAed") || "").trim() || null,
         categoryId: selectedTaxonomy.categoryId || null,
         subCategoryId: selectedTaxonomy.subCategoryId || null,
         images: commit.urls,
@@ -368,9 +374,13 @@ export default function NewProductPageClient() {
                       categoryName={selectedTaxonomy.categoryName}
                       subCategoryName={selectedTaxonomy.subCategoryName}
                       onTitleChange={setLiveTitle}
-                      onPresetIdentityChange={setSelectedProductTitlePresetId}
-                      onPresetSelected={(attributes) => {
+                      onPresetIdentityChange={(presetId) => {
+                        setSelectedProductTitlePresetId(presetId);
+                        if (!presetId) setPricePerDayAed("");
+                      }}
+                      onPresetSelected={(attributes, presetPricePerDayAed) => {
                         setLiveAttributes(attributes);
+                        setPricePerDayAed(presetPricePerDayAed ?? "");
                         setPresetFieldKeys(Object.keys(attributes));
                         setPresetRevision((revision) => revision + 1);
                       }}
@@ -379,6 +389,21 @@ export default function NewProductPageClient() {
                       onClearFormRequested={resetCreateForm}
                       onCustomPresetSelectionChange={handleCustomPresetSelection}
                     />
+                    <div className="mt-4">
+                      <label htmlFor="price-per-day-aed" className={admin.labelModern}>
+                        Price per day (AED)
+                      </label>
+                      <input
+                        id="price-per-day-aed"
+                        name="pricePerDayAed"
+                        type="text"
+                        inputMode="decimal"
+                        value={pricePerDayAed}
+                        onChange={(event) => setPricePerDayAed(event.target.value)}
+                        placeholder="Leave empty or enter daily rate"
+                        className={admin.fieldModern}
+                      />
+                    </div>
                   </section>
 
                   {!canShowProductFields ? (

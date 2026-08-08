@@ -14,6 +14,7 @@ import {
   type ShopProductDetail,
 } from "@/lib/shop-products";
 import type { ProductAttributeValue } from "@/lib/category-template";
+import { formatPricePerDayAed } from "@/lib/product-pricing";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -51,6 +52,7 @@ async function getPresetProduct(id: string): Promise<ShopProductDetail | null> {
       id: productTitlePresets.id,
       title: productTitlePresets.title,
       sourceLabel: productTitlePresets.sourceLabel,
+      pricePerDayAed: productTitlePresets.pricePerDayAed,
       attributes: productTitlePresets.attributes,
       categoryName: productCategories.name,
       subCategoryName: productSubcategories.name,
@@ -77,7 +79,7 @@ async function getPresetProduct(id: string): Promise<ShopProductDetail | null> {
     familyId: `preset-${preset.id}`,
     cardSubtitle: preset.subCategoryName ?? undefined,
     equipmentFilters: [preset.subCategoryName ?? preset.categoryName],
-    price: "Quote",
+    price: formatPricePerDayAed(preset.pricePerDayAed),
     tag: null,
     image: fallback.image,
     shortDescription:

@@ -12,12 +12,14 @@ import { Check, ChevronLeft, ChevronRight, Eye, Loader2, Pencil, Search, Trash2 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatUtcDate } from "@/lib/format-datetime";
+import { formatAdminPricePerDayAed } from "@/lib/product-pricing";
 import { useEffect, useMemo, useState } from "react";
 
 export type AdminProductListRow = {
   id: string;
   title: string;
   slug: string;
+  pricePerDayAed: string | null;
   category: string | null;
   categoryId: string | null;
   galleryCount: number;
@@ -463,6 +465,7 @@ export default function AdminProductsTable({
                         slug: updated.slug,
                         category: updated.category,
                         categoryId: updated.categoryId ?? null,
+                        pricePerDayAed: updated.pricePerDayAed ?? null,
                         galleryCount: updated.images?.length ?? 0,
                         published: updated.published,
                         isFeatured: updated.isFeatured,
@@ -524,10 +527,13 @@ export default function AdminProductsTable({
                 <th className="w-[18%] px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-admin-ink/55 sm:px-3">
                   Product
                 </th>
-                <th className="w-[20%] px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-admin-ink/55 sm:px-3">
+                <th className="w-[17%] px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-admin-ink/55 sm:px-3">
                   Specifications
                 </th>
-                <th className="w-[30%] px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-admin-ink/55 sm:px-3">
+                <th className="w-[11%] px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-admin-ink/55 sm:px-3">
+                  Price
+                </th>
+                <th className="w-[25%] px-2 py-3 text-left text-xs font-semibold uppercase tracking-wider text-admin-ink/55 sm:px-3">
                   Visibility
                 </th>
                 <th className="w-[14%] min-w-[96px] px-2 py-3 text-right text-xs font-semibold uppercase tracking-wider text-admin-ink/55 sm:px-3">
@@ -558,6 +564,16 @@ export default function AdminProductsTable({
                   </td>
                   <td className="px-2 py-3 sm:px-3">
                     <Specifications attributes={r.attributes} />
+                  </td>
+                  <td className="px-2 py-3 sm:px-3">
+                    <p className="whitespace-nowrap text-xs font-semibold text-admin-ink">
+                      {formatAdminPricePerDayAed(r.pricePerDayAed)}
+                    </p>
+                    {r.pricePerDayAed ? (
+                      <p className="mt-0.5 text-[10px] font-medium text-admin-ink/40">
+                        per day
+                      </p>
+                    ) : null}
                   </td>
                   <td className="px-2 py-3 sm:px-3">
                     <div className="flex flex-wrap gap-1 sm:gap-1.5">
@@ -651,7 +667,7 @@ export default function AdminProductsTable({
               ))}
               {filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-16 text-center text-sm text-gray-400">
+                  <td colSpan={7} className="px-4 py-16 text-center text-sm text-gray-400">
                     {emptyMessage}
                   </td>
                 </tr>

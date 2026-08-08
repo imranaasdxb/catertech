@@ -1,5 +1,6 @@
 import Container from "@/components/Container";
 import founderPortrait from "@/assets/imamsir2.jpeg";
+import catertechOffice from "@/assets/catertech_office.png";
 import {
   ArrowRight,
   Globe,
@@ -230,9 +231,9 @@ export default function AboutPage() {
                   </span>
                 </h2>
 
-                <div className="relative mt-8 h-[200px] w-full overflow-hidden rounded-2xl bg-[#f3f4f6] sm:h-[220px] lg:h-[240px]">
+                <div className="relative mt-8 h-[260px] w-full overflow-hidden rounded-2xl bg-[#f3f4f6] sm:h-[300px] lg:h-[340px]">
                   <Image
-                    src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=840&q=85"
+                    src={catertechOffice}
                     alt="CaterTech hospitality and events in the UAE"
                     fill
                     className="object-cover"

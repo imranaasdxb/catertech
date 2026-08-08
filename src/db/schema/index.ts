@@ -78,6 +78,7 @@ export const productTitlePresets = pgTable(
     }),
     title: text("title").notNull(),
     sourceLabel: text("source_label").notNull(),
+    pricePerDayAed: text("price_per_day_aed"),
     attributes: jsonb("attributes")
       .$type<Record<string, ProductAttributeValue>>()
       .notNull()
@@ -108,6 +109,7 @@ export const products = pgTable(
     title: text("title").notNull(),
     slug: text("slug").notNull().unique(),
     description: text("description"),
+    pricePerDayAed: text("price_per_day_aed"),
     /** Denormalized storefront label, e.g. "Cooking › Gas ranges" — kept in sync from taxonomy on save. */
     category: text("category"),
     categoryId: uuid("category_id").references(() => productCategories.id, {

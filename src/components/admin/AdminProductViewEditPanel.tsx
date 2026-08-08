@@ -61,6 +61,7 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
   });
   const [templateFields, setTemplateFields] = useState<TemplateFieldDef[]>([]);
   const [liveTitle, setLiveTitle] = useState(product.title);
+  const [pricePerDayAed, setPricePerDayAed] = useState(product.pricePerDayAed ?? "");
   const [liveAttributes, setLiveAttributes] = useState<Record<string, ProductAttributeValue>>(
     (product.attributes ?? {}) as Record<string, ProductAttributeValue>
   );
@@ -85,8 +86,12 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
     );
   }, []);
 
-  const handlePresetSelected = useCallback((attributes: Record<string, ProductAttributeValue>) => {
+  const handlePresetSelected = useCallback((
+    attributes: Record<string, ProductAttributeValue>,
+    presetPricePerDayAed?: string | null
+  ) => {
     setLiveAttributes(attributes);
+    if (presetPricePerDayAed) setPricePerDayAed(presetPricePerDayAed);
   }, []);
 
   const generatedSeo = generateProductSeo({
@@ -128,6 +133,7 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
       const payload = {
         title: String(fd.get("title") || ""),
         description: String(fd.get("description") || "") || null,
+        pricePerDayAed: String(fd.get("pricePerDayAed") || "").trim() || null,
         categoryId: selectedTaxonomy.categoryId || null,
         subCategoryId: selectedTaxonomy.subCategoryId || null,
         images: commit.urls,
@@ -217,6 +223,21 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
                 Select a category above to edit title and specifications.
               </p>
             )}
+            <div>
+              <label htmlFor="view-edit-price-per-day" className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-admin-ink/40">
+                Price per day (AED)
+              </label>
+              <input
+                id="view-edit-price-per-day"
+                name="pricePerDayAed"
+                type="text"
+                inputMode="decimal"
+                value={pricePerDayAed}
+                onChange={(event) => setPricePerDayAed(event.target.value)}
+                placeholder="Leave empty or enter daily rate"
+                className={`${admin.fieldModern} py-2 text-xs`}
+              />
+            </div>
             <div className={`${admin.checkRow} flex-wrap gap-4`}>
               <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-admin-ink">
                 <input

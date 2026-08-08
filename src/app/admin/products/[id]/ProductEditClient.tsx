@@ -70,10 +70,11 @@ export default function ProductEditClient({
 
     setBlockingTitle("Saving product…");
     setBlockingSubtitle("Updating your catalogue entry.");
-    const payload = {
-      title: String(fd.get("title") || ""),
-      description: String(fd.get("description") || "") || null,
-      categoryId: (() => {
+      const payload = {
+        title: String(fd.get("title") || ""),
+        description: String(fd.get("description") || "") || null,
+        pricePerDayAed: String(fd.get("pricePerDayAed") || "").trim() || null,
+        categoryId: (() => {
         const raw = fd.get("categoryId");
         const s = typeof raw === "string" ? raw.trim() : "";
         return s === "" ? null : s;
@@ -168,6 +169,20 @@ export default function ProductEditClient({
           <div>
             <label className={admin.labelModern}>Title *</label>
             <input name="title" required defaultValue={product.title} className={admin.fieldModern} />
+          </div>
+          <div>
+            <label htmlFor="product-price-per-day" className={admin.labelModern}>
+              Price per day (AED)
+            </label>
+            <input
+              id="product-price-per-day"
+              name="pricePerDayAed"
+              type="text"
+              inputMode="decimal"
+              defaultValue={product.pricePerDayAed ?? ""}
+              placeholder="Leave empty or enter daily rate"
+              className={admin.fieldModern}
+            />
           </div>
           <div>
             <ProductCategorySelects
