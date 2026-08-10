@@ -44,11 +44,50 @@ type QuoteFormFields = {
 
 type ActiveQuoteModal = null | QuoteModalVariant;
 
+const VAT_RATE = 0.05;
+
 const purpleRadial =
   "radial-gradient(circle, rgba(180, 120, 220, 0.40) 0%, rgba(240, 225, 255, 0.18) 45%, transparent 70%)";
 
 const inputClass =
   "w-full rounded-xl border border-[#e5e7eb] bg-white px-4 py-3 text-sm text-ink outline-none transition-colors placeholder:text-[#9ca3af] hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/20";
+
+type CartLinePrice = {
+  itemId: string;
+  unitPrice: number | null;
+  subtotal: number | null;
+};
+
+function parseAedPrice(value: string) {
+  const cleaned = value
+    .replace(/\bAED\b/gi, "")
+    .replace(/\bper\s+day\b/gi, "")
+    .replace(/\/\s*day\b/gi, "")
+    .trim();
+  const token = cleaned.match(/\d[\d,.]*/)?.[0];
+  if (!token) return null;
+
+  let normalized = token;
+  if (token.includes(",") && token.includes(".")) {
+    normalized = token.replace(/,/g, "");
+  } else if (token.includes(",") && !token.includes(".")) {
+    const parts = token.split(",");
+    normalized =
+      parts.length === 2 && parts[1].length === 2
+        ? parts.join(".")
+        : token.replace(/,/g, "");
+  }
+
+  const amount = Number(normalized);
+  return Number.isFinite(amount) ? amount : null;
+}
+
+function formatAedAmount(value: number) {
+  return `AED ${value.toLocaleString("en-AE", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
 
 function fieldIconClass(hasError: boolean) {
   return hasError ? "text-accent" : "text-body-muted";
@@ -423,11 +462,13 @@ function EmptyBasket() {
 function CartItemCard({
   item,
   index,
+  linePrice,
   removeItem,
   updateQty,
 }: {
   item: CartItem;
   index: number;
+  linePrice: CartLinePrice;
   removeItem: (id: string) => void;
   updateQty: (id: string, qty: number) => void;
 }) {
@@ -469,7 +510,24 @@ function CartItemCard({
               <h3 className="mt-2.5 text-lg font-bold leading-snug tracking-tight text-ink sm:text-xl">
                 {item.name}
               </h3>
-              {item.price ? <p className="mt-1 text-sm font-medium text-body-muted">{item.price}</p> : null}
+              <div className="mt-3 grid max-w-xl grid-cols-2 gap-3 sm:grid-cols-3">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-body-muted">Price</p>
+                  <p className="mt-1 text-sm font-semibold tabular-nums text-ink">
+                    {linePrice.unitPrice !== null ? formatAedAmount(linePrice.unitPrice) : item.price || "Quote"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-body-muted">Quantity</p>
+                  <p className="mt-1 text-sm font-semibold tabular-nums text-ink">x {item.quantity}</p>
+                </div>
+                <div className="col-span-2 sm:col-span-1">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-body-muted">Subtotal</p>
+                  <p className="mt-1 text-sm font-bold tabular-nums text-primary">
+                    {linePrice.subtotal !== null ? formatAedAmount(linePrice.subtotal) : "Quote"}
+                  </p>
+                </div>
+              </div>
             </div>
             <button
               type="button"
@@ -501,9 +559,14 @@ function CartItemCard({
                 <Plus className="h-4 w-4" strokeWidth={2} />
               </button>
             </div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-body-muted">
-              Quote line ready
-            </p>
+            <div className="text-left sm:text-right">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-body-muted">
+                Line total
+              </p>
+              <p className="mt-1 text-base font-bold tabular-nums text-ink">
+                {linePrice.subtotal !== null ? formatAedAmount(linePrice.subtotal) : "Quote"}
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -517,6 +580,25 @@ export default function CartClient() {
 
   const totalQty = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
   const categories = useMemo(() => new Set(items.map((item) => item.category)).size, [items]);
+  const pricing = useMemo(() => {
+    const lines = items.map<CartLinePrice>((item) => {
+      const unitPrice = parseAedPrice(item.price);
+      return {
+        itemId: item.id,
+        unitPrice,
+        subtotal: unitPrice !== null ? unitPrice * item.quantity : null,
+      };
+    });
+    const subtotal = lines.reduce((sum, line) => sum + (line.subtotal ?? 0), 0);
+    const vat = subtotal * VAT_RATE;
+    return {
+      lines,
+      subtotal,
+      vat,
+      total: subtotal + vat,
+      hasUnpricedItems: lines.some((line) => line.subtotal === null),
+    };
+  }, [items]);
 
   const handleQuoteSuccess = () => {
     clearCart();
@@ -594,6 +676,11 @@ export default function CartClient() {
                     key={item.id}
                     item={item}
                     index={index}
+                    linePrice={pricing.lines.find((line) => line.itemId === item.id) ?? {
+                      itemId: item.id,
+                      unitPrice: null,
+                      subtotal: null,
+                    }}
                     removeItem={removeItem}
                     updateQty={updateQty}
                   />
@@ -629,14 +716,85 @@ export default function CartClient() {
                   <div className="relative z-10">
                     <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Quote command center</p>
                     <h2 className="mt-3 text-2xl font-bold tracking-tight text-ink">Ready to request?</h2>
-                    <p className="mt-3 text-sm leading-relaxed text-body-muted">
-                      Pricing is prepared by the Catertech team after reviewing quantities,
-                      availability, delivery details, and event timing.
+                    <p className="mt-5 text-xs font-bold uppercase tracking-[0.16em] text-primary">
+                      Lines in this basket
                     </p>
+                    <div
+                      className={`mt-3 space-y-3 ${
+                        items.length > 4
+                          ? "max-h-36 overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin] [scrollbar-color:rgba(50,43,129,0.35)_transparent]"
+                          : ""
+                      }`}
+                    >
+                      {items.map((item, index) => {
+                        const linePrice = pricing.lines.find((line) => line.itemId === item.id);
+                        return (
+                          <div key={item.id} className="text-sm">
+                            <div className="flex items-center gap-2">
+                              <span className="shrink-0 font-bold tabular-nums text-primary">
+                                {index + 1}.
+                              </span>
+                              <span className="line-clamp-1 min-w-0 font-medium text-ink">
+                                {item.name}
+                              </span>
+                              <span className="h-px min-w-4 flex-1 border-t border-dashed border-body-muted/35" />
+                              <span className="shrink-0 tabular-nums text-body-muted">
+                                x {item.quantity}
+                              </span>
+                            </div>
+                            <p className="mt-1 text-right font-semibold tabular-nums text-ink">
+                              {linePrice?.subtotal !== null && linePrice?.subtotal !== undefined
+                                ? formatAedAmount(linePrice.subtotal)
+                                : "Quote"}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
                 <div className="border-t border-[#e5e7eb] p-6">
+              
+
+                  
+
+                  <div className="space-y-4 rounded-2xl border border-[#e5e7eb] bg-white p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="text-sm font-bold text-body-muted">Subtotal</p>
+                      <p className="text-sm font-bold tabular-nums text-ink">
+                        {formatAedAmount(pricing.subtotal)}
+                      </p>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between gap-4">
+                        <p className="text-sm font-bold text-body-muted">Shipment</p>
+                        <p className="text-sm font-bold text-body-muted">TBC</p>
+                      </div>
+                      <p className="mt-2 text-sm leading-relaxed text-body-muted">
+                        Setup/Delivery fees may apply. Our team will contact you shortly.
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="text-sm font-bold text-body-muted">VAT 5%</p>
+                      <p className="text-sm font-bold tabular-nums text-ink">
+                        {formatAedAmount(pricing.vat)}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between gap-4 border-t border-[#e5e7eb] pt-4">
+                      <p className="text-base font-bold text-ink">Total</p>
+                      <p className="text-base font-bold tabular-nums text-primary">
+                        {formatAedAmount(pricing.total)}
+                      </p>
+                    </div>
+                    {pricing.hasUnpricedItems ? (
+                      <p className="text-xs leading-relaxed text-body-muted">
+                        Items marked Quote are not included in this automatic total.
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="my-6 h-px bg-[#e5e7eb]" />
+
                   <div className="space-y-3">
                     <button
                       type="button"
@@ -659,26 +817,6 @@ export default function CartClient() {
                       <MessageCircle className="h-4 w-4" strokeWidth={2} />
                       Ask on WhatsApp
                     </button>
-                  </div>
-
-                  <div className="my-6 h-px bg-[#e5e7eb]" />
-
-                  <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-primary">
-                    Lines in this basket
-                  </p>
-                  <div
-                    className={`space-y-3 ${
-                      items.length > 4
-                        ? "max-h-36 overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin] [scrollbar-color:rgba(50,43,129,0.35)_transparent]"
-                        : ""
-                    }`}
-                  >
-                    {items.map((item) => (
-                      <div key={item.id} className="flex items-start justify-between gap-3 text-sm">
-                        <span className="line-clamp-1 font-medium text-ink">{item.name}</span>
-                        <span className="shrink-0 tabular-nums text-body-muted">x {item.quantity}</span>
-                      </div>
-                    ))}
                   </div>
 
                   <div className="mt-6 space-y-3 rounded-2xl bg-surface-card p-4">
