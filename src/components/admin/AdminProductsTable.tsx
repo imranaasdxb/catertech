@@ -12,7 +12,7 @@ import { Check, ChevronLeft, ChevronRight, Eye, Loader2, Pencil, Search, Trash2 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatUtcDate } from "@/lib/format-datetime";
-import { formatAdminPricePerDayAed } from "@/lib/product-pricing";
+import { normalizePricePerDayAed } from "@/lib/product-pricing";
 import { useEffect, useMemo, useState } from "react";
 
 export type AdminProductListRow = {
@@ -151,6 +151,97 @@ function VisibilityToggle({
       </span>
       {label}
     </button>
+  );
+}
+
+function InlinePriceEditor({
+  row,
+  onSaved,
+}: {
+  row: AdminProductListRow;
+  onSaved: (updated: ProductRow) => void;
+}) {
+  const [draft, setDraft] = useState(row.pricePerDayAed ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDraft(row.pricePerDayAed ?? "");
+    setError("");
+  }, [row.pricePerDayAed]);
+
+  async function savePrice() {
+    const trimmed = draft.trim();
+    const normalized = normalizePricePerDayAed(trimmed);
+
+    if (trimmed && !normalized) {
+      setError("Use numbers only, e.g. 120 or 120 / 150.");
+      return;
+    }
+
+    const nextPrice = normalized ?? null;
+    if ((row.pricePerDayAed ?? null) === nextPrice) {
+      setDraft(nextPrice ?? "");
+      setError("");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/products/${row.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pricePerDayAed: nextPrice }),
+      });
+      if (!res.ok) throw new Error();
+      const updated = (await res.json()) as ProductRow;
+      setDraft(updated.pricePerDayAed ?? "");
+      onSaved(updated);
+    } catch {
+      setError("Could not save.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="group min-w-0">
+      <label className="flex max-w-[7.5rem] items-center rounded-lg border border-transparent bg-transparent px-2 py-1 text-xs font-semibold text-admin-ink transition-colors group-hover:border-admin-accent/35 group-hover:bg-white focus-within:border-admin-accent/60 focus-within:bg-white focus-within:ring-2 focus-within:ring-admin-accent/15">
+        <span className="shrink-0 text-admin-ink/45">AED</span>
+        <input
+          type="text"
+          inputMode="decimal"
+          aria-label={`Price per day for ${row.title}`}
+          value={draft}
+          disabled={saving}
+          placeholder="Add price"
+          onChange={(event) => {
+            setDraft(event.target.value);
+            if (error) setError("");
+          }}
+          onBlur={savePrice}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.currentTarget.blur();
+            }
+            if (event.key === "Escape") {
+              setDraft(row.pricePerDayAed ?? "");
+              setError("");
+              event.currentTarget.blur();
+            }
+          }}
+          className="min-w-0 flex-1 bg-transparent px-1 text-xs font-semibold text-admin-ink outline-none placeholder:text-admin-ink/35 disabled:cursor-wait"
+        />
+        {saving ? (
+          <Loader2 className="h-3 w-3 shrink-0 animate-spin text-admin-ink/35" aria-hidden />
+        ) : null}
+      </label>
+      <p className={`mt-0.5 text-[10px] font-medium ${error ? "text-red-500" : "text-admin-ink/40"}`}>
+        {error || "per day"}
+      </p>
+    </div>
   );
 }
 
@@ -333,6 +424,32 @@ export default function AdminProductsTable({
     } finally {
       setTogglingId(null);
     }
+  }
+
+  function handleInlinePriceSaved(updated: ProductRow) {
+    setLocalRows((prev) =>
+      prev.map((r) =>
+        r.id === updated.id
+          ? {
+              ...r,
+              title: updated.title,
+              slug: updated.slug,
+              category: updated.category,
+              categoryId: updated.categoryId ?? null,
+              pricePerDayAed: updated.pricePerDayAed ?? null,
+              galleryCount: updated.images?.length ?? 0,
+              published: updated.published,
+              isFeatured: updated.isFeatured,
+              isAvailable: updated.isAvailable,
+              attributes: (updated.attributes ?? {}) as Record<string, ProductAttributeValue>,
+              updatedAt: updated.updatedAt,
+              thumbUrl: updated.images?.[0] ?? null,
+            }
+          : r
+      )
+    );
+    if (viewProduct?.id === updated.id) setViewProduct(updated);
+    router.refresh();
   }
 
   const confirmCopy = toggleAction ? toggleCopy(toggleAction) : null;
@@ -566,14 +683,7 @@ export default function AdminProductsTable({
                     <Specifications attributes={r.attributes} />
                   </td>
                   <td className="px-2 py-3 sm:px-3">
-                    <p className="whitespace-nowrap text-xs font-semibold text-admin-ink">
-                      {formatAdminPricePerDayAed(r.pricePerDayAed)}
-                    </p>
-                    {r.pricePerDayAed ? (
-                      <p className="mt-0.5 text-[10px] font-medium text-admin-ink/40">
-                        per day
-                      </p>
-                    ) : null}
+                    <InlinePriceEditor row={r} onSaved={handleInlinePriceSaved} />
                   </td>
                   <td className="px-2 py-3 sm:px-3">
                     <div className="flex flex-wrap gap-1 sm:gap-1.5">
