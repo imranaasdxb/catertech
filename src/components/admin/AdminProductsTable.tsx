@@ -8,7 +8,7 @@ import { AdminPanelModal } from "@/components/admin/AdminPanelModal";
 import { notifyProductTaxonomyChanged } from "@/components/admin/ProductCategorySelects";
 import { products, type ProductAttributeValue } from "@/db/schema";
 import type { InferSelectModel } from "drizzle-orm";
-import { Check, ChevronLeft, ChevronRight, Eye, Loader2, Pencil, Search, Trash2 } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Eye, Loader2, Pencil, Search, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatUtcDate } from "@/lib/format-datetime";
@@ -280,13 +280,31 @@ export default function AdminProductsTable({
   }, [rows]);
 
   useEffect(() => {
-    // Keep the submitted server search term in sync after navigation.
+    // Keep optional initial search text in sync after navigation.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearchInput(initialSearch);
   }, [initialSearch]);
 
   const filteredRows = useMemo(() => {
+    const searchTerm = searchInput.trim().toLowerCase();
     return localRows.filter((r) => {
+      if (searchTerm) {
+        const attributeText = Object.entries(r.attributes)
+          .map(([key, value]) => `${key} ${formatAttribute(value)}`)
+          .join(" ");
+        const searchable = [
+          r.title,
+          r.slug,
+          r.category ?? "",
+          r.pricePerDayAed ?? "",
+          attributeText,
+        ]
+          .join(" ")
+          .toLowerCase();
+
+        if (!searchable.includes(searchTerm)) return false;
+      }
+
       if (filter === "all") return true;
       if (r.categoryId === filter) return true;
       const selected = categories.find((category) => category.id === filter);
@@ -299,7 +317,7 @@ export default function AdminProductsTable({
         categoryLabel.startsWith(`${categoryName} >`)
       );
     });
-  }, [localRows, filter, categories]);
+  }, [localRows, filter, categories, searchInput]);
 
   const sortedRows = useMemo(() => {
     if (sortOrder !== "a-z") return filteredRows;
@@ -310,6 +328,7 @@ export default function AdminProductsTable({
 
   const activeCategoryName =
     filter === "all" ? null : categories.find((category) => category.id === filter)?.name ?? null;
+  const hasSearch = searchInput.trim().length > 0;
 
   const totalPages = Math.max(1, Math.ceil(sortedRows.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -321,7 +340,7 @@ export default function AdminProductsTable({
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
-  }, [filter, initialSearch, rows.length, sortOrder]);
+  }, [filter, searchInput, rows.length, sortOrder]);
 
   useEffect(() => {
     if (page > totalPages) {
@@ -372,8 +391,7 @@ export default function AdminProductsTable({
 
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const q = searchInput.trim();
-    router.push(q ? `/admin/products?q=${encodeURIComponent(q)}` : "/admin/products");
+    setSearchInput((current) => current.trim());
   }
 
   function toggleCopy(action: ToggleAction) {
@@ -468,8 +486,19 @@ export default function AdminProductsTable({
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search products…"
-            className="w-full rounded-lg border border-admin-border bg-white py-2.5 pl-9 pr-3 text-sm text-admin-ink outline-none placeholder:text-admin-ink/40 focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15"
+              className="w-full rounded-lg border border-admin-border bg-white py-2.5 pl-9 pr-9 text-sm text-admin-ink outline-none placeholder:text-admin-ink/40 focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15"
             />
+            {searchInput ? (
+              <button
+                type="button"
+                onClick={() => setSearchInput("")}
+                className="absolute right-2 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-admin-ink/35 transition-colors hover:bg-admin-bg hover:text-admin-ink"
+                aria-label="Clear product search"
+                title="Clear search"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden />
+              </button>
+            ) : null}
           </form>
           <select
             value={filter}
@@ -778,7 +807,7 @@ export default function AdminProductsTable({
               {filteredRows.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-16 text-center text-sm text-gray-400">
-                    {emptyMessage}
+                    {hasSearch ? "No products match your search." : emptyMessage}
                   </td>
                 </tr>
               ) : null}

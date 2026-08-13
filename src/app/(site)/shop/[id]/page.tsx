@@ -157,6 +157,8 @@ export default async function ShopProductPage({ params, searchParams }: Props) {
 
       excludeProductId: product.id,
 
+      title: product.title,
+
       limit: 12,
 
     }),

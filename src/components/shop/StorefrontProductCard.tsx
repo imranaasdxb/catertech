@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import WaterRiseCta from "@/components/ui/WaterRiseCta";
 import type { ProductAttributeValue } from "@/lib/category-template";
 import { formatPricePerDayAed } from "@/lib/product-pricing";
@@ -15,6 +18,7 @@ export type StorefrontProductCardData = {
   pricePerDayAed?: string | null;
   attributes: Record<string, ProductAttributeValue>;
   image: string | null;
+  images?: string[];
   tag: "Popular" | "New" | null;
 };
 
@@ -61,6 +65,14 @@ export default function StorefrontProductCard({
   const priceLabel = formatPricePerDayAed(product.pricePerDayAed);
   const hasDailyPrice = priceLabel !== "Quote";
   const priceValue = hasDailyPrice ? priceLabel.replace(/^AED\s+/, "").replace(/\s+\/ day$/, "") : "";
+  const galleryImages = useMemo(() => {
+    const images = (product.images?.length ? product.images : product.image ? [product.image] : [])
+      .map((image) => image?.trim())
+      .filter((image): image is string => Boolean(image));
+    return [...new Set(images)];
+  }, [product.image, product.images]);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const hasImageSlider = galleryImages.length > 1;
   const cardTitleClass = `font-sans !font-normal tracking-normal text-[#1a1a1a] ${
     shopCompact ? "text-sm lg:text-lg xl:text-xl" : "text-lg sm:text-xl"
   }`;
@@ -69,6 +81,20 @@ export default function StorefrontProductCard({
       ? "text-[10px] leading-snug lg:text-[13px] lg:leading-[1.6]"
       : "text-[13px] leading-[1.6]"
   }`;
+
+  useEffect(() => {
+    setActiveImageIndex(0);
+  }, [product.id, galleryImages.length]);
+
+  useEffect(() => {
+    if (!hasImageSlider) return;
+
+    const interval = window.setInterval(() => {
+      setActiveImageIndex((current) => (current + 1) % galleryImages.length);
+    }, 2800);
+
+    return () => window.clearInterval(interval);
+  }, [galleryImages.length, hasImageSlider]);
 
   return (
     <article
@@ -81,27 +107,44 @@ export default function StorefrontProductCard({
       )}
     >
       <div className="relative aspect-square w-full shrink-0 bg-[#FEFEFE]">
-        {product.image ? (
+        {galleryImages.length > 0 ? (
           <Link href={productHref} className="relative block h-full w-full">
-            <Image
-              src={product.image}
-              alt={product.name}
-              fill
-              loading={lazyImage ? "lazy" : undefined}
-              unoptimized
-              className={`object-contain object-center transition-transform duration-500 group-hover:scale-[1.02] ${
-                shopCompact ? "p-2 lg:p-4" : "p-4"
-              }`}
-              sizes={
-                shopCompact
-                  ? "(max-width: 1024px) 45vw, 22vw"
-                  : "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 22vw"
-              }
-            />
+            {galleryImages.map((image, index) => (
+              <Image
+                key={`${image}-${index}`}
+                src={image}
+                alt={product.name}
+                fill
+                loading={lazyImage || index > 0 ? "lazy" : undefined}
+                unoptimized
+                className={`object-contain object-center transition-all duration-700 group-hover:scale-[1.02] ${
+                  index === activeImageIndex ? "opacity-100" : "opacity-0"
+                } ${shopCompact ? "p-2 lg:p-4" : "p-4"}`}
+                sizes={
+                  shopCompact
+                    ? "(max-width: 1024px) 45vw, 22vw"
+                    : "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 22vw"
+                }
+              />
+            ))}
           </Link>
         ) : (
           <div className="h-full w-full animate-pulse bg-[#ececec]" aria-label="Image coming soon" />
         )}
+
+        {hasImageSlider ? (
+          <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full bg-white/85 px-2 py-1 shadow-sm">
+            {galleryImages.map((image, index) => (
+              <span
+                key={`dot-${image}-${index}`}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  index === activeImageIndex ? "w-3 bg-[#1a1a1a]" : "w-1.5 bg-[#b8b8b8]"
+                }`}
+                aria-hidden
+              />
+            ))}
+          </div>
+        ) : null}
 
         {product.tag ? (
           <span

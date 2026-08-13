@@ -1,15 +1,10 @@
-import { asc, desc, ilike, or } from "drizzle-orm";
-import Link from "next/link";
-
-export const dynamic = "force-dynamic";
+import { asc, desc } from "drizzle-orm";
 import AdminProductsTable from "@/components/admin/AdminProductsTable";
 import { admin } from "@/components/admin/adminTheme";
 import { getDb } from "@/db";
 import { productCategories, products } from "@/db/schema";
 
-type SearchProps = {
-  searchParams: Promise<{ q?: string }>;
-};
+export const dynamic = "force-dynamic";
 
 const RETRY_DELAYS_MS = [150, 400];
 
@@ -49,11 +44,7 @@ async function retryBusyDatabase<T>(query: () => Promise<T>) {
   throw new Error("Database query failed.");
 }
 
-export default async function AdminProductsPage({ searchParams }: SearchProps) {
-  const sp = await searchParams;
-  const rawQ = typeof sp.q === "string" ? sp.q.trim() : "";
-  const q = rawQ.slice(0, 120);
-
+export default async function AdminProductsPage() {
   const db = getDb();
   if (!db) {
     return <p className={`${admin.page} ${admin.muted}`}>Configure DATABASE_URL.</p>;
@@ -75,19 +66,7 @@ export default async function AdminProductsPage({ searchParams }: SearchProps) {
   };
 
   const raw = await retryBusyDatabase(() =>
-    q
-      ? db
-          .select(selectFields)
-          .from(products)
-          .where(
-            or(
-              ilike(products.title, `%${q}%`),
-              ilike(products.slug, `%${q}%`),
-              ilike(products.category, `%${q}%`)
-            )
-          )
-          .orderBy(desc(products.updatedAt))
-      : db.select(selectFields).from(products).orderBy(desc(products.updatedAt))
+    db.select(selectFields).from(products).orderBy(desc(products.updatedAt))
   );
 
   const categories = await retryBusyDatabase(() =>
@@ -122,24 +101,10 @@ export default async function AdminProductsPage({ searchParams }: SearchProps) {
       <div className={admin.headerRow}>
         <div className={admin.headerLead}>
           <h1 className={admin.h1}>Products</h1>
-          {q ? (
-            <p className={`${admin.muted} mt-1`}>
-              Filtered by &ldquo;{q}&rdquo; —{" "}
-              <Link href="/admin/products" className={admin.link}>
-                Clear
-              </Link>
-            </p>
-          ) : (
-            <p className={`${admin.muted} mt-1`}>Manage catalogue items and publishing.</p>
-          )}
+          <p className={`${admin.muted} mt-1`}>Manage catalogue items and publishing.</p>
         </div>
       </div>
-      <AdminProductsTable
-        rows={rows}
-        categories={categories}
-        initialSearch={q}
-        emptyMessage={q ? "No products match your search." : "No products yet."}
-      />
+      <AdminProductsTable rows={rows} categories={categories} emptyMessage="No products yet." />
     </div>
   );
 }

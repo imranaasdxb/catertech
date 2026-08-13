@@ -38,6 +38,7 @@ export type ProductRow = {
   description: string;
   pricePerDayAed: string | null;
   image: string | null;
+  images?: string[];
   tag: "Popular" | "New" | null;
   attributes: Record<string, ProductAttributeValue>;
   categoryName: string | null;
@@ -57,6 +58,7 @@ type ProductCard = {
   pricePerDayAed: string | null;
   attributes: Record<string, ProductAttributeValue>;
   image: string | null;
+  images?: string[];
   tag: "Popular" | "New" | null;
 };
 
@@ -67,6 +69,62 @@ function norm(s: string) {
 function formatAttributeValue(value: ProductAttributeValue) {
   if (typeof value === "string") return value.trim();
   return `${value.value}${value.unit ? ` ${value.unit}` : ""}`.trim();
+}
+
+const PRODUCT_TYPE_GROUPS = [
+  { key: "bar-counter", pattern: /\bbar\s+counters?\b/ },
+  { key: "hot-cabinet", pattern: /\bhot\s+cabinet\b|\bhot\s+cupboard\b/ },
+  { key: "chiller", pattern: /\bchill?er\b|\bchilling\b|\brefrigerator\b|\bfridge\b/ },
+  { key: "cooler", pattern: /\bcooler\b|\bcooling\b|\bice\s+box\b/ },
+  { key: "chair", pattern: /\bchairs?\b|\bseating\b|\bstool\b|\bsofa\b/ },
+  { key: "table", pattern: /\btables?\b|\bcocktail\b|\bdining\b|\bcounter\s+table\b/ },
+  { key: "glass", pattern: /\bglass(?:es)?\b|\btumbler\b|\bgoblet\b/ },
+  { key: "plate", pattern: /\bplates?\b|\bplatter\b|\bdish(?:es)?\b/ },
+  { key: "fan", pattern: /\bfans?\b|\bair\s+cooler\b/ },
+  { key: "cabinet", pattern: /\bcabinet\b|\bcupboard\b/ },
+  { key: "warmer", pattern: /\bwarmer\b|\bchafer\b|\bchafing\b|\bbanquet\b/ },
+  { key: "trolley", pattern: /\btrolleys?\b|\bcarts?\b/ },
+  { key: "dispenser", pattern: /\bdispenser\b|\burn\b|\bkettle\b/ },
+  { key: "oven", pattern: /\boven\b|\bgrill\b|\bfryer\b|\bpan\b/ },
+  { key: "freezer", pattern: /\bfreezer\b/ },
+  { key: "sink", pattern: /\bsinks?\b|\bwash\b/ },
+  { key: "cutlery", pattern: /\bcutlery\b|\bspoon\b|\bfork\b|\bknife\b|\bknives\b/ },
+  { key: "tray", pattern: /\btrays?\b/ },
+];
+
+function productSimilarityKey(title: string) {
+  return title
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\b(?:with|without|cloth|cover|covered|uncovered|white|black|blue|red|golden|gold|silver|green|grey|gray|ivory|beige|brown|clear|transparent|chrome|brass|copper|rose)\b/g, " ")
+    .replace(/\b\d+(?:\.\d+)?\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function productTypeGroupKey(product: ProductCard) {
+  const searchable = `${product.name} ${product.subCategoryName ?? ""} ${product.category}`.toLowerCase();
+  const index = PRODUCT_TYPE_GROUPS.findIndex((group) => group.pattern.test(searchable));
+  return index >= 0 ? `${String(index).padStart(2, "0")}-${PRODUCT_TYPE_GROUPS[index].key}` : `99-${productSimilarityKey(product.name)}`;
+}
+
+function orderSimilarProductsTogether(products: ProductCard[]) {
+  return [...products].sort((a, b) => {
+    const leftGroup = productTypeGroupKey(a);
+    const rightGroup = productTypeGroupKey(b);
+    const groupCompare = leftGroup.localeCompare(rightGroup, undefined, { sensitivity: "base" });
+    if (groupCompare !== 0) return groupCompare;
+
+    const similarityCompare = productSimilarityKey(a.name).localeCompare(
+      productSimilarityKey(b.name),
+      undefined,
+      { sensitivity: "base" },
+    );
+    if (similarityCompare !== 0) return similarityCompare;
+
+    return a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+  });
 }
 
 const EQUIPMENT_PREVIEW_COUNT = 10;
@@ -377,6 +435,7 @@ export default function FeaturedProductsClient({
           pricePerDayAed: product.pricePerDayAed,
           attributes: product.attributes,
           image: product.image,
+          images: product.images,
           tag: product.tag,
         };
       }),
@@ -424,7 +483,7 @@ export default function FeaturedProductsClient({
   }, [activeTab, categories, highlight, isShopCatalogue, productCards, search, selectedEquipment]);
 
   const displayed = useMemo(() => {
-    if (sortOrder !== "a-z") return filtered;
+    if (sortOrder !== "a-z") return orderSimilarProductsTogether(filtered);
     return [...filtered].sort((a, b) =>
       a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
     );

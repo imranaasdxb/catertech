@@ -105,6 +105,7 @@ function mapStorefrontProduct(product: {
     description: plainText(product.description),
     pricePerDayAed: product.pricePerDayAed,
     image: product.images[0] ?? null,
+    images: product.images.filter(Boolean),
     tag: isNew ? "New" : product.isFeatured ? "Popular" : null,
     attributes: product.attributes,
     categoryName: resolvedCategoryName,
@@ -127,14 +128,49 @@ export function extractProductVariantGroupKey(title: string) {
     "",
   );
 
+  value = value.replace(/\b(?:with|without|cloth|cover|covered|uncovered)\b/gi, " ");
+
   value = value.replace(
     /\s+\d[\d\s*x×*./-]*(?:cm|mm|m|in|inch|inches|ft|feet)?(?:\s*(\([^)]*\)|\[[^\]]*\]))?\s*$/i,
     "",
   );
 
-  value = value.replace(/\s+\([^)]*\)\s*$/i, "").trim();
+  value = value.replace(/\s+\([^)]*\)\s*$/i, "").replace(/\s+/g, " ").trim();
 
   return value || title.trim();
+}
+
+const PRODUCT_TYPE_GROUPS = [
+  { key: "bar-counter", pattern: /\bbar\s+counters?\b/ },
+  { key: "hot-cabinet", pattern: /\bhot\s+cabinet\b|\bhot\s+cupboard\b/ },
+  { key: "chiller", pattern: /\bchill?er\b|\bchilling\b|\brefrigerator\b|\bfridge\b/ },
+  { key: "cooler", pattern: /\bcooler\b|\bcooling\b|\bice\s+box\b/ },
+  { key: "chair", pattern: /\bchairs?\b|\bseating\b|\bstool\b|\bsofa\b/ },
+  { key: "table", pattern: /\btables?\b|\bcocktail\b|\bdining\b|\bcounter\s+table\b/ },
+  { key: "glass", pattern: /\bglass(?:es)?\b|\btumbler\b|\bgoblet\b/ },
+  { key: "plate", pattern: /\bplates?\b|\bplatter\b|\bdish(?:es)?\b/ },
+  { key: "fan", pattern: /\bfans?\b|\bair\s+cooler\b/ },
+  { key: "cabinet", pattern: /\bcabinet\b|\bcupboard\b/ },
+  { key: "warmer", pattern: /\bwarmer\b|\bchafer\b|\bchafing\b|\bbanquet\b/ },
+  { key: "trolley", pattern: /\btrolleys?\b|\bcarts?\b/ },
+  { key: "dispenser", pattern: /\bdispenser\b|\burn\b|\bkettle\b/ },
+  { key: "oven", pattern: /\boven\b|\bgrill\b|\bfryer\b|\bpan\b/ },
+  { key: "freezer", pattern: /\bfreezer\b/ },
+  { key: "sink", pattern: /\bsinks?\b|\bwash\b/ },
+  { key: "cutlery", pattern: /\bcutlery\b|\bspoon\b|\bfork\b|\bknife\b|\bknives\b/ },
+  { key: "tray", pattern: /\btrays?\b/ },
+];
+
+function productTypeGroupKey(product: {
+  title: string;
+  categoryName: string | null;
+  subCategoryName: string | null;
+}) {
+  const searchable = `${product.title} ${product.subCategoryName ?? ""} ${product.categoryName ?? ""}`.toLowerCase();
+  const index = PRODUCT_TYPE_GROUPS.findIndex((group) => group.pattern.test(searchable));
+  return index >= 0
+    ? `${String(index).padStart(2, "0")}-${PRODUCT_TYPE_GROUPS[index].key}`
+    : `99-${extractProductVariantGroupKey(product.title).toLowerCase()}`;
 }
 
 /** @deprecated Use extractProductVariantGroupKey */
@@ -352,10 +388,12 @@ export async function getProductTitleVariants({
 export async function getSimilarCatalogueProducts({
   categoryId,
   excludeProductId,
+  title,
   limit = 12,
 }: {
   categoryId: string | null;
   excludeProductId: string;
+  title?: string;
   limit?: number;
 }): Promise<CatalogueProductRow[]> {
   const db = getDb();
@@ -391,9 +429,40 @@ export async function getSimilarCatalogueProducts({
       .leftJoin(productSubcategories, eq(products.subCategoryId, productSubcategories.id))
       .where(whereClause)
       .orderBy(desc(products.isFeatured), desc(products.createdAt))
-      .limit(limit);
+      .limit(Math.max(limit, limit * 4));
 
-    return rows.map(mapStorefrontProduct);
+    const activeGroupKey = title ? extractProductVariantGroupKey(title).toLowerCase() : "";
+    const activeTypeKey = title
+      ? productTypeGroupKey({ title, categoryName: null, subCategoryName: null })
+      : "";
+    return rows
+      .map(mapStorefrontProduct)
+      .sort((a, b) => {
+        const leftType = productTypeGroupKey(a);
+        const rightType = productTypeGroupKey(b);
+
+        if (activeTypeKey && leftType !== rightType) {
+          if (leftType === activeTypeKey) return -1;
+          if (rightType === activeTypeKey) return 1;
+        }
+
+        const typeCompare = leftType.localeCompare(rightType, undefined, { sensitivity: "base" });
+        if (typeCompare !== 0) return typeCompare;
+
+        const leftGroup = extractProductVariantGroupKey(a.title).toLowerCase();
+        const rightGroup = extractProductVariantGroupKey(b.title).toLowerCase();
+
+        if (activeGroupKey && leftGroup !== rightGroup) {
+          if (leftGroup === activeGroupKey) return -1;
+          if (rightGroup === activeGroupKey) return 1;
+        }
+
+        const groupCompare = leftGroup.localeCompare(rightGroup, undefined, { sensitivity: "base" });
+        if (groupCompare !== 0) return groupCompare;
+
+        return a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
+      })
+      .slice(0, limit);
   } catch {
     return [];
   }

@@ -149,6 +149,7 @@ export function toStorefrontProductCard(row: CatalogueProductRow): StorefrontPro
     pricePerDayAed: row.pricePerDayAed,
     attributes: row.attributes,
     image: row.image,
+    images: row.images ?? (row.image ? [row.image] : []),
     tag: row.tag,
   };
 }
