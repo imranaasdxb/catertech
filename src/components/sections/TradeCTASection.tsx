@@ -160,9 +160,6 @@ export default function TradeCTASection() {
               <TradeCtaButton href="/trade/enquiry" variant="primary">
                 Submit an enquiry
               </TradeCtaButton>
-              {/* <TradeCtaButton href="/trade/rfq" variant="secondary">
-                Request full quote
-              </TradeCtaButton> */}
             </div>
           </div>
 

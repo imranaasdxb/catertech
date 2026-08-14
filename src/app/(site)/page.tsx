@@ -3,8 +3,6 @@ import ServicesSection from "@/components/sections/ServicesSection";
 import TrustBar from "@/components/sections/TrustBar";
 import FeaturedProducts from "@/components/sections/FeaturedProducts";
 import TradeCTASection from "@/components/sections/TradeCTASection";
-
-import JourneySection from "@/components/sections/JourneySection";
 import TestimonialsSection from "@/components/sections/TestimonialsSection";
 import BlogPreview from "@/components/sections/BlogPreview";
 import JourneyTeaser from "@/components/sections/JourneyTeaser";
@@ -20,7 +18,6 @@ export default function Home() {
       <FeaturedProducts />
       <TradeCTASection />
       <JourneyTeaser />
-      {/* <JourneySection /> */}
       <TestimonialsSection />
       <BlogPreview />
     </>

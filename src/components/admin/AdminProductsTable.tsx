@@ -8,7 +8,7 @@ import { AdminPanelModal } from "@/components/admin/AdminPanelModal";
 import { notifyProductTaxonomyChanged } from "@/components/admin/ProductCategorySelects";
 import { products, type ProductAttributeValue } from "@/db/schema";
 import type { InferSelectModel } from "drizzle-orm";
-import { Check, ChevronLeft, ChevronRight, Eye, Loader2, Pencil, Search, Trash2, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, DollarSign, Eye, Loader2, Pencil, Search, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatUtcDate } from "@/lib/format-datetime";
@@ -68,6 +68,10 @@ function Thumb({ url }: { url: string | null }) {
 function formatAttribute(value: ProductAttributeValue) {
   if (typeof value === "string") return value || "Not set";
   return `${value.value || "Not set"}${value.unit ? ` ${value.unit}` : ""}`;
+}
+
+function isMissingPrice(row: AdminProductListRow) {
+  return !row.pricePerDayAed?.trim();
 }
 
 function Specifications({
@@ -260,6 +264,7 @@ export default function AdminProductsTable({
   const [localRows, setLocalRows] = useState(rows);
   const [searchInput, setSearchInput] = useState(initialSearch);
   const [filter, setFilter] = useState<FilterKey>("all");
+  const [showMissingPriceOnly, setShowMissingPriceOnly] = useState(false);
   const [sortOrder, setSortOrder] = useState<SortOrder>("default");
   const [viewId, setViewId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminProductListRow | null>(null);
@@ -285,9 +290,29 @@ export default function AdminProductsTable({
     setSearchInput(initialSearch);
   }, [initialSearch]);
 
+  const categoryFilteredRows = useMemo(() => {
+    return localRows.filter((r) => {
+      if (filter === "all") return true;
+      if (r.categoryId === filter) return true;
+      const selected = categories.find((category) => category.id === filter);
+      if (!selected) return false;
+      const categoryLabel = r.category?.trim().toLowerCase() ?? "";
+      const categoryName = selected.name.trim().toLowerCase();
+      const matchesCategory = (
+        categoryLabel === categoryName ||
+        categoryLabel.startsWith(`${categoryName} ›`) ||
+        categoryLabel.startsWith(`${categoryName} >`)
+      );
+
+      if (!matchesCategory) return false;
+
+      return true;
+    });
+  }, [localRows, filter, categories]);
+
   const filteredRows = useMemo(() => {
     const searchTerm = searchInput.trim().toLowerCase();
-    return localRows.filter((r) => {
+    return categoryFilteredRows.filter((r) => {
       if (searchTerm) {
         const attributeText = Object.entries(r.attributes)
           .map(([key, value]) => `${key} ${formatAttribute(value)}`)
@@ -305,19 +330,13 @@ export default function AdminProductsTable({
         if (!searchable.includes(searchTerm)) return false;
       }
 
-      if (filter === "all") return true;
-      if (r.categoryId === filter) return true;
-      const selected = categories.find((category) => category.id === filter);
-      if (!selected) return false;
-      const categoryLabel = r.category?.trim().toLowerCase() ?? "";
-      const categoryName = selected.name.trim().toLowerCase();
-      return (
-        categoryLabel === categoryName ||
-        categoryLabel.startsWith(`${categoryName} ›`) ||
-        categoryLabel.startsWith(`${categoryName} >`)
-      );
+      return true;
+    }).filter((r) => {
+      // Temporary admin cleanup filter: remove this state/button/filter block after all prices are filled.
+      if (!showMissingPriceOnly) return true;
+      return isMissingPrice(r);
     });
-  }, [localRows, filter, categories, searchInput]);
+  }, [categoryFilteredRows, searchInput, showMissingPriceOnly]);
 
   const sortedRows = useMemo(() => {
     if (sortOrder !== "a-z") return filteredRows;
@@ -329,6 +348,10 @@ export default function AdminProductsTable({
   const activeCategoryName =
     filter === "all" ? null : categories.find((category) => category.id === filter)?.name ?? null;
   const hasSearch = searchInput.trim().length > 0;
+  const missingPriceCount = useMemo(
+    () => categoryFilteredRows.filter(isMissingPrice).length,
+    [categoryFilteredRows]
+  );
 
   const totalPages = Math.max(1, Math.ceil(sortedRows.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -340,7 +363,7 @@ export default function AdminProductsTable({
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
-  }, [filter, searchInput, rows.length, sortOrder]);
+  }, [filter, searchInput, rows.length, sortOrder, showMissingPriceOnly]);
 
   useEffect(() => {
     if (page > totalPages) {
@@ -513,6 +536,23 @@ export default function AdminProductsTable({
               </option>
             ))}
           </select>
+          <button
+            type="button"
+            aria-pressed={showMissingPriceOnly}
+            title="Show products without a saved price"
+            onClick={() => setShowMissingPriceOnly((current) => !current)}
+            className={`inline-flex h-[42px] shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border px-3 text-sm font-semibold transition-colors ${
+              showMissingPriceOnly
+                ? "border-admin-accent/45 bg-admin-accent/10 text-admin-accent"
+                : "border-admin-border bg-white text-admin-ink/65 hover:border-admin-accent/35 hover:bg-admin-bg"
+            }`}
+          >
+            <DollarSign className="h-4 w-4" aria-hidden />
+            No price
+            <span className="rounded-full bg-white/80 px-1.5 py-0.5 text-[11px] leading-none text-admin-ink/55">
+              {missingPriceCount}
+            </span>
+          </button>
           <select
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value as SortOrder)}

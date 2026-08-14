@@ -1,10 +1,6 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
 import { Handshake, Layers, Package, Sparkles, Truck } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Marquee } from "@/components/ui/marquee";
 import servicesDesktop from "@/assets/services/services-section-desktop.png";
 import servicesTablet from "@/assets/services/services-section-tablet.png";
 import servicesMobile from "@/assets/services/services-section-mobile.png";
@@ -15,21 +11,6 @@ import service4Image from "@/assets/services/service-event-management.png";
 import service5Image from "@/assets/services/service-trade-corporate.png";
 import type { StaticImageData } from "next/image";
 import { SERVICES_FEATURES_SECTION_ID } from "@/lib/connect-us-sections";
-
-const marqueeData = [
-  "What chafing dish capacity do I need for a 300-guest buffet?",
-  "How do I plan equipment for a corporate gala?",
-  "Can I rent tables and chairs for a single weekend?",
-  "Which commercial oven suits a hotel kitchen upgrade?",
-  "Do you deliver and collect across Dubai?",
-  "What linen options work for outdoor weddings?",
-  "How far in advance should I book event rentals?",
-  "Can you manage on-site setup for large functions?",
-  "Are your catering items food-grade certified?",
-  "What refrigeration capacity do I need for banquets?",
-  "Do you supply staging and AV for conferences?",
-  "Can I mix purchase and rental in one order?",
-];
 
 const features: {
   description: string;
@@ -141,11 +122,6 @@ function ServiceFeatureCard({ feature }: { feature: FeatureItem }) {
 }
 
 export default function ServicesFeatureShowcase() {
-  const third = Math.ceil(marqueeData.length / 3);
-  const m1 = marqueeData.slice(0, third);
-  const m2 = marqueeData.slice(third, third * 2);
-  const m3 = marqueeData.slice(third * 2);
-
   return (
     <section
       id={SERVICES_FEATURES_SECTION_ID}
@@ -188,59 +164,6 @@ export default function ServicesFeatureShowcase() {
             procurement for a portfolio of venues, Catertech simplifies the process, the right
             equipment, delivered on time, backed by a team that understands hospitality.
           </p>
-
-          <div className="relative mx-auto max-w-4xl overflow-hidden">
-            {/* <div
-              className="pointer-events-none absolute top-0 left-0 z-10 h-full w-32 sm:w-40"
-              style={{
-                background:
-                  "linear-gradient(90deg, #F6EADC 0%, #F6ECDF 18%, rgba(246, 236, 223, 0.55) 42%, rgba(246, 236, 223, 0.2) 68%, transparent 100%)",
-              }}
-            /> */}
-           
-            <div className="absolute right-0 z-10 h-full w-20 bg-linear-to-l from-[#f5f4f0]/90" />
-
-            {/* <div className="-mx-6 flex w-screen flex-col md:-mx-10 lg:-mx-16">
-              <Marquee className="[--duration:45s] [--gap:0.75rem]" repeat={4}>
-                {m1.map((q) => (
-                  <Badge
-                    className="rounded-none border-border bg-surface-card px-3 py-1 text-body-muted"
-                    key={q}
-                    size="lg"
-                    variant="outline"
-                  >
-                    {q}
-                  </Badge>
-                ))}
-              </Marquee>
-
-              <Marquee className="[--duration:50s] [--gap:0.75rem]" repeat={4} reverse>
-                {m2.map((q) => (
-                  <Badge
-                    className="rounded-none border-border bg-surface-card px-3 py-1 text-body-muted"
-                    key={q}
-                    size="lg"
-                    variant="outline"
-                  >
-                    {q}
-                  </Badge>
-                ))}
-              </Marquee>
-
-              <Marquee className="[--duration:42s] [--gap:0.75rem]" repeat={4}>
-                {m3.map((q) => (
-                  <Badge
-                    className="rounded-none border-border bg-surface-card px-3 py-1 text-body-muted"
-                    key={q}
-                    size="lg"
-                    variant="outline"
-                  >
-                    {q}
-                  </Badge>
-                ))}
-              </Marquee>
-            </div> */}
-          </div>
         </div>
 
         <div className="mt-10 lg:px-8 xl:px-10">
