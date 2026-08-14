@@ -1,7 +1,7 @@
-import service1Image from "@/assets/service1.png";
-import service2Image from "@/assets/service2.png";
-import service3Image from "@/assets/service3.png";
-import service4Image from "@/assets/service4.png";
+import service1Image from "@/assets/services/service-catering-equipment.png";
+import service2Image from "@/assets/services/service-kitchen-equipment.png";
+import service3Image from "@/assets/services/service-event-rental.png";
+import service4Image from "@/assets/services/service-event-management.png";
 import type { StaticImageData } from "next/image";
 
 export type ServiceData = {

@@ -1,11 +1,11 @@
 "use client";
 
-import RichText from "@/app/admin/ui/Richtext";
+import RichText from "@/components/admin/RichTextEditor";
 import AdminGalleryUpload, {
   type AdminGalleryUploadHandle,
 } from "@/components/admin/AdminGalleryUpload";
 import { AdminBlockingOverlay, AdminSuccessModal } from "@/components/admin/AdminFormOverlays";
-import { admin } from "@/components/admin/adminTheme";
+import { admin } from "@/components/admin/admin-theme";
 import {
   notifyProductTaxonomyChanged,
   ProductCategorySelects,

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getDb } from "@/db";
 import { tradeEnquiries } from "@/db/schema";
 import { sendTradeEnquiryNotifyEmail } from "@/lib/smtp-mail";
+import { sanitizeMultilineText, sanitizePhone, sanitizeText } from "@/lib/security";
 
 const chatbotLeadSchema = z.object({
   name: z.string().min(2).max(200),
@@ -31,7 +32,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const lead = parsed.data;
+  const lead = {
+    name: sanitizeText(parsed.data.name),
+    phone: sanitizePhone(parsed.data.phone),
+    need: sanitizeText(parsed.data.need),
+    details: sanitizeMultilineText(parsed.data.details || ""),
+  };
+  if (!lead.name || !lead.phone || !lead.need) {
+    return NextResponse.json({ error: "Invalid lead details" }, { status: 400 });
+  }
   const message = [
     "Source: Website chat assistant",
     "",
@@ -39,7 +48,7 @@ export async function POST(request: Request) {
     `Phone: ${lead.phone}`,
     "",
     "Message:",
-    lead.details?.trim() || "No extra message provided.",
+    lead.details || "No extra message provided.",
   ].join("\n");
 
   const [row] = await db

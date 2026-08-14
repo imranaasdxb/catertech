@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Container from "@/components/Container";
+import Container from "@/components/layout/PageContainer";
 import JourneySection from "@/components/sections/JourneySection";
 
 const CLOSING_STATS = [

@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import Container from "@/components/Container";
-import logo from "@/assets/logo.png";
+import Container from "@/components/layout/PageContainer";
+import logo from "@/assets/brand/logo.png";
 import { ShoppingBasket } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 

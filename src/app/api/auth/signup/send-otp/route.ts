@@ -17,6 +17,7 @@ import {
   putPublicMediaObject,
 } from "@/lib/media-storage";
 import { sendSignupOtpEmail } from "@/lib/smtp-mail";
+import { sanitizeEmail, sanitizeText } from "@/lib/security";
 
 export const runtime = "nodejs";
 
@@ -46,8 +47,8 @@ export async function POST(request: Request) {
     return bad("Invalid form data");
   }
 
-  const fullName = String(form.get("fullName") || "").trim();
-  const email = String(form.get("email") || "").trim().toLowerCase();
+  const fullName = sanitizeText(String(form.get("fullName") || ""));
+  const email = sanitizeEmail(String(form.get("email") || ""));
   const password = String(form.get("password") || "");
   const confirmPassword = String(form.get("confirmPassword") || "");
 
@@ -152,7 +153,7 @@ export async function POST(request: Request) {
   if (!mailed.ok) {
     await db.delete(authOtpChallenges).where(eq(authOtpChallenges.id, pendingId));
     if (profilePendingKey && getActiveMediaProvider() === "r2") {
-      const { deleteObjectFromR2 } = await import("@/lib/r2");
+      const { deleteObjectFromR2 } = await import("@/lib/cloudflare-r2-storage");
       await deleteObjectFromR2(profilePendingKey);
     }
     return NextResponse.json({ error: mailed.reason }, { status: 503 });

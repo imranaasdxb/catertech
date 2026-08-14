@@ -1,37 +1,100 @@
 import { z } from "zod";
+import {
+  sanitizeEmail,
+  sanitizeMultilineText,
+  sanitizePhone,
+  sanitizeText,
+} from "@/lib/sanitize";
+
+function requiredText(max: number) {
+  return z
+    .string()
+    .max(max * 2)
+    .transform(sanitizeText)
+    .pipe(z.string().min(1).max(max));
+}
+
+function optionalText(max: number) {
+  return z
+    .union([
+      z.string().max(max * 2).transform(sanitizeText).pipe(z.string().max(max)),
+      z.literal(""),
+    ])
+    .optional();
+}
+
+function requiredMultiline(max: number) {
+  return z
+    .string()
+    .max(max * 2)
+    .transform(sanitizeMultilineText)
+    .pipe(z.string().min(1).max(max));
+}
+
+function optionalMultiline(max: number) {
+  return z
+    .union([
+      z
+        .string()
+        .max(max * 2)
+        .transform(sanitizeMultilineText)
+        .pipe(z.string().max(max)),
+      z.literal(""),
+    ])
+    .optional();
+}
+
+const emailField = z
+  .string()
+  .max(640)
+  .transform(sanitizeEmail)
+  .pipe(z.string().email().max(320));
+
+const phoneField = z
+  .string()
+  .max(100)
+  .transform(sanitizePhone)
+  .pipe(z.string().min(1).max(50));
+
+const optionalPhoneField = z
+  .union([
+    z.string().max(100).transform(sanitizePhone).pipe(z.string().max(50)),
+    z.literal(""),
+  ])
+  .optional();
 
 export const contactSchema = z.object({
-  fullName: z.string().min(1).max(200),
-  email: z.string().email().max(320),
-  phone: z.string().max(50).optional().or(z.literal("")),
-  message: z.string().min(1).max(10000),
+  fullName: requiredText(200),
+  email: emailField,
+  phone: optionalPhoneField,
+  message: requiredMultiline(10000),
 });
 
 export const enquirySchema = z.object({
-  companyName: z.string().min(1).max(300),
-  contactName: z.string().min(1).max(200),
-  phone: z.string().min(1).max(50),
-  email: z.string().email().max(320),
-  emirate: z.string().max(100).optional().or(z.literal("")),
-  serviceInterest: z.string().max(200).optional().or(z.literal("")),
-  message: z.string().min(1).max(10000),
+  companyName: requiredText(300),
+  contactName: requiredText(200),
+  phone: phoneField,
+  email: emailField,
+  emirate: optionalText(100),
+  serviceInterest: optionalText(200),
+  message: requiredMultiline(10000),
 });
 
 export const quoteSchema = z.object({
-  customerName: z.string().min(1).max(200),
-  email: z.string().email().max(320),
-  phone: z.string().min(1).max(50),
-  company: z.string().max(300).optional().or(z.literal("")),
-  address: z.string().min(1).max(500),
-  message: z.string().max(5000).optional().or(z.literal("")),
+  customerName: requiredText(200),
+  email: emailField,
+  phone: phoneField,
+  company: optionalText(300),
+  address: requiredText(500),
+  message: optionalMultiline(5000),
   source: z.enum(["email", "whatsapp"]).optional(),
   items: z
     .array(
       z.object({
-        name: z.string(),
-        category: z.string(),
+        name: requiredText(200),
+        category: requiredText(120),
         /** Optional line price shown in WhatsApp / notification email. */
-        price: z.string().max(120).optional(),
+        price: optionalText(120),
         qty: z.number().int().positive(),
       })
     )
@@ -50,21 +113,21 @@ export const rfqEventTypes = [
 ] as const;
 
 export const rfqSchema = z.object({
-  companyName: z.string().min(1).max(300),
-  tradeLicenceNo: z.string().max(200).optional().or(z.literal("")),
-  contactPerson: z.string().min(1).max(200),
-  phone: z.string().min(1).max(50),
-  email: z.string().email().max(320),
-  budgetAed: z.string().max(100).optional().or(z.literal("")),
-  emirate: z.string().max(100).optional().or(z.literal("")),
-  eventName: z.string().min(1).max(300),
+  companyName: requiredText(300),
+  tradeLicenceNo: optionalText(200),
+  contactPerson: requiredText(200),
+  phone: phoneField,
+  email: emailField,
+  budgetAed: optionalText(100),
+  emirate: optionalText(100),
+  eventName: requiredText(300),
   eventType: z.enum(rfqEventTypes),
-  eventDate: z.string().max(50).optional().or(z.literal("")),
-  eventDuration: z.string().max(100).optional().or(z.literal("")),
-  venueName: z.string().max(300).optional().or(z.literal("")),
-  venueLocation: z.string().max(300).optional().or(z.literal("")),
-  expectedGuests: z.string().max(50).optional().or(z.literal("")),
-  notes: z.string().max(10000).optional().or(z.literal("")),
+  eventDate: optionalText(50),
+  eventDuration: optionalText(100),
+  venueName: optionalText(300),
+  venueLocation: optionalText(300),
+  expectedGuests: optionalText(50),
+  notes: optionalMultiline(10000),
 });
 
 export type RfqPayload = z.infer<typeof rfqSchema>;

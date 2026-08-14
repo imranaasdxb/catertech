@@ -1,7 +1,7 @@
 "use client";
 
 import { AdminPanelModal } from "@/components/admin/AdminPanelModal";
-import { admin } from "@/components/admin/adminTheme";
+import { admin } from "@/components/admin/admin-theme";
 import { Check, ExternalLink, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";

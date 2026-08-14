@@ -6,10 +6,10 @@ import { FEATURED_PRODUCTS_SECTION_ID } from "@/lib/connect-us-sections";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import Container from "@/components/Container";
+import Container from "@/components/layout/PageContainer";
 import StorefrontProductCard from "@/components/shop/StorefrontProductCard";
 import SectionHeader from "@/components/ui/SectionHeader";
-import WaterRiseCta from "@/components/ui/WaterRiseCta";
+import BrandCta from "@/components/ui/BrandCta";
 import { productMatchesCategory, resolveCategoryForProduct } from "@/lib/product-category-match";
 import { slugify } from "@/lib/slug";
 import type { ProductAttributeValue } from "@/lib/category-template";
@@ -1087,9 +1087,9 @@ export default function FeaturedProductsClient({
 
         {!compactTop ? (
           <div className="text-center mt-12">
-            <WaterRiseCta href="/shop" size="lg" className="whitespace-nowrap max-sm:px-5">
+            <BrandCta href="/shop" size="lg" className="whitespace-nowrap max-sm:px-5">
               Browse Full Catalogue
-            </WaterRiseCta>
+            </BrandCta>
           </div>
         ) : null}
         </div>

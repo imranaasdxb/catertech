@@ -1,7 +1,7 @@
 import Link from "next/link";
-import Container from "@/components/Container";
+import Container from "@/components/layout/PageContainer";
 import BlogCoverImage from "@/components/blog/BlogCoverImage";
-import WaterRiseCta from "@/components/ui/WaterRiseCta";
+import BrandCta from "@/components/ui/BrandCta";
 import { getLatestBlogPosts } from "@/lib/blog-posts";
 
 export default async function BlogPreview() {
@@ -21,9 +21,9 @@ export default async function BlogPreview() {
               and event teams across the UAE.
             </p>
           </div>
-          <WaterRiseCta href="/blog" size="md" className="self-start whitespace-nowrap md:self-auto">
+          <BrandCta href="/blog" size="md" className="self-start whitespace-nowrap md:self-auto">
             View all blogs
-          </WaterRiseCta>
+          </BrandCta>
         </header>
 
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">

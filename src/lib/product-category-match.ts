@@ -1,4 +1,4 @@
-import { CANONICAL_CATALOGUE } from "@/lib/catalog/canonical-catalog";
+import { CANONICAL_CATALOGUE } from "@/lib/product-catalog/canonical-catalog";
 import { slugify } from "@/lib/slug";
 
 export type CategoryMatchTarget = {

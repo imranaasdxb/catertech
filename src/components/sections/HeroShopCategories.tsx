@@ -4,15 +4,15 @@ import { useEffect, useRef } from "react";
 import Image, { type StaticImageData } from "next/image";
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, CircleDollarSign, PackageCheck, UsersRound } from "lucide-react";
-import furnitureImg from "@/assets/categories/furniture.png";
-import glasswareImg from "@/assets/categories/glassware.png";
-import ceramicwareImg from "@/assets/categories/ceramicware.png";
-import stainlessSteelImg from "@/assets/categories/stainless steel.png";
-import diningCutleryImg from "@/assets/categories/dinig cutlery.png";
-import buffetEquipmentImg from "@/assets/categories/buffet equipment.png";
-import kitchenEquipmentImg from "@/assets/categories/kitchen equipment.png";
-import outdoorEquipmentImg from "@/assets/categories/outdoor equipment.png";
-import kitchenUtensilsImg from "@/assets/categories/kitchen utensils.png";
+import furnitureImg from "@/assets/category-icons/furniture.png";
+import glasswareImg from "@/assets/category-icons/glassware.png";
+import ceramicwareImg from "@/assets/category-icons/ceramicware.png";
+import stainlessSteelImg from "@/assets/category-icons/stainless-steel.png";
+import diningCutleryImg from "@/assets/category-icons/dining-cutlery.png";
+import buffetEquipmentImg from "@/assets/category-icons/buffet-equipment.png";
+import kitchenEquipmentImg from "@/assets/category-icons/kitchen-equipment.png";
+import outdoorEquipmentImg from "@/assets/category-icons/outdoor-equipment.png";
+import kitchenUtensilsImg from "@/assets/category-icons/kitchen-utensils.png";
 
 type CategoryItem = {
   name: string;

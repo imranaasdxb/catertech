@@ -1,6 +1,6 @@
 "use client";
 
-import { admin, ADMIN_PURPLE } from "@/components/admin/adminTheme";
+import { admin, ADMIN_PURPLE } from "@/components/admin/admin-theme";
 import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import { AdminProductPresetsPanel } from "@/components/admin/AdminProductPresetsPanel";
 import { notifyProductTaxonomyChanged, type TaxonomyRow } from "@/components/admin/ProductCategorySelects";

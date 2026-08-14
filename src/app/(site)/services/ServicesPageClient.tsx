@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import Container from "@/components/Container";
+import Container from "@/components/layout/PageContainer";
 import ServicesProcessSection from "@/components/sections/ServicesProcessSection";
-import WaterRiseCta from "@/components/ui/WaterRiseCta";
+import BrandCta from "@/components/ui/BrandCta";
 import { SERVICES_LIST } from "@/lib/services";
 
 export default function ServicesPageClient() {
@@ -77,13 +77,13 @@ export default function ServicesPageClient() {
                         Coming soon
                       </span>
                     ) : (
-                      <WaterRiseCta
+                      <BrandCta
                         href={`/services/${service.slug}`}
                         size="sm"
                         className="mt-4 w-fit"
                       >
                         View details
-                      </WaterRiseCta>
+                      </BrandCta>
                     )}
                   </div>
 

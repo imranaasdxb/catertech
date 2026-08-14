@@ -1,4 +1,4 @@
-import Container from "@/components/Container";
+import Container from "@/components/layout/PageContainer";
 import { PARTNERS, type PartnerEntry } from "@/lib/partners";
 import { ArrowUpRight, Globe2, Sparkles } from "lucide-react";
 import type { Metadata } from "next";

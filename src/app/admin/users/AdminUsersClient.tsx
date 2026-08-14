@@ -24,7 +24,7 @@ import type { LucideIcon } from "lucide-react";
 import type { AdminUserRow } from "@/app/api/admin/users/route";
 import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import { AdminPanelModal } from "@/components/admin/AdminPanelModal";
-import { admin } from "@/components/admin/adminTheme";
+import { admin } from "@/components/admin/admin-theme";
 import { uploadMediaPublicUrl } from "@/lib/upload-media-client";
 import { cn } from "@/lib/utils";
 

@@ -1,5 +1,5 @@
-import { createPresignedPutUrl, putPublicObjectToR2 } from "@/lib/r2";
-import { isImageKitConfigured, putPublicObjectToImageKit } from "@/lib/imagekit";
+import { createPresignedPutUrl, putPublicObjectToR2 } from "@/lib/cloudflare-r2-storage";
+import { isImageKitConfigured, putPublicObjectToImageKit } from "@/lib/imagekit-storage";
 
 const UPLOAD_PROVIDER = process.env.MEDIA_UPLOAD_PROVIDER?.trim().toLowerCase();
 

@@ -7,7 +7,7 @@ import {
   SIGNUP_OTP_PURPOSE,
   verifyOtpHash,
 } from "@/lib/auth-otp";
-import { copyObjectWithinR2, deleteObjectFromR2 } from "@/lib/r2";
+import { copyObjectWithinR2, deleteObjectFromR2 } from "@/lib/cloudflare-r2-storage";
 import { getDb } from "@/db";
 import { authOtpChallenges, users } from "@/db/schema";
 import {
@@ -17,6 +17,7 @@ import {
   USER_AUTH_COOKIE,
 } from "@/lib/user-auth-session";
 import { getActiveMediaProvider } from "@/lib/media-storage";
+import { sanitizeEmail } from "@/lib/security";
 
 export const runtime = "nodejs";
 
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
     return bad("Invalid JSON");
   }
 
-  const email = String(body.email || "").trim().toLowerCase();
+  const email = sanitizeEmail(String(body.email || ""));
   const code = String(body.code || "").trim();
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return bad("Invalid email");

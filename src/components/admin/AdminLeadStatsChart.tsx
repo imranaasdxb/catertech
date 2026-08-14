@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { adminCard } from "./adminTheme";
+import { adminCard } from "./admin-theme";
 
 const CHART_ACCENT = "#f87941";
 const CHART_INK = "#2f3035";

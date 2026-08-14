@@ -1,8 +1,8 @@
 "use client";
 
-import logo from "@/assets/logo.png";
-import vector1 from "@/assets/contact2.png";
-import Container from "@/components/Container";
+import logo from "@/assets/brand/logo.png";
+import rfqIllustrationImage from "@/assets/trade/rfq-form-illustration.png";
+import Container from "@/components/layout/PageContainer";
 import FormResponseTimeNote from "@/components/ui/FormResponseTimeNote";
 import { rfqEventTypes } from "@/lib/validations/forms";
 import { cn } from "@/lib/utils";
@@ -64,7 +64,7 @@ function RFQGraphic() {
     <div className="relative mx-auto w-full max-w-[380px]" aria-hidden>
       <div className="absolute -left-6 top-8 h-24 w-24 rounded-full bg-primary-soft blur-2xl" />
       <NextImage
-        src={vector1}
+        src={rfqIllustrationImage}
         alt=""
         width={420}
         height={380}

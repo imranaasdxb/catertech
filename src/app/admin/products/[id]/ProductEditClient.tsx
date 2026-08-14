@@ -1,6 +1,6 @@
 "use client";
 
-import RichText from "@/app/admin/ui/Richtext";
+import RichText from "@/components/admin/RichTextEditor";
 import AdminGalleryUpload, {
   type AdminGalleryUploadHandle,
 } from "@/components/admin/AdminGalleryUpload";
@@ -14,7 +14,7 @@ import {
   notifyProductTaxonomyChanged,
   ProductCategorySelects,
 } from "@/components/admin/ProductCategorySelects";
-import { ADMIN_PURPLE, admin, adminCardShadow } from "@/components/admin/adminTheme";
+import { ADMIN_PURPLE, admin, adminCardShadow } from "@/components/admin/admin-theme";
 import { products } from "@/db/schema";
 import type { TemplateFieldDef } from "@/lib/category-template";
 import type { InferSelectModel } from "drizzle-orm";

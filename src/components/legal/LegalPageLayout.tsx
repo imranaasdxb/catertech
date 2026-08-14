@@ -1,4 +1,4 @@
-import Container from "@/components/Container";
+import Container from "@/components/layout/PageContainer";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ChevronRight, Shield } from "lucide-react";

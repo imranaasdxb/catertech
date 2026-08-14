@@ -10,7 +10,7 @@ import {
 import {
   FURNITURE_PRESETS,
   FURNITURE_SUBCATEGORIES,
-} from "@/lib/catalog/furniture-presets";
+} from "@/lib/product-catalog/furniture-presets";
 import { uniqueCategorySlug, uniqueSubcategorySlug } from "@/lib/product-taxonomy";
 
 export async function POST() {

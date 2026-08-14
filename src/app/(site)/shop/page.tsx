@@ -1,8 +1,8 @@
 import { Suspense } from "react";
-import shopBgDesktop from "@/assets/shopbg2.png";
-import shopBgMobile from "@/assets/shopbgmobile.png";
-import shopBgTablet from "@/assets/shopbgtablet.png";
-import Container from "@/components/Container";
+import shopBgDesktop from "@/assets/shop/shop-hero-desktop.png";
+import shopBgMobile from "@/assets/shop/shop-hero-mobile.png";
+import shopBgTablet from "@/assets/shop/shop-hero-tablet.png";
+import Container from "@/components/layout/PageContainer";
 import ShopCatalogueClient from "@/components/shop/ShopCatalogueClient";
 import { getCatalogueProductData } from "@/lib/catalogue-presets";
 import Image from "next/image";

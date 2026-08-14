@@ -1,7 +1,7 @@
 import {
   cleanPresetProductTitle,
   inferPresetAttributes,
-} from "@/lib/catalog/canonical-catalog";
+} from "@/lib/product-catalog/canonical-catalog";
 import type { ProductAttributeValue } from "@/db/schema";
 
 export type PresetMatchRow = {

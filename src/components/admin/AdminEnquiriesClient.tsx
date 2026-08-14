@@ -1,6 +1,6 @@
 "use client";
 
-import { admin } from "@/components/admin/adminTheme";
+import { admin } from "@/components/admin/admin-theme";
 import { AdminPanelModal } from "@/components/admin/AdminPanelModal";
 import { MessageSquare, Search } from "lucide-react";
 import { formatUtcDateTime } from "@/lib/format-datetime";

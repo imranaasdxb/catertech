@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Check, Clock, Shield, Truck } from "lucide-react";
-import Container from "@/components/Container";
+import Container from "@/components/layout/PageContainer";
 import type { ServiceData } from "@/lib/services";
 
 export default function ServiceDetailClient({ service }: { service: ServiceData }) {

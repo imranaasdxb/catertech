@@ -11,15 +11,15 @@ import {
   cleanPresetProductTitle,
   inferPresetAttributes,
   normalizedPresetTitle,
-} from "@/lib/catalog/canonical-catalog";
+} from "@/lib/product-catalog/canonical-catalog";
 import {
   FURNITURE_PRESETS,
   FURNITURE_SUBCATEGORIES,
-} from "@/lib/catalog/furniture-presets";
+} from "@/lib/product-catalog/furniture-presets";
 import {
   GLASSWARE_PRESETS,
   GLASSWARE_SUBCATEGORIES,
-} from "@/lib/catalog/glassware-presets";
+} from "@/lib/product-catalog/glassware-presets";
 import { uniqueCategorySlug, uniqueSubcategorySlug } from "@/lib/product-taxonomy";
 import { z } from "zod";
 

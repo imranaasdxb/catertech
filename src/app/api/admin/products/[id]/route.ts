@@ -1,8 +1,9 @@
 import { and, eq, ne } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
+import { isAdminSession } from "@/lib/auth-user";
 import { products, productTitlePresets, type ProductAttributeValue } from "@/db/schema";
-import { cleanPresetProductTitle } from "@/lib/catalog/canonical-catalog";
+import { cleanPresetProductTitle } from "@/lib/product-catalog/canonical-catalog";
 import {
   buildCategoryDisplayLabel,
   validateSubcategoryForCategory,
@@ -49,6 +50,10 @@ export async function GET(
   _req: Request,
   ctx: { params: Promise<{ id: string }> }
 ) {
+  if (!(await isAdminSession())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await ctx.params;
   const db = getDb();
   if (!db)
@@ -68,6 +73,10 @@ export async function PUT(
   request: Request,
   ctx: { params: Promise<{ id: string }> }
 ) {
+  if (!(await isAdminSession())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await ctx.params;
   const db = getDb();
   if (!db)
@@ -360,6 +369,10 @@ export async function DELETE(
   _req: Request,
   ctx: { params: Promise<{ id: string }> }
 ) {
+  if (!(await isAdminSession())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await ctx.params;
   const db = getDb();
   if (!db)

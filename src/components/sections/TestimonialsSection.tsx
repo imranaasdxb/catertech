@@ -1,5 +1,5 @@
-import Container from "@/components/Container";
-import TestimonialsMarquee from "@/components/ui/testimonials-marquee";
+import Container from "@/components/layout/PageContainer";
+import TestimonialsMarquee from "@/components/sections/TestimonialsMarquee";
 import { TESTIMONIALS_SECTION_ID } from "@/lib/connect-us-sections";
 
 export default function TestimonialsSection() {

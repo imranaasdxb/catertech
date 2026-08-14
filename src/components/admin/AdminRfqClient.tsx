@@ -1,6 +1,6 @@
 "use client";
 
-import { admin } from "@/components/admin/adminTheme";
+import { admin } from "@/components/admin/admin-theme";
 import { AdminPanelModal } from "@/components/admin/AdminPanelModal";
 import { rfqEventTypes } from "@/lib/validations/forms";
 import type { LucideIcon } from "lucide-react";

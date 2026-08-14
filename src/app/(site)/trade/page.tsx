@@ -1,4 +1,4 @@
-import Container from "@/components/Container";
+import Container from "@/components/layout/PageContainer";
 import { ArrowRight, Building2, ClipboardList, MessageSquareText, ShieldCheck, Truck } from "lucide-react";
 import Link from "next/link";
 

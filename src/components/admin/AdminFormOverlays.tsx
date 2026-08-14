@@ -1,6 +1,6 @@
 "use client";
 
-import { ADMIN_PURPLE } from "@/components/admin/adminTheme";
+import { ADMIN_PURPLE } from "@/components/admin/admin-theme";
 import { Loader2, X } from "lucide-react";
 
 export function AdminBlockingOverlay(props: {

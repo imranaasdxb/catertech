@@ -1,7 +1,7 @@
 "use client";
 
-import Container from "@/components/Container";
-import { BrandCtaWithIcon } from "@/components/ui/WaterRiseCta";
+import Container from "@/components/layout/PageContainer";
+import { BrandCtaWithIcon } from "@/components/ui/BrandCta";
 
 const BRAND_PURPLE = "#322b81";
 const BRAND_RED = "#c21722";

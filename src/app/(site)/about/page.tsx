@@ -1,6 +1,6 @@
-import Container from "@/components/Container";
-import founderPortrait from "@/assets/imamsir2.jpeg";
-import catertechOffice from "@/assets/catertech_office.png";
+import Container from "@/components/layout/PageContainer";
+import founderPortrait from "@/assets/about/founder-imam-portrait.jpeg";
+import catertechOffice from "@/assets/about/catertech-office.png";
 import {
   ArrowRight,
   Globe,

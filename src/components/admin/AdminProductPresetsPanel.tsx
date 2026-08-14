@@ -1,6 +1,6 @@
 "use client";
 
-import { admin } from "@/components/admin/adminTheme";
+import { admin } from "@/components/admin/admin-theme";
 import type { TaxonomyRow } from "@/components/admin/ProductCategorySelects";
 import type {
   ProductAttributeValue,

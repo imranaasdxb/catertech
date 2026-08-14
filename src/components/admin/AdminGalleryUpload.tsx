@@ -1,6 +1,6 @@
 "use client";
 
-import { admin } from "@/components/admin/adminTheme";
+import { admin } from "@/components/admin/admin-theme";
 import { uploadMediaPublicUrl } from "@/lib/upload-media-client";
 import { ArrowLeft, ArrowRight, ImagePlus, Loader2, X } from "lucide-react";
 import {

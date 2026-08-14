@@ -1,5 +1,5 @@
-import tradeBgImage from "@/assets/tradefinal.png";
-import Container from "@/components/Container";
+import tradeBgImage from "@/assets/trade/trade-cta-background.png";
+import Container from "@/components/layout/PageContainer";
 import Image from "next/image";
 import Link from "next/link";
 import {

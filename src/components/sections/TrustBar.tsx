@@ -1,9 +1,9 @@
 "use client";
 
-import uaeMapDesktop from "@/assets/uaemapcenter.png";
-import uaeMapTablet from "@/assets/tabletmap.png";
-import uaeMapMobile from "@/assets/uaemapmobile.png";
-import Container from "@/components/Container";
+import uaeMapDesktop from "@/assets/maps/uae-map-desktop.png";
+import uaeMapTablet from "@/assets/maps/uae-map-tablet.png";
+import uaeMapMobile from "@/assets/maps/uae-map-mobile.png";
+import Container from "@/components/layout/PageContainer";
 import Image from "next/image";
 import { formatInteger } from "@/lib/format-datetime";
 import { useEffect, useRef, useState } from "react";

@@ -10,6 +10,15 @@ import { isAdminSession } from "@/lib/auth-user";
 export const maxDuration = 120;
 
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
+const DISALLOWED_IMAGE_MIME = new Set(["image/svg+xml"]);
+
+function isAllowedUploadMime(mime: string) {
+  return (
+    (mime.startsWith("image/") && !DISALLOWED_IMAGE_MIME.has(mime)) ||
+    mime === "video/mp4" ||
+    mime === "video/webm"
+  );
+}
 
 /** When the client sends octet-stream or empty type, infer from filename (common on Windows). */
 function resolveMultipartMediaMime(filename: string, reported: string): string | null {
@@ -76,11 +85,7 @@ export async function POST(request: Request) {
     const mime =
       resolveMultipartMediaMime(filename, reported) ??
       (reported || "application/octet-stream");
-    const okMedia =
-      mime.startsWith("image/") ||
-      mime === "video/mp4" ||
-      mime === "video/webm";
-    if (!okMedia) {
+    if (!isAllowedUploadMime(mime)) {
       return NextResponse.json(
         { error: "Only image files or MP4/WebM videos are allowed" },
         { status: 400 }
@@ -121,6 +126,12 @@ export async function POST(request: Request) {
 
   const filename = (body.filename || "file").replace(/[^\w.\-]/g, "_");
   const contentType = body.contentType || "application/octet-stream";
+  if (!isAllowedUploadMime(contentType)) {
+    return NextResponse.json(
+      { error: "Only image files or MP4/WebM videos are allowed" },
+      { status: 400 }
+    );
+  }
   const key = `uploads/${new Date().toISOString().slice(0, 10)}/${randomUUID()}-${filename}`;
 
   const result = await createPresignedMediaPutUrl(key, contentType);

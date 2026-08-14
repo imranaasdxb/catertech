@@ -1,7 +1,8 @@
-import footerBgImage from "@/assets/footerbg.png";
+import footerBgImage from "@/assets/layout/footer-background.png";
 import Image from "next/image";
 import Link from "next/link";
 import FooterMapPanel from "@/components/layout/FooterMapPanel";
+import { SERVICES_LIST } from "@/lib/services";
 import {
   CATER_TECH_LOCATION,
   GOOGLE_MAPS_PLACE_URL,
@@ -21,12 +22,6 @@ const data = {
   instaLink: "https://instagram.com",
   linkedinLink: "https://linkedin.com",
   whatsappLink: "https://wa.me/971504522867",
-  services: {
-    catering: "/services/catering-equipment",
-    eventRental: "/services/event-rental",
-    kitchen: "/services/kitchen-equipment",
-    eventMgmt: "/services/event-management",
-  },
   about: {
     about: "/about",
     journey: "/about/journey",
@@ -65,11 +60,12 @@ const aboutLinks = [
 ] as const;
 
 const serviceLinks = [
-  { text: "Catering Equipment", href: data.services.catering },
-  { text: "Event Equipment Rental", href: data.services.eventRental },
-  { text: "Kitchen Equipment", href: data.services.kitchen },
-  { text: "Event Management", href: data.services.eventMgmt },
-] as const;
+  ...SERVICES_LIST.filter((service) => service.slug !== "event-management").map((service) => ({
+    text: service.title,
+    href: `/services/${service.slug}`,
+  })),
+  { text: "Trade & Corporate", href: data.help.trade },
+];
 
 type FooterLink = {
   text: string;

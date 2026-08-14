@@ -1,5 +1,5 @@
-import VercepFeaturesDemo from "@/components/ui/vercep-features-demo";
+import ServicesFeatureShowcase from "@/components/sections/ServicesFeatureShowcase";
 
 export default function ServicesSection() {
-  return <VercepFeaturesDemo />;
+  return <ServicesFeatureShowcase />;
 }

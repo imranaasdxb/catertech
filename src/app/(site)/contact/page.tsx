@@ -1,7 +1,7 @@
-import Container from "@/components/Container";
+import Container from "@/components/layout/PageContainer";
 import { Mail, Phone } from "lucide-react";
 import { ContactForm } from "./ContactForm";
-import { ContactLottie } from "./ContactLottie";
+import { ContactIllustration } from "./ContactIllustration";
 
 const CONTACT = {
   email: "info@catertech.ae",
@@ -40,7 +40,7 @@ export default function ContactPage() {
             </p>
 
             <div className="mt-8 flex justify-center lg:justify-start">
-              <ContactLottie />
+              <ContactIllustration />
             </div>
           </div>
 

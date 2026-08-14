@@ -4,13 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useRef } from "react";
-import Container from "@/components/Container";
+import Container from "@/components/layout/PageContainer";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import journeyDesktop from "@/assets/journeydesktop.png";
-import journeyTablet from "@/assets/journeytablet.png";
-import journeyMobile from "@/assets/journeymoobile.png";
+import journeyDesktop from "@/assets/about/journey-desktop.png";
+import journeyTablet from "@/assets/about/journey-tablet.png";
+import journeyMobile from "@/assets/about/journey-mobile.png";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 

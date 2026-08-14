@@ -6,6 +6,46 @@ import {
   USER_AUTH_COOKIE,
 } from "@/lib/user-auth-session";
 import { isStaffRole, isSuperadminRole } from "@/lib/admin-roles";
+import {
+  applySecurityHeaders,
+  checkRateLimit,
+  getClientIp,
+  rateLimitResponse,
+  validateSameOriginRequest,
+} from "@/lib/security";
+
+const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+function withSecurityHeaders(response: NextResponse) {
+  return applySecurityHeaders(response);
+}
+
+function rateLimitConfig(pathname: string):
+  | { scope: string; limit: number; windowMs: number }
+  | null {
+  if (pathname === "/api/auth/login") {
+    return { scope: "auth-login", limit: 20, windowMs: 15 * 60 * 1000 };
+  }
+  if (pathname.startsWith("/api/auth/signup")) {
+    return { scope: "auth-signup", limit: 12, windowMs: 15 * 60 * 1000 };
+  }
+  if (
+    pathname === "/api/contact" ||
+    pathname === "/api/enquiry" ||
+    pathname === "/api/quote" ||
+    pathname === "/api/rfq" ||
+    pathname === "/api/chatbot-leads"
+  ) {
+    return { scope: `public-form:${pathname}`, limit: 20, windowMs: 10 * 60 * 1000 };
+  }
+  if (pathname === "/api/upload") {
+    return { scope: "admin-upload", limit: 80, windowMs: 10 * 60 * 1000 };
+  }
+  if (pathname.startsWith("/api/admin")) {
+    return { scope: "admin-api", limit: 300, windowMs: 60 * 1000 };
+  }
+  return null;
+}
 
 /** Staff cookies are site-wide, but staff should still be able to open the public website. */
 function isStaffBrowseAllowed(pathname: string): boolean {
@@ -23,6 +63,28 @@ function isStaffBrowseAllowed(pathname: string): boolean {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const method = request.method.toUpperCase();
+
+  if (pathname.startsWith("/api") && MUTATING_METHODS.has(method)) {
+    if (!validateSameOriginRequest(request, request.nextUrl.origin)) {
+      return withSecurityHeaders(
+        NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      );
+    }
+
+    const cfg = rateLimitConfig(pathname);
+    if (cfg) {
+      const limited = checkRateLimit({
+        key: `${cfg.scope}:${getClientIp(request)}`,
+        limit: cfg.limit,
+        windowMs: cfg.windowMs,
+      });
+      if (!limited.ok) {
+        return withSecurityHeaders(rateLimitResponse(limited.retryAfterSec));
+      }
+    }
+  }
+
   const secret = getAuthSigningSecret();
   const token = request.cookies.get(USER_AUTH_COOKIE)?.value;
   const sess =
@@ -38,23 +100,27 @@ export async function middleware(request: NextRequest) {
 
   if (pathname.startsWith("/api/admin")) {
     if (!staffAuthed) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return withSecurityHeaders(
+        NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      );
     }
     if ((isContactsArea || isUsersArea) && !isSuperadminRole(sess?.role)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return withSecurityHeaders(
+        NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      );
     }
-    return NextResponse.next();
+    return withSecurityHeaders(NextResponse.next());
   }
 
   if (staffAuthed && !isStaffBrowseAllowed(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin";
     url.search = "";
-    return NextResponse.redirect(url);
+    return withSecurityHeaders(NextResponse.redirect(url));
   }
 
   if (pathname.startsWith("/admin/login")) {
-    return NextResponse.next();
+    return withSecurityHeaders(NextResponse.next());
   }
 
   if (pathname.startsWith("/admin")) {
@@ -63,17 +129,17 @@ export async function middleware(request: NextRequest) {
       url.pathname = "/auth";
       url.searchParams.set("tab", "login");
       url.searchParams.set("from", pathname);
-      return NextResponse.redirect(url);
+      return withSecurityHeaders(NextResponse.redirect(url));
     }
     if ((isContactsArea || isUsersArea) && !isSuperadminRole(sess?.role)) {
       const url = request.nextUrl.clone();
       url.pathname = "/admin";
       url.search = "";
-      return NextResponse.redirect(url);
+      return withSecurityHeaders(NextResponse.redirect(url));
     }
   }
 
-  return NextResponse.next();
+  return withSecurityHeaders(NextResponse.next());
 }
 
 export const config = {

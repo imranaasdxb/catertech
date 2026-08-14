@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Container from "@/components/Container";
+import Container from "@/components/layout/PageContainer";
 import BlogArticleBody from "@/components/blog/BlogArticleBody";
 import BlogCoverImage from "@/components/blog/BlogCoverImage";
 import type { BlogPostPublic } from "@/lib/blog-posts";

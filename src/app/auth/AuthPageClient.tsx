@@ -14,8 +14,8 @@ import {
   ShieldCheck,
   User,
 } from "lucide-react";
-import { admin } from "@/components/admin/adminTheme";
-import logo from "@/assets/logo.png";
+import { admin } from "@/components/admin/admin-theme";
+import logo from "@/assets/brand/logo.png";
 import { isStaffRole } from "@/lib/admin-roles";
 import { cn } from "@/lib/utils";
 import { AuthCateringPattern } from "./AuthCateringPattern";

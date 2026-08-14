@@ -9,7 +9,7 @@ import {
 import {
   GLASSWARE_PRESETS,
   GLASSWARE_SUBCATEGORIES,
-} from "@/lib/catalog/glassware-presets";
+} from "@/lib/product-catalog/glassware-presets";
 import { uniqueCategorySlug, uniqueSubcategorySlug } from "@/lib/product-taxonomy";
 
 export async function POST() {

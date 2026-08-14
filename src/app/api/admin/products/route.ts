@@ -1,12 +1,13 @@
 import { desc, eq, like } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
+import { isAdminSession } from "@/lib/auth-user";
 import {
   products,
   productTitlePresets,
   type ProductAttributeValue,
 } from "@/db/schema";
-import { cleanPresetProductTitle } from "@/lib/catalog/canonical-catalog";
+import { cleanPresetProductTitle } from "@/lib/product-catalog/canonical-catalog";
 import {
   buildCategoryDisplayLabel,
   validateSubcategoryForCategory,
@@ -45,6 +46,10 @@ function hasSavedAttributes(attributes: Record<string, ProductAttributeValue>) {
 }
 
 export async function GET() {
+  if (!(await isAdminSession())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const db = getDb();
   if (!db)
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
@@ -58,6 +63,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (!(await isAdminSession())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const db = getDb();
   if (!db)
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });

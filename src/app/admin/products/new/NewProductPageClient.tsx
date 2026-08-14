@@ -1,6 +1,6 @@
 "use client";
 
-import RichText, { isRichTextBodyEmpty } from "@/app/admin/ui/Richtext";
+import RichText, { isRichTextBodyEmpty } from "@/components/admin/RichTextEditor";
 import AdminGalleryUpload, {
   type AdminGalleryUploadHandle,
 } from "@/components/admin/AdminGalleryUpload";
@@ -16,7 +16,7 @@ import {
 } from "@/components/admin/ProductCategorySelects";
 import { ProductPresetStatusButtons } from "@/components/admin/ProductPresetStatusButtons";
 import { ProductTitlePresetInput } from "@/components/admin/ProductTitlePresetInput";
-import { admin } from "@/components/admin/adminTheme";
+import { admin } from "@/components/admin/admin-theme";
 import type {
   ProductAttributeValue,
   TemplateFieldDef,

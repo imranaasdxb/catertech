@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import WaterRiseCta from "@/components/ui/WaterRiseCta";
+import BrandCta from "@/components/ui/BrandCta";
 import type { ProductAttributeValue } from "@/lib/category-template";
 import { formatPricePerDayAed } from "@/lib/product-pricing";
 import { cn } from "@/lib/utils";
@@ -226,13 +226,13 @@ export default function StorefrontProductCard({
               </p>
             )}
           </div>
-          <WaterRiseCta
+          <BrandCta
             href={productHref}
             size="xs"
             className="ml-auto w-fit shrink-0 whitespace-nowrap px-2 py-0.5 [&_.btn-brand__content]:shrink-0 [&_.btn-brand__content]:whitespace-nowrap max-sm:[&_.btn-brand__content]:gap-0.5 max-sm:[&_.btn-brand__content]:text-[7px] max-sm:[&_.btn-brand__content]:tracking-normal max-sm:[&_.btn-brand__arrow]:size-4"
           >
             View &amp; quote
-          </WaterRiseCta>
+          </BrandCta>
         </div>
       </div>
     </article>

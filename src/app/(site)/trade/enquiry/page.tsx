@@ -1,4 +1,4 @@
-import Container from "@/components/Container";
+import Container from "@/components/layout/PageContainer";
 import { MailCheck, MessageSquareText, Timer } from "lucide-react";
 import { EnquiryForm } from "./EnquiryForm";
 

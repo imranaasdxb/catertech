@@ -9,7 +9,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import Container from "@/components/Container";
+import Container from "@/components/layout/PageContainer";
 import { cn } from "@/lib/utils";
 
 const STEP_MS = 5000;

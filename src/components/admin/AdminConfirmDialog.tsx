@@ -1,6 +1,6 @@
 "use client";
 
-import { admin, ADMIN_PURPLE } from "@/components/admin/adminTheme";
+import { admin, ADMIN_PURPLE } from "@/components/admin/admin-theme";
 import { X } from "lucide-react";
 import { useState } from "react";
 

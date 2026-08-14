@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { rfqSubmissions, type RfqAttachmentFile } from "@/db/schema";
-import { isImageKitConfigured, putPublicObjectToImageKit } from "@/lib/imagekit";
+import { isImageKitConfigured, putPublicObjectToImageKit } from "@/lib/imagekit-storage";
 import { putPublicMediaObject } from "@/lib/media-storage";
 import { rfqSchema } from "@/lib/validations/forms";
 
@@ -31,10 +31,26 @@ function resolveAttachmentMime(filename: string, reported: string): string {
 }
 
 const MAX_INLINE_IMAGE_BYTES = 4 * 1024 * 1024;
+const MAX_RFQ_ATTACHMENT_BYTES = 8 * 1024 * 1024;
+const MAX_RFQ_TOTAL_ATTACHMENT_BYTES = 15 * 1024 * 1024;
+const MAX_RFQ_ATTACHMENTS = 5;
+const ALLOWED_RFQ_ATTACHMENT_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]);
 
 function isImageMime(type: string, filename: string) {
   if (type.startsWith("image/")) return true;
   return /\.(png|jpe?g|gif|webp|svg|bmp|avif)$/i.test(filename);
+}
+
+function isAllowedAttachmentMime(type: string) {
+  return ALLOWED_RFQ_ATTACHMENT_TYPES.has(type);
 }
 
 async function uploadAttachmentFile(
@@ -64,12 +80,28 @@ async function uploadAttachmentFile(
 
 async function storeAttachmentFiles(files: File[]): Promise<RfqAttachmentFile[]> {
   const stored: RfqAttachmentFile[] = [];
+  if (files.length > MAX_RFQ_ATTACHMENTS) {
+    throw new Error(`Upload up to ${MAX_RFQ_ATTACHMENTS} attachments.`);
+  }
+
+  const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
+  if (totalBytes > MAX_RFQ_TOTAL_ATTACHMENT_BYTES) {
+    throw new Error("Attachments are too large in total.");
+  }
 
   for (const file of files) {
+    const resolvedType = file.type || resolveAttachmentMime(file.name, file.type);
+    if (file.size > MAX_RFQ_ATTACHMENT_BYTES) {
+      throw new Error("Each attachment must be 8 MB or smaller.");
+    }
+    if (!isAllowedAttachmentMime(resolvedType)) {
+      throw new Error("Only images, PDF, DOC, or DOCX attachments are allowed.");
+    }
+
     const meta: RfqAttachmentFile = {
       name: file.name,
       size: file.size,
-      type: file.type || resolveAttachmentMime(file.name, file.type),
+      type: resolvedType,
     };
 
     const buf = Buffer.from(await file.arrayBuffer());
@@ -127,7 +159,7 @@ export async function POST(request: Request) {
     body = parsedBody.payload;
     attachmentFiles = parsedBody.attachmentFiles;
   } catch {
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid request body or attachments" }, { status: 400 });
   }
 
   const parsed = rfqSchema.safeParse(body);

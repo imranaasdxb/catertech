@@ -5,7 +5,7 @@ import { formatInteger } from "@/lib/format-datetime";
 import { useCallback, useEffect, useState } from "react";
 import { AdminLeadStatsChart } from "./AdminLeadStatsChart";
 import { AdminWidgetCard } from "./AdminWidgetCard";
-import { adminCard } from "./adminTheme";
+import { adminCard } from "./admin-theme";
 
 export type DashboardMetrics = {
   productCount: number;

@@ -1,6 +1,6 @@
 "use client";
 
-import { ADMIN_PURPLE, admin } from "@/components/admin/adminTheme";
+import { ADMIN_PURPLE, admin } from "@/components/admin/admin-theme";
 import { products } from "@/db/schema";
 import type { ProductAttributeValue, TemplateFieldDef } from "@/lib/category-template";
 import { formatAdminPricePerDayAed } from "@/lib/product-pricing";

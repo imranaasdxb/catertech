@@ -8,7 +8,7 @@ import {
   productTitlePresets,
   type ProductAttributeValue,
 } from "@/db/schema";
-import { cleanPresetProductTitle } from "@/lib/catalog/canonical-catalog";
+import { cleanPresetProductTitle } from "@/lib/product-catalog/canonical-catalog";
 import {
   categoryLabelMatches,
   collectCreatedPresetIds,

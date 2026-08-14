@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import Container from "@/components/Container";
+import Container from "@/components/layout/PageContainer";
 import BlogCoverImage from "@/components/blog/BlogCoverImage";
 import type { BlogPostPublic } from "@/lib/blog-posts";
 

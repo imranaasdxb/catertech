@@ -1,6 +1,6 @@
 "use client";
 
-import { ADMIN_PURPLE, admin } from "@/components/admin/adminTheme";
+import { ADMIN_PURPLE, admin } from "@/components/admin/admin-theme";
 import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import AdminProductViewEditPanel from "@/components/admin/AdminProductViewEditPanel";
 import AdminProductViewPanel from "@/components/admin/AdminProductViewPanel";

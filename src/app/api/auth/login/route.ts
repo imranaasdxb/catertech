@@ -11,6 +11,14 @@ import {
   getAuthSigningSecret,
   USER_AUTH_COOKIE,
 } from "@/lib/user-auth-session";
+import {
+  checkLoginAttemptLimit,
+  clearLoginFailures,
+  getClientIp,
+  recordLoginFailure,
+  rateLimitResponse,
+  sanitizeEmail,
+} from "@/lib/security";
 
 export const runtime = "nodejs";
 
@@ -34,21 +42,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const email = String(body.email || "").trim().toLowerCase();
+  const email = sanitizeEmail(String(body.email || ""));
   const password = String(body.password || "");
 
   if (!email || !password) {
     return NextResponse.json({ error: "Email and password required" }, { status: 400 });
   }
 
+  const attemptKey = `${email}:${getClientIp(request)}`;
+  const attemptLimit = checkLoginAttemptLimit(attemptKey);
+  if (!attemptLimit.ok) {
+    return rateLimitResponse(attemptLimit.retryAfterSec);
+  }
+
   const row = await db.select().from(users).where(eq(users.email, email)).limit(1);
   const user = row[0];
   if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+    recordLoginFailure(attemptKey);
     return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
   }
 
   const roleNorm = user.role.trim().toLowerCase();
   if (!isStaffRole(roleNorm)) {
+    recordLoginFailure(attemptKey);
     return NextResponse.json(
       {
         error:
@@ -71,6 +87,7 @@ export async function POST(request: Request) {
   });
   const jar = await cookies();
   jar.set(USER_AUTH_COOKIE, token, authCookieBaseOptions(ttlSec));
+  clearLoginFailures(attemptKey);
 
   return NextResponse.json({ ok: true, role: roleNorm });
 }

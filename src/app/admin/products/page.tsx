@@ -1,6 +1,6 @@
 import { asc, desc } from "drizzle-orm";
 import AdminProductsTable from "@/components/admin/AdminProductsTable";
-import { admin } from "@/components/admin/adminTheme";
+import { admin } from "@/components/admin/admin-theme";
 import { getDb } from "@/db";
 import { productCategories, products } from "@/db/schema";
 

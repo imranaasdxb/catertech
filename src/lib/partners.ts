@@ -1,6 +1,6 @@
 import type { StaticImageData } from "next/image";
-import partnerAasLogo from "@/assets/partner-aas-logo.png";
-import partnerTruescaleLogo from "@/assets/partner-truescale-logo.png";
+import partnerAasLogo from "@/assets/partners/partner-aas-logo.png";
+import partnerTruescaleLogo from "@/assets/partners/partner-truescale-logo.png";
 
 export type PartnerEntry = {
   id: string;

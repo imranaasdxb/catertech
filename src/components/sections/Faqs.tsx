@@ -1,6 +1,6 @@
 "use client";
 
-import Container from "@/components/Container";
+import Container from "@/components/layout/PageContainer";
 import { ArrowRight, Minus, Plus } from "lucide-react";
 import Link from "next/link";
 import { useId, useState } from "react";
