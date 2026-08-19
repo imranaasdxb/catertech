@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type PointerEvent } from "react";
 import {
   type ShopProductDetail,
   type ShopProductCard,
@@ -167,7 +167,7 @@ function SimilarProductsCarousel({
 
   return (
     <div>
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:gap-4 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 px-1 sm:grid-cols-3 sm:gap-3 sm:px-0 md:grid-cols-4 lg:gap-4 xl:grid-cols-5">
         {visible.map((p) => (
           <div key={p.id} className="min-w-0">
             <StorefrontProductCard product={p} shopCompact lazyImage />
@@ -325,7 +325,7 @@ export default function ProductEquipmentDetail({
   similarProducts?: StorefrontProductCardData[];
   categorySlug?: string | null;
 }) {
-  const { addItem } = useCart();
+  const { addItem, items, updateQty } = useCart();
   const [activeSlug, setActiveSlug] = useState(productSlug || initialProduct.slug || "");
   const product = useMemo(() => {
     const match = titleVariants.find((variant) => variant.slug === activeSlug);
@@ -337,8 +337,8 @@ export default function ProductEquipmentDetail({
   const [qtyInput, setQtyInput] = useState("1");
   const [wishlist, setWishlist] = useState(false);
   const [activeThumb, setActiveThumb] = useState(0);
+  const [zoomPosition, setZoomPosition] = useState<{ x: number; y: number } | null>(null);
   const [openSection, setOpenSection] = useState<AccordionKey>("description");
-  const [cartAdded, setCartAdded] = useState(false);
 
   const dimensionSpecRows = useMemo(
     () =>
@@ -368,9 +368,9 @@ export default function ProductEquipmentDetail({
     setColorId(product.colors[0]?.id ?? "");
     setSizeId(product.sizes[0]?.id ?? "");
     setActiveThumb(0);
+    setZoomPosition(null);
     setQty(1);
     setQtyInput("1");
-    setCartAdded(false);
     if (typeof document !== "undefined") {
       document.title = `${product.name} | Catertech Shop`;
     }
@@ -398,6 +398,18 @@ export default function ProductEquipmentDetail({
 
   const mainSrc = thumbSources[activeThumb] ?? product.image;
 
+  function handleImageZoomMove(event: PointerEvent<HTMLDivElement>) {
+    if (event.pointerType === "touch") return;
+    if (!mainSrc) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    setZoomPosition({
+      x: Math.max(0, Math.min(100, x)),
+      y: Math.max(0, Math.min(100, y)),
+    });
+  }
+
   const collectionSiblings = useMemo(
     () => getCollectionSiblings(product.id, product.familyId),
     [product.id, product.familyId]
@@ -417,25 +429,56 @@ export default function ProductEquipmentDetail({
     return /chair|seating/.test(haystack);
   }, [product.category, product.name, product.cardSubtitle, product.equipmentFilters]);
 
+  const selectedColor = product.colors.find((c) => c.id === colorId);
+  const selectedSizeLabel = product.sizes.find((s) => s.id === sizeId)?.label;
+  const selectedCartId = `product-${product.id}-${sizeId}-${colorId}`;
+  const selectedCartItem = items.find((item) => item.id === selectedCartId);
+  const selectedCartQuantity = selectedCartItem?.quantity ?? null;
+  const isProductInQuote = Boolean(selectedCartItem);
+
   const CHAIR_RENTAL_STOCK = 11_000;
 
   const syncQty = (next: number) => {
     const safe = Math.max(1, Math.floor(next));
     setQty(safe);
     setQtyInput(String(safe));
+    if (isProductInQuote) updateQty(selectedCartId, safe);
   };
 
-  const selectedColor = product.colors.find((c) => c.id === colorId);
+  const handleQtyInputChange = (value: string) => {
+    const raw = value.replace(/\D/g, "");
+    setQtyInput(raw);
+    if (raw !== "") {
+      const parsed = parseInt(raw, 10);
+      if (!Number.isNaN(parsed) && parsed >= 1) setQty(parsed);
+    }
+  };
+
+  const commitQtyInput = () => {
+    const parsed = parseInt(qtyInput, 10);
+    syncQty(Number.isNaN(parsed) || parsed < 1 ? 1 : parsed);
+  };
+
+  useEffect(() => {
+    if (!selectedCartQuantity) return;
+    setQty(selectedCartQuantity);
+    setQtyInput(String(selectedCartQuantity));
+  }, [selectedCartQuantity]);
 
   const handleAddToCart = () => {
-    const sizeLabel = product.sizes.find((s) => s.id === sizeId)?.label;
-    const variantParts = [selectedColor?.label, sizeLabel].filter(Boolean);
+    if (isProductInQuote) return;
+
+    const parsedQty = parseInt(qtyInput, 10);
+    const quoteQty = Number.isNaN(parsedQty) || parsedQty < 1 ? 1 : Math.floor(parsedQty);
+    setQty(quoteQty);
+    setQtyInput(String(quoteQty));
+
+    const variantParts = [selectedColor?.label, selectedSizeLabel].filter(Boolean);
     const displayName =
       variantParts.length > 0 ? `${product.name} (${variantParts.join(" · ")})` : product.name;
-    const cartId = `product-${product.id}-${sizeId}-${colorId}`;
-    for (let i = 0; i < qty; i++) {
+    for (let i = 0; i < quoteQty; i++) {
       addItem({
-        id: cartId,
+        id: selectedCartId,
         name: displayName,
         category: product.category,
         price: product.price,
@@ -443,8 +486,6 @@ export default function ProductEquipmentDetail({
         type: "product",
       });
     }
-    setCartAdded(true);
-    setTimeout(() => setCartAdded(false), 2500);
   };
 
   const variantPickCards = useMemo(() => {
@@ -510,14 +551,25 @@ export default function ProductEquipmentDetail({
           {/* LEFT — Gallery */}
           <div className="lg:sticky lg:top-28 lg:self-start space-y-3">
             {/* Main image */}
-            <div className="relative aspect-4/3 rounded-2xl overflow-hidden border border-border bg-[#FEFEFE] shadow-[0_4px_32px_rgba(26,31,46,0.07)]">
+            <div
+              className="relative aspect-4/3 cursor-zoom-in overflow-hidden rounded-2xl border border-border bg-[#FEFEFE] shadow-[0_4px_32px_rgba(26,31,46,0.07)]"
+              onPointerMove={handleImageZoomMove}
+              onPointerEnter={handleImageZoomMove}
+              onPointerLeave={() => setZoomPosition(null)}
+            >
               {mainSrc ? (
                 <Image
                   src={mainSrc}
                   alt={product.name}
                   fill
                   unoptimized
-                  className="object-contain object-center p-4 sm:p-6 md:p-8"
+                  className="object-contain object-center p-4 transition-transform duration-150 ease-out sm:p-6 md:p-8"
+                  style={{
+                    transform: zoomPosition ? "scale(2.05)" : "scale(1)",
+                    transformOrigin: zoomPosition
+                      ? `${zoomPosition.x}% ${zoomPosition.y}%`
+                      : "center",
+                  }}
                   priority
                   sizes="(max-width: 1024px) 100vw, 55vw"
                 />
@@ -560,12 +612,12 @@ export default function ProductEquipmentDetail({
               </button>
 
               {/* Zoom hint */}
-              <div className="absolute bottom-4 right-4 z-10 flex items-center gap-1.5 px-3 py-1.5 bg-white/85 backdrop-blur-sm rounded-full text-[10px] font-semibold text-charcoal tracking-wider border border-white/60 shadow-sm">
+              <div className="pointer-events-none absolute bottom-4 right-4 z-10 flex items-center gap-1.5 rounded-full border border-white/60 bg-white/85 px-3 py-1.5 text-[10px] font-semibold tracking-wider text-charcoal shadow-sm backdrop-blur-sm">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <circle cx="11" cy="11" r="8" />
                   <path d="M21 21l-4.35-4.35M11 8v6M8 11h6" />
                 </svg>
-                ZOOM
+                HOVER ZOOM
               </div>
             </div>
 
@@ -748,18 +800,8 @@ export default function ProductEquipmentDetail({
                   inputMode="numeric"
                   pattern="[0-9]*"
                   value={qtyInput}
-                  onChange={(e) => {
-                    const raw = e.target.value.replace(/\D/g, "");
-                    setQtyInput(raw);
-                    if (raw !== "") {
-                      const parsed = parseInt(raw, 10);
-                      if (!Number.isNaN(parsed) && parsed >= 1) setQty(parsed);
-                    }
-                  }}
-                  onBlur={() => {
-                    const parsed = parseInt(qtyInput, 10);
-                    syncQty(Number.isNaN(parsed) || parsed < 1 ? 1 : parsed);
-                  }}
+                  onChange={(e) => handleQtyInputChange(e.target.value)}
+                  onBlur={commitQtyInput}
                   className="h-10 w-14 rounded-md border border-border bg-offwhite px-1 text-center text-sm font-bold text-charcoal tabular-nums outline-none focus:border-sand focus:ring-2 focus:ring-sand/20 [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   aria-label="Quantity"
                 />
@@ -776,23 +818,24 @@ export default function ProductEquipmentDetail({
               </div>
 
               {/* Primary CTA */}
-              <button
-                type="button"
-                onClick={handleAddToCart}
-                className={`flex-1 inline-flex items-center justify-center gap-2 text-sm font-semibold tracking-wider rounded-xl px-6 py-3.5 transition-colors duration-200 shadow-sm ${
-                  cartAdded
-                    ? "bg-green-600 hover:bg-green-700 text-white"
-                    : "bg-navy hover:bg-charcoal text-white"
-                }`}
-              >
-                {cartAdded ? (
+              {isProductInQuote ? (
+                <Link
+                  href="/cart"
+                  className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-green-600 px-6 py-3.5 text-sm font-semibold tracking-wider text-white shadow-sm transition-colors duration-200 hover:bg-green-700"
+                >
                   <>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
-                    Added to Quote!
+                    View Basket
                   </>
-                ) : (
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleAddToCart}
+                  className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-navy px-6 py-3.5 text-sm font-semibold tracking-wider text-white shadow-sm transition-colors duration-200 hover:bg-charcoal"
+                >
                   <>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
@@ -801,8 +844,8 @@ export default function ProductEquipmentDetail({
                     </svg>
                     Add to Quote
                   </>
-                )}
-              </button>
+                </button>
+              )}
             </div>
 
             {isChairsProduct ? (
@@ -814,10 +857,10 @@ export default function ProductEquipmentDetail({
               </p>
             ) : null}
 
-            {cartAdded && (
+            {isProductInQuote && (
               <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 mb-4">
                 <span className="text-[12px] text-green-700 font-medium">
-                  {qty > 1 ? `${qty} × ` : ""}{product.name} added to your quote basket
+                  {selectedCartQuantity && selectedCartQuantity > 1 ? `${selectedCartQuantity} × ` : ""}{product.name} added to your quote basket
                 </span>
                 <Link
                   href="/cart"
@@ -1039,8 +1082,8 @@ export default function ProductEquipmentDetail({
         ) : null}
 
         {similarProducts.length > 0 ? (
-          <section className="mt-12 -mx-5 md:-mx-8">
-            <div className="mb-5 flex flex-col gap-3 px-5 md:px-8 sm:flex-row sm:items-center sm:justify-between">
+          <section className="mt-12 md:-mx-8">
+            <div className="mb-5 flex flex-col gap-3 px-1 md:px-8 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-sand">
                 More you may need
               </p>
@@ -1090,23 +1133,54 @@ export default function ProductEquipmentDetail({
             {product.name}
           </p>
         </div>
-        <Link
-          href="/trade/rfq"
-          className="shrink-0 border border-sand text-sand text-[11px] font-bold tracking-wider uppercase px-4 py-2.5 rounded-xl transition-colors hover:bg-sand hover:text-white"
-        >
-          Quote
-        </Link>
-        <button
-          type="button"
-          onClick={handleAddToCart}
-          className={`shrink-0 text-[11px] font-bold tracking-wider uppercase px-5 py-2.5 rounded-xl transition-colors ${
-            cartAdded
-              ? "bg-green-600 text-white"
-              : "bg-navy hover:bg-charcoal text-white"
-          }`}
-        >
-          {cartAdded ? "Added ✓" : "Add to Quote"}
-        </button>
+        <div className="flex h-10 shrink-0 items-center overflow-hidden rounded-xl border border-border bg-white">
+          <button
+            type="button"
+            onClick={() => syncQty(qty - 1)}
+            aria-label="Decrease quantity"
+            className="flex h-full w-8 items-center justify-center text-muted transition-colors hover:bg-cream hover:text-sand"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M5 12h14" />
+            </svg>
+          </button>
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={qtyInput}
+            onChange={(e) => handleQtyInputChange(e.target.value)}
+            onBlur={commitQtyInput}
+            className="h-full w-9 border-x border-border bg-offwhite px-1 text-center text-xs font-bold text-charcoal tabular-nums outline-none focus:bg-white"
+            aria-label="Quantity"
+          />
+          <button
+            type="button"
+            onClick={() => syncQty(qty + 1)}
+            aria-label="Increase quantity"
+            className="flex h-full w-8 items-center justify-center text-muted transition-colors hover:bg-cream hover:text-sand"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </button>
+        </div>
+        {isProductInQuote ? (
+          <Link
+            href="/cart"
+            className="inline-flex h-10 w-[5.75rem] shrink-0 items-center justify-center rounded-xl bg-green-600 px-3 text-center text-[10px] font-bold uppercase tracking-wider text-white transition-colors hover:bg-green-700"
+          >
+            Basket
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            className="inline-flex h-10 w-[5.75rem] shrink-0 items-center justify-center rounded-xl bg-navy px-3 text-[11px] font-bold uppercase tracking-wider text-white transition-colors hover:bg-charcoal"
+          >
+            Quote
+          </button>
+        )}
       </div>
     </div>
   );

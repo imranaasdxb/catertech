@@ -497,9 +497,9 @@ export default function AdminProductsTable({
 
   return (
     <div className="mx-auto w-full max-w-[1560px] px-1 sm:px-2 lg:px-4">
-      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
-          <form onSubmit={handleSearchSubmit} className="relative min-w-0 flex-1 sm:max-w-xs">
+      <div className="mb-5 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(7.5rem,9rem)] gap-2 sm:gap-3 lg:grid-cols-[minmax(18rem,2fr)_9rem_auto_5.75rem_auto] xl:flex xl:items-center xl:gap-2">
+          <form onSubmit={handleSearchSubmit} className="relative min-w-0 xl:min-w-[22rem] xl:max-w-md xl:flex-1">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
               aria-hidden
@@ -527,7 +527,7 @@ export default function AdminProductsTable({
             value={filter}
             onChange={(e) => setFilter(e.target.value as FilterKey)}
             aria-label="Filter products by category"
-            className="w-full min-w-0 max-w-[10.5rem] shrink cursor-pointer rounded-lg border border-admin-border bg-white px-2.5 py-2.5 text-sm text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15 sm:w-[10.5rem]"
+            className="h-[42px] w-full min-w-0 shrink-0 cursor-pointer rounded-lg border border-admin-border bg-white px-2.5 text-sm text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15 lg:w-36 xl:w-36"
           >
             <option value="all">All categories</option>
             {categories.map((category) => (
@@ -541,7 +541,7 @@ export default function AdminProductsTable({
             aria-pressed={showMissingPriceOnly}
             title="Show products without a saved price"
             onClick={() => setShowMissingPriceOnly((current) => !current)}
-            className={`inline-flex h-[42px] shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border px-3 text-sm font-semibold transition-colors ${
+            className={`inline-flex h-[42px] w-full shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-3 text-sm font-semibold transition-colors lg:w-auto ${
               showMissingPriceOnly
                 ? "border-admin-accent/45 bg-admin-accent/10 text-admin-accent"
                 : "border-admin-border bg-white text-admin-ink/65 hover:border-admin-accent/35 hover:bg-admin-bg"
@@ -557,27 +557,27 @@ export default function AdminProductsTable({
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value as SortOrder)}
             aria-label="Sort products alphabetically"
-            className="w-[5.75rem] shrink-0 cursor-pointer rounded-lg border border-admin-border bg-white px-2.5 py-2.5 text-sm font-semibold text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15"
+            className="h-[42px] w-full shrink-0 cursor-pointer rounded-lg border border-admin-border bg-white px-2.5 text-sm font-semibold text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15 lg:w-[5.75rem]"
           >
             <option value="default">Default</option>
             <option value="a-z">A–Z</option>
           </select>
-          <p className="shrink-0 text-sm text-gray-500">
+          <p className="hidden shrink-0 text-sm text-gray-500 lg:block">
             <span className="font-semibold text-gray-800">{sortedRows.length}</span>
             {sortedRows.length === 1 ? " product" : " products"}
             {activeCategoryName ? ` in ${activeCategoryName}` : ""}
           </p>
         </div>
-        <div className="flex shrink-0 items-center justify-end gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0 sm:items-center sm:justify-end">
           <Link
             href="/admin/products/categories"
-            className={`${admin.secondaryBtn} cursor-pointer border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium`}
+            className={`${admin.secondaryBtn} cursor-pointer justify-center border border-gray-200 bg-white px-3 py-2.5 text-center text-sm font-medium sm:px-4`}
           >
             Category master
           </Link>
           <Link
             href="/admin/products/new"
-            className={`${admin.primaryBtn} cursor-pointer px-4 py-2.5 text-sm font-medium`}
+            className={`${admin.primaryBtn} cursor-pointer justify-center px-3 py-2.5 text-center text-sm font-medium sm:px-4`}
             style={{ backgroundColor: ADMIN_PURPLE }}
           >
             + New product

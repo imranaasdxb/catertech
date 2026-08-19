@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Container from "@/components/layout/PageContainer";
 import { useCart, type CartItem } from "@/lib/cart-context";
 import {
@@ -473,13 +473,13 @@ function CartItemCard({
   updateQty: (id: string, qty: number) => void;
 }) {
   return (
-    <article className="group w-full overflow-hidden rounded-3xl border border-[#e5e7eb] bg-white shadow-[0_14px_45px_rgba(20,19,31,0.05)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_20px_55px_rgba(20,19,31,0.09)]">
-      <div className="flex gap-4 p-5 sm:gap-6 sm:p-6">
-        <div className="flex shrink-0 items-center gap-3 sm:gap-4">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-soft text-xs font-bold tabular-nums text-primary">
+    <article className="group w-full overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_10px_34px_rgba(20,19,31,0.05)] transition-all duration-300 hover:border-primary/30 sm:rounded-3xl sm:shadow-[0_14px_45px_rgba(20,19,31,0.05)] sm:hover:-translate-y-1 sm:hover:shadow-[0_20px_55px_rgba(20,19,31,0.09)]">
+      <div className="grid grid-cols-[6.75rem_minmax(0,1fr)] gap-3 p-3 sm:flex sm:gap-6 sm:p-6">
+        <div className="relative flex shrink-0 items-center gap-3 sm:static sm:gap-4">
+          <span className="absolute -left-1 -top-1 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-primary-soft text-[10px] font-bold tabular-nums text-primary shadow-sm sm:static sm:h-10 sm:w-10 sm:text-xs sm:shadow-none">
             {String(index + 1).padStart(2, "0")}
           </span>
-          <div className="relative h-24 w-24 overflow-hidden rounded-2xl border border-[#e5e7eb] bg-[#FEFEFE] sm:h-28 sm:w-28">
+          <div className="relative h-24 w-24 overflow-hidden rounded-xl border border-[#e5e7eb] bg-[#FEFEFE] sm:h-28 sm:w-28 sm:rounded-2xl">
             {item.image ? (
               <Image
                 src={item.image}
@@ -497,33 +497,30 @@ function CartItemCard({
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start justify-between gap-2 sm:gap-4">
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-primary-soft px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
-                  {item.category}
-                </span>
-                <span className="rounded-full bg-accent-soft px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-accent">
-                  {item.type}
-                </span>
+              <p className="truncate text-[9px] font-bold uppercase tracking-[0.12em] text-body-muted sm:text-[10px] sm:tracking-[0.14em]">
+                {item.category}
+              </p>
+              <div className="mt-2 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mt-2.5 sm:overflow-visible">
+                <h3 className="line-clamp-2 w-[18rem] max-w-none text-[15px] font-bold leading-tight tracking-tight text-ink sm:w-auto sm:text-xl sm:leading-snug">
+                  {item.name}
+                </h3>
               </div>
-              <h3 className="mt-2.5 text-lg font-bold leading-snug tracking-tight text-ink sm:text-xl">
-                {item.name}
-              </h3>
-              <div className="mt-3 grid max-w-xl grid-cols-2 gap-3 sm:grid-cols-3">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-body-muted">Price</p>
-                  <p className="mt-1 text-sm font-semibold tabular-nums text-ink">
+              <div className="mt-2 grid max-w-xl grid-cols-3 gap-2 sm:mt-3 sm:gap-3">
+                <div className="min-w-0">
+                  <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-body-muted sm:text-[10px] sm:tracking-[0.14em]">Price</p>
+                  <p className="mt-0.5 truncate text-xs font-semibold tabular-nums text-ink sm:mt-1 sm:text-sm">
                     {linePrice.unitPrice !== null ? formatAedAmount(linePrice.unitPrice) : item.price || "Quote"}
                   </p>
                 </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-body-muted">Quantity</p>
-                  <p className="mt-1 text-sm font-semibold tabular-nums text-ink">x {item.quantity}</p>
+                <div className="min-w-0">
+                  <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-body-muted sm:text-[10px] sm:tracking-[0.14em]">Quantity</p>
+                  <p className="mt-0.5 text-xs font-semibold tabular-nums text-ink sm:mt-1 sm:text-sm">x {item.quantity}</p>
                 </div>
-                <div className="col-span-2 sm:col-span-1">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-body-muted">Subtotal</p>
-                  <p className="mt-1 text-sm font-bold tabular-nums text-primary">
+                <div className="min-w-0">
+                  <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-body-muted sm:text-[10px] sm:tracking-[0.14em]">Subtotal</p>
+                  <p className="mt-0.5 truncate text-xs font-bold tabular-nums text-primary sm:mt-1 sm:text-sm">
                     {linePrice.subtotal !== null ? formatAedAmount(linePrice.subtotal) : "Quote"}
                   </p>
                 </div>
@@ -532,38 +529,38 @@ function CartItemCard({
             <button
               type="button"
               onClick={() => removeItem(item.id)}
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-body-muted transition-colors hover:bg-accent-soft hover:text-accent"
+              className="-mr-1 -mt-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-body-muted transition-colors hover:bg-accent-soft hover:text-accent sm:mr-0 sm:mt-0 sm:h-10 sm:w-10"
               aria-label={`Remove ${item.name}`}
             >
               <Trash2 className="h-4 w-4" strokeWidth={1.9} />
             </button>
           </div>
 
-          <div className="mt-auto flex flex-col gap-3 pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-auto flex items-center justify-between gap-3 pt-3 sm:pt-5">
             <div className="inline-flex w-fit items-center overflow-hidden rounded-full border border-[#e5e7eb] bg-surface-card">
               <button
                 type="button"
                 onClick={() => updateQty(item.id, item.quantity - 1)}
-                className="flex h-10 w-10 items-center justify-center text-body-muted transition-colors hover:bg-white hover:text-ink"
+                className="flex h-9 w-9 items-center justify-center text-body-muted transition-colors hover:bg-white hover:text-ink sm:h-10 sm:w-10"
                 aria-label="Decrease quantity"
               >
                 <Minus className="h-4 w-4" strokeWidth={2} />
               </button>
-              <span className="w-10 text-center text-sm font-bold tabular-nums text-ink">{item.quantity}</span>
+              <span className="w-8 text-center text-sm font-bold tabular-nums text-ink sm:w-10">{item.quantity}</span>
               <button
                 type="button"
                 onClick={() => updateQty(item.id, item.quantity + 1)}
-                className="flex h-10 w-10 items-center justify-center text-body-muted transition-colors hover:bg-white hover:text-ink"
+                className="flex h-9 w-9 items-center justify-center text-body-muted transition-colors hover:bg-white hover:text-ink sm:h-10 sm:w-10"
                 aria-label="Increase quantity"
               >
                 <Plus className="h-4 w-4" strokeWidth={2} />
               </button>
             </div>
-            <div className="text-left sm:text-right">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-body-muted">
+            <div className="min-w-0 text-right">
+              <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-body-muted sm:text-xs sm:tracking-[0.14em]">
                 Line total
               </p>
-              <p className="mt-1 text-base font-bold tabular-nums text-ink">
+              <p className="mt-0.5 truncate text-sm font-bold tabular-nums text-ink sm:mt-1 sm:text-base">
                 {linePrice.subtotal !== null ? formatAedAmount(linePrice.subtotal) : "Quote"}
               </p>
             </div>
@@ -577,6 +574,8 @@ function CartItemCard({
 export default function CartClient() {
   const { items, removeItem, updateQty, clearCart } = useCart();
   const [activeQuoteModal, setActiveQuoteModal] = useState<ActiveQuoteModal>(null);
+  const [showMobileQuoteBar, setShowMobileQuoteBar] = useState(true);
+  const cartEndRef = useRef<HTMLDivElement | null>(null);
 
   const totalQty = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
   const categories = useMemo(() => new Set(items.map((item) => item.category)).size, [items]);
@@ -605,8 +604,23 @@ export default function CartClient() {
     setActiveQuoteModal(null);
   };
 
+  useEffect(() => {
+    const cartEnd = cartEndRef.current;
+    if (!cartEnd) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setShowMobileQuoteBar(!entry?.isIntersecting);
+      },
+      { rootMargin: "0px 0px -96px 0px" },
+    );
+
+    observer.observe(cartEnd);
+    return () => observer.disconnect();
+  }, [items.length]);
+
   return (
-    <main className="relative isolate min-h-screen bg-white pt-32 pb-20 md:pt-40 md:pb-28">
+    <main className="relative isolate min-h-screen overflow-x-hidden bg-white pt-32 pb-36 md:pt-40 md:pb-28">
       <div
         className="pointer-events-none absolute -right-24 -top-24 h-[420px] w-[420px] rounded-full opacity-70 md:h-[540px] md:w-[540px]"
         style={{ background: purpleRadial }}
@@ -629,16 +643,6 @@ export default function CartClient() {
               built for clarity
             </span>
           </h1>
-
-          {items.length > 0 ? (
-            <button
-              type="button"
-              onClick={clearCart}
-              className="inline-flex shrink-0 min-h-11 items-center justify-center rounded-xl border border-[#e5e7eb] bg-white px-5 py-2.5 text-xs font-bold uppercase tracking-[0.14em] text-body-muted transition-colors hover:border-accent hover:text-accent"
-            >
-              Clear basket
-            </button>
-          ) : null}
         </div>
 
         {items.length === 0 ? (
@@ -646,28 +650,38 @@ export default function CartClient() {
             <EmptyBasket />
           </div>
         ) : (
-          <div className="mt-14 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start">
+          <div className="mt-8 grid grid-cols-1 gap-8 md:mt-14 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start">
             <div className="min-w-0 space-y-5">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 {[
                   { label: "Items", value: items.length, icon: ShoppingBag },
                   { label: "Total units", value: totalQty, icon: PackageCheck },
                   { label: "Categories", value: categories, icon: Sparkles },
                 ].map(({ label, value, icon: Icon }) => (
-                  <div key={label} className="rounded-2xl border border-[#e5e7eb] bg-white p-5 shadow-sm">
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <p className="text-2xl font-bold tracking-tight text-ink">{value}</p>
-                        <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-body-muted">
+                  <div key={label} className="rounded-2xl border border-[#e5e7eb] bg-white p-3 shadow-sm sm:p-5">
+                    <div className="flex items-center justify-between gap-2 sm:gap-4">
+                      <div className="min-w-0">
+                        <p className="text-xl font-bold tracking-tight text-ink sm:text-2xl">{value}</p>
+                        <p className="mt-0.5 truncate text-[9px] font-semibold uppercase tracking-[0.08em] text-body-muted sm:mt-1 sm:text-xs sm:tracking-[0.14em]">
                           {label}
                         </p>
                       </div>
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-                        <Icon className="h-5 w-5" strokeWidth={1.8} />
+                      <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary min-[380px]:flex sm:h-11 sm:w-11">
+                        <Icon className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={1.8} />
                       </span>
                     </div>
                   </div>
                 ))}
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={clearCart}
+                  className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-[#e5e7eb] bg-white px-4 py-2 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-body-muted transition-colors hover:border-accent hover:text-accent sm:min-h-11 sm:px-5 sm:py-2.5 sm:text-xs sm:tracking-[0.14em]"
+                >
+                  Clear basket
+                </button>
               </div>
 
               <div className="space-y-4">
@@ -685,23 +699,6 @@ export default function CartClient() {
                     updateQty={updateQty}
                   />
                 ))}
-              </div>
-
-              <div className="flex flex-wrap gap-3 border-t border-[#e5e7eb] pt-5">
-                <Link
-                  href="/shop"
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-body-muted transition-colors hover:text-primary"
-                >
-                  <ArrowLeft className="h-4 w-4" strokeWidth={2} />
-                  Continue shopping
-                </Link>
-                <Link
-                  href="/services"
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-body-muted transition-colors hover:text-primary"
-                >
-                  <ArrowLeft className="h-4 w-4" strokeWidth={2} />
-                  Browse services
-                </Link>
               </div>
             </div>
 
@@ -834,9 +831,54 @@ export default function CartClient() {
                 </div>
               </div>
             </aside>
+
+            <div className="flex flex-wrap gap-3 border-t border-[#e5e7eb] pt-5 lg:col-span-2">
+              <Link
+                href="/shop"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-body-muted transition-colors hover:text-primary"
+              >
+                <ArrowLeft className="h-4 w-4" strokeWidth={2} />
+                Continue shopping
+              </Link>
+              <Link
+                href="/services"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-body-muted transition-colors hover:text-primary"
+              >
+                <ArrowLeft className="h-4 w-4" strokeWidth={2} />
+                Browse services
+              </Link>
+            </div>
           </div>
         )}
       </Container>
+      <div ref={cartEndRef} className="h-px" aria-hidden />
+
+      {items.length > 0 && !activeQuoteModal && showMobileQuoteBar ? (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#e5e7eb] bg-white/95 px-3 py-2.5 shadow-[0_-12px_35px_rgba(20,19,31,0.12)] backdrop-blur-md lg:hidden">
+          <div className="mx-auto flex max-w-xl items-center gap-2">
+            <div className="min-w-0 flex-1">
+              <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-body-muted">Total</p>
+              <p className="truncate text-sm font-bold tabular-nums text-primary">
+                {formatAedAmount(pricing.total)}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveQuoteModal("email")}
+              className="btn-brand min-h-10 min-w-0 flex-1 rounded-xl px-2 py-2 text-[0.6rem] font-semibold uppercase tracking-[0.08em] min-[380px]:px-3 min-[380px]:text-[0.62rem] min-[380px]:tracking-[0.1em]"
+            >
+              <span className="btn-brand__content justify-center whitespace-nowrap">Request Quote</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveQuoteModal("whatsapp")}
+              className="inline-flex min-h-10 min-w-0 flex-1 items-center justify-center rounded-xl bg-[#25D366] px-2 py-2 text-[0.6rem] font-bold uppercase tracking-[0.08em] text-white transition-colors hover:bg-[#1ebe5d] min-[380px]:px-3 min-[380px]:text-[0.62rem] min-[380px]:tracking-[0.1em]"
+            >
+              WhatsApp
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {activeQuoteModal ? (
         <QuoteModal

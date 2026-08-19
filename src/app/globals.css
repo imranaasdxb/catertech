@@ -253,6 +253,20 @@ h3 {
   animation: process-progress-fill linear forwards;
 }
 
+@keyframes process-progress-fill-vertical {
+  from {
+    height: 0%;
+  }
+  to {
+    height: 100%;
+  }
+}
+
+.process-progress-bar-vertical {
+  height: 0%;
+  animation: process-progress-fill-vertical linear forwards;
+}
+
 /* PDP product rails */
 .shop-pdp-marquee-outer {
   overflow: hidden;

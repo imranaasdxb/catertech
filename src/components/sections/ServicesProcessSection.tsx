@@ -156,7 +156,7 @@ export default function ServicesProcessSection() {
         </div>
 
         <div className="mt-14 lg:mt-16">
-          <div className="mb-10 flex w-full gap-1.5 md:mb-12">
+          <div className="mb-10 hidden w-full gap-1.5 sm:flex md:mb-12">
             {STEPS.map((step, index) => (
               <div
                 key={`bar-${step.num}`}
@@ -176,7 +176,7 @@ export default function ServicesProcessSection() {
             ))}
           </div>
 
-          <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+          <div className="grid grid-cols-1 gap-0 sm:grid-cols-2 sm:gap-10 lg:grid-cols-4 lg:gap-6">
             {STEPS.map((step, index) => {
               const isActive = index === active;
               const Icon = step.Icon;
@@ -184,7 +184,7 @@ export default function ServicesProcessSection() {
               return (
                 <div
                   key={step.num}
-                  className="cursor-pointer text-left lg:text-center"
+                  className="relative grid cursor-pointer grid-cols-[2.75rem_minmax(0,1fr)] gap-3 pb-8 text-left last:pb-0 sm:block sm:pb-0 lg:text-center"
                   onClick={() => goToStep(index)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
@@ -196,9 +196,24 @@ export default function ServicesProcessSection() {
                   tabIndex={0}
                   aria-selected={isActive}
                 >
+                  {index < STEPS.length - 1 ? (
+                    <div className="absolute bottom-0 left-5 top-10 w-px overflow-hidden rounded-full bg-[#e8e4df] sm:hidden">
+                      {index < active ? (
+                        <div className="absolute inset-0 rounded-full bg-primary" />
+                      ) : null}
+                      {index === active ? (
+                        <div
+                          key={progressKey}
+                          className="process-progress-bar-vertical absolute left-0 top-0 w-full rounded-full bg-linear-to-b from-primary to-accent"
+                          style={{ animationDuration: `${STEP_MS}ms` }}
+                        />
+                      ) : null}
+                    </div>
+                  ) : null}
+
                   <div
                     className={cn(
-                      "mb-4 flex h-10 w-10 items-center justify-center rounded-full text-white lg:mx-auto",
+                      "relative z-10 flex h-10 w-10 items-center justify-center rounded-full text-white sm:mb-4 lg:mx-auto",
                       step.iconRing,
                       !isActive && "opacity-80",
                     )}
@@ -206,18 +221,20 @@ export default function ServicesProcessSection() {
                     <Icon className="h-4 w-4" strokeWidth={2} aria-hidden />
                   </div>
 
-                  <p
-                    className={cn(
-                      "text-sm font-semibold tracking-wide",
-                      isActive ? "text-ink" : "text-muted",
-                    )}
-                  >
-                    {step.num}. {step.title}
-                  </p>
+                  <div className="min-w-0">
+                    <p
+                      className={cn(
+                        "text-sm font-semibold tracking-wide",
+                        isActive ? "text-ink" : "text-muted",
+                      )}
+                    >
+                      {step.num}. {step.title}
+                    </p>
 
-                  <p className="mt-2 min-h-[5.5rem] text-xs leading-relaxed text-body-muted sm:text-sm">
-                    {step.description}
-                  </p>
+                    <p className="mt-2 text-xs leading-relaxed text-body-muted sm:min-h-[5.5rem] sm:text-sm">
+                      {step.description}
+                    </p>
+                  </div>
                 </div>
               );
             })}

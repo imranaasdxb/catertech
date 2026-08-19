@@ -75,32 +75,36 @@ function TestimonialCard({
   return (
     <article
       key={`${testimonial.name}-${index}`}
-      className="w-[min(100vw-2rem,350px)] shrink-0 rounded-xl border border-border bg-white p-4 transition-colors duration-300 hover:border-primary/20"
+      className="w-[8.5rem] shrink-0 rounded-xl border border-border bg-white p-3 transition-colors duration-300 hover:border-primary/20 min-[420px]:w-[9.75rem] sm:w-[min(100vw-2rem,350px)] sm:p-4"
     >
-      <div className="mb-4 flex" aria-hidden>
+      <div className="mb-3 flex sm:mb-4" aria-hidden>
         {Array.from({ length: 5 }).map((_, i) => (
           <Star
             key={i}
-            size={16}
+            size={14}
             className="fill-accent text-accent"
             strokeWidth={0}
           />
         ))}
       </div>
-      <p className="mb-6 text-sm leading-relaxed text-body-muted">
+      <p className="mb-4 text-[11px] leading-relaxed text-body-muted sm:mb-6 sm:text-sm">
         {testimonial.text}
       </p>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         <Image
           src={testimonial.image}
           alt={testimonial.name}
           width={44}
           height={44}
-          className="h-11 w-11 rounded-full object-cover"
+          className="h-8 w-8 rounded-full object-cover sm:h-11 sm:w-11"
         />
-        <div>
-          <p className="text-sm font-medium text-ink">{testimonial.name}</p>
-          <p className="text-sm text-body-muted">{testimonial.role}</p>
+        <div className="min-w-0">
+          <p className="truncate text-[11px] font-medium text-ink sm:text-sm">
+            {testimonial.name}
+          </p>
+          <p className="line-clamp-2 text-[10px] leading-snug text-body-muted sm:text-sm">
+            {testimonial.role}
+          </p>
         </div>
       </div>
     </article>
@@ -138,7 +142,7 @@ export default function TestimonialsMarquee({
               aria-hidden
             />
 
-            <div className={`flex w-max gap-6 ${row.className}`}>
+            <div className={`flex w-max gap-3 sm:gap-6 ${row.className}`}>
               {track.map((testimonial, index) => (
                 <TestimonialCard
                   key={`${rowIndex}-${testimonial.name}-${index}`}

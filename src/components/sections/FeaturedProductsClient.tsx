@@ -673,6 +673,57 @@ export default function FeaturedProductsClient({
     );
   }
 
+  function ShopMobileStickyControls() {
+    return (
+      <div className="sticky top-[var(--header-height)] z-30 mb-4 bg-offwhite pb-3 lg:hidden">
+        <div className="border-b border-border py-1">
+          <div className="flex min-w-0 items-end gap-2 sm:gap-3">
+            <CategoryTabStrip tabs={tabs} activeTab={activeTab} onSelect={selectTab} size="shop" />
+          </div>
+        </div>
+        <div className="mt-3 flex min-w-0 items-center gap-2">
+          <label htmlFor="featured-shop-mobile-search" className="sr-only">
+            Search products
+          </label>
+          <div className="relative min-w-0 flex-1">
+            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="7" />
+                <path d="M21 21l-4.3-4.3" strokeLinecap="round" />
+              </svg>
+            </span>
+            <input
+              id="featured-shop-mobile-search"
+              type="search"
+              value={search}
+              onChange={(e) => updateSearch(e.target.value)}
+              placeholder="Search products..."
+              autoComplete="off"
+              className="h-11 w-full rounded-xl border border-border bg-[#FEFEFE] pl-10 pr-3 text-sm text-charcoal shadow-[0_2px_12px_rgba(26,31,46,0.04)] outline-none placeholder:text-muted/80 focus:border-ink/20 focus:ring-2 focus:ring-ink/10"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setMobileFiltersOpen(true)}
+            className="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-border bg-[#FEFEFE] px-3 text-sm font-semibold text-charcoal shadow-[0_2px_12px_rgba(26,31,46,0.04)] transition-colors hover:border-ink/20"
+            aria-expanded={mobileFiltersOpen}
+            aria-controls="featured-mobile-filters"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M4 6h16M7 12h10M10 18h4" strokeLinecap="round" />
+            </svg>
+            Filters
+            {mobileFilterCount > 0 ? (
+              <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-[#322b81] px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
+                {mobileFilterCount}
+              </span>
+            ) : null}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   function FeaturedViewMore() {
     if (activeTab === ALL_TAB || !activeCategory) return null;
 
@@ -832,9 +883,7 @@ export default function FeaturedProductsClient({
 
         {isShopCatalogue ? <div className="h-5 md:h-6" aria-hidden /> : null}
 
-        {isShopCatalogue ? (
-          <ShopCategoryTabs className="mb-0 lg:hidden" />
-        ) : null}
+        {isShopCatalogue ? <ShopMobileStickyControls /> : null}
 
         {!isShopCatalogue ? (
         <div className="mb-6 min-w-0 border-b border-border md:mb-10">
@@ -858,13 +907,13 @@ export default function FeaturedProductsClient({
           }`}
         >
           <aside
-            className={`w-full shrink-0 space-y-3 lg:w-[252px] lg:space-y-5 xl:w-[260px] ${
+            className={`shrink-0 space-y-3 lg:w-[252px] lg:space-y-5 xl:w-[260px] ${
               isShopCatalogue
-                ? "lg:sticky lg:top-[calc(var(--header-height)+0.75rem)] lg:z-10 lg:self-start lg:bg-offwhite"
-                : "lg:sticky lg:top-28 lg:self-start"
+                ? "contents lg:sticky lg:block lg:top-[calc(var(--header-height)+0.75rem)] lg:z-10 lg:self-start lg:bg-offwhite"
+                : "w-full lg:sticky lg:top-28 lg:self-start"
             }`}
           >
-            <div>
+            <div className={isShopCatalogue ? "hidden lg:block" : undefined}>
               <label htmlFor="featured-shop-search" className="sr-only">
                 Search featured products
               </label>
@@ -887,7 +936,7 @@ export default function FeaturedProductsClient({
               </div>
             </div>
 
-            <div className="flex items-center gap-2 lg:hidden">
+            <div className={`items-center gap-2 lg:hidden ${isShopCatalogue ? "hidden" : "flex"}`}>
               <button
                 type="button"
                 onClick={() => setMobileFiltersOpen(true)}

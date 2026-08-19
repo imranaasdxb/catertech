@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type SVGProps } from "react";
+import { usePathname } from "next/navigation";
 import { buildWhatsAppUrl, openWhatsAppChat } from "@/lib/whatsapp-quote";
 
 type ChatLead = {
@@ -67,6 +68,7 @@ function buildLeadMessage(lead: ChatLead) {
 }
 
 export default function WhatsAppButton() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [lead, setLead] = useState<ChatLead>({
     name: "",
@@ -79,6 +81,7 @@ export default function WhatsAppButton() {
   const [saveState, setSaveState] = useState<SaveState>("idle");
 
   const whatsappUrl = useMemo(() => buildWhatsAppUrl(buildLeadMessage(lead)), [lead]);
+  const hasBottomStickyBar = pathname === "/cart" || (pathname.startsWith("/shop/") && pathname !== "/shop");
   const hasStarted = submittedMessage.trim().length > 0;
   const needsCustomMessage = lead.need === "Other";
   const canContinue =
@@ -164,7 +167,11 @@ export default function WhatsAppButton() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+    <div
+      className={`fixed right-4 z-50 flex flex-col items-end gap-3 sm:right-6 ${
+        hasBottomStickyBar ? "bottom-24 sm:bottom-6" : "bottom-6"
+      }`}
+    >
       {open ? (
         <section
           aria-label="Catertech sales chat"
