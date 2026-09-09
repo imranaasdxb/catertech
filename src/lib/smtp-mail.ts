@@ -80,6 +80,41 @@ export async function sendSignupOtpEmail(
   }
 }
 
+export async function sendPasswordResetOtpEmail(opts: {
+  toEmail: string;
+  code: string;
+  fullName: string;
+}): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const transport = getSmtpTransport();
+  if (!transport) {
+    return {
+      ok: false,
+      reason:
+        "SMTP not configured — set SMTP_HOST, SMTP_USER, SMTP_PASS (optional SMTP_PORT, SMTP_SECURE, SMTP_FROM).",
+    };
+  }
+  const user = (process.env.SMTP_USER || "").trim();
+  const fromRaw = (process.env.SMTP_FROM || user || "").trim();
+  const appName = process.env.MAIL_FROM_NAME?.trim() || "CaterTech";
+
+  try {
+    await transport.sendMail({
+      from: `"${appName}" <${fromRaw}>`,
+      to: opts.toEmail,
+      subject: `${appName} — reset your admin password`,
+      text: `Hi ${opts.fullName}, use code ${opts.code} to reset your admin password. It expires in 10 minutes. If you did not request this, ignore this email.`,
+      html: `<p>Hi <strong>${escapeHtml(opts.fullName)}</strong>, use this code to reset your admin password:</p><p style="font-size:22px;font-weight:bold;letter-spacing:0.2em;">${opts.code}</p><p>This code expires in 10 minutes.</p><p style="color:#666;font-size:13px;">If you did not request this, you can ignore this email.</p>`,
+    });
+    return { ok: true };
+  } catch (err: unknown) {
+    const msg =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message?: string }).message)
+        : String(err);
+    return { ok: false, reason: `Mail failed: ${msg}` };
+  }
+}
+
 export async function sendAdminEmailChangeOtpEmail(opts: {
   toEmail: string;
   code: string;

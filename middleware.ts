@@ -21,13 +21,19 @@ function withSecurityHeaders(response: NextResponse) {
 }
 
 function rateLimitConfig(pathname: string):
-  | { scope: string; limit: number; windowMs: number }
+  | { scope: string; limit: number; windowMs: number; burst?: number }
   | null {
   if (pathname === "/api/auth/login") {
-    return { scope: "auth-login", limit: 20, windowMs: 15 * 60 * 1000 };
+    return { scope: "auth-login", limit: 20, windowMs: 15 * 60 * 1000, burst: 10 };
   }
   if (pathname.startsWith("/api/auth/signup")) {
-    return { scope: "auth-signup", limit: 12, windowMs: 15 * 60 * 1000 };
+    return { scope: "auth-signup", limit: 8, windowMs: 15 * 60 * 1000, burst: 4 };
+  }
+  if (
+    pathname === "/api/admin/users/create/send-otp" ||
+    /^\/api\/admin\/users\/[^/]+\/email\/send-otp$/.test(pathname)
+  ) {
+    return { scope: `admin-otp:${pathname}`, limit: 12, windowMs: 15 * 60 * 1000, burst: 4 };
   }
   if (
     pathname === "/api/contact" ||
@@ -36,13 +42,16 @@ function rateLimitConfig(pathname: string):
     pathname === "/api/rfq" ||
     pathname === "/api/chatbot-leads"
   ) {
-    return { scope: `public-form:${pathname}`, limit: 20, windowMs: 10 * 60 * 1000 };
+    return { scope: `public-form:${pathname}`, limit: 12, windowMs: 10 * 60 * 1000, burst: 5 };
   }
   if (pathname === "/api/upload") {
-    return { scope: "admin-upload", limit: 80, windowMs: 10 * 60 * 1000 };
+    return { scope: "admin-upload", limit: 180, windowMs: 10 * 60 * 1000, burst: 60 };
+  }
+  if (pathname.startsWith("/api/admin/products")) {
+    return { scope: "admin-products", limit: 600, windowMs: 60 * 1000, burst: 120 };
   }
   if (pathname.startsWith("/api/admin")) {
-    return { scope: "admin-api", limit: 300, windowMs: 60 * 1000 };
+    return { scope: "admin-api", limit: 300, windowMs: 60 * 1000, burst: 120 };
   }
   return null;
 }
@@ -78,6 +87,7 @@ export async function middleware(request: NextRequest) {
         key: `${cfg.scope}:${getClientIp(request)}`,
         limit: cfg.limit,
         windowMs: cfg.windowMs,
+        burst: cfg.burst,
       });
       if (!limited.ok) {
         return withSecurityHeaders(rateLimitResponse(limited.retryAfterSec));

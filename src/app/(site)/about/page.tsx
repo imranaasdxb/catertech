@@ -5,7 +5,6 @@ import {
   ArrowRight,
   Globe,
   MapPin,
-  Plus,
   Quote,
   Users,
   Utensils,
@@ -101,25 +100,6 @@ const partners = [
   "Conference & seminar organisers",
   "Wedding, party & event planners",
   "Private hosts & families",
-];
-
-const faqs = [
-  {
-    q: "Which areas in the UAE does CaterTech serve?",
-    a: "We serve all seven emirates: Dubai, Abu Dhabi, Sharjah, Ras Al Khaimah, Ajman, Fujairah and Umm Al Quwain, plus Al Ain and clients across the wider GCC and Middle East, all from our base in Ras Al Khor, Dubai.",
-  },
-  {
-    q: "Does CaterTech provide both catering and equipment rental?",
-    a: "Yes. We're a true one-stop partner: food catering, full event and party management, professional service crew, and rental of kitchen equipment, catering and serving equipment, event furniture, linen and mobile kitchens.",
-  },
-  {
-    q: "Who does CaterTech work with?",
-    a: "Hotels and hospitality venues, professional caterers and F&B operators, corporate clients, conference and seminar organisers, wedding and party planners, and private hosts across the Emirates.",
-  },
-  {
-    q: "Does CaterTech deliver across the Emirates?",
-    a: "Yes. We run our own delivery and collection fleet, including open trucks with tail-lifts, mini buses and vans, providing competitively priced logistics to events anywhere in the UAE.",
-  },
 ];
 
 function WhyCard({ title, body }: { title: string; body: string }) {
@@ -567,71 +547,6 @@ export default function AboutPage() {
         </Container>
       </section>
 
-      {/* ══════════════════════════════════════════════════════
-          FAQ
-          ══════════════════════════════════════════════════ */}
-      <section className="border-t border-[#e8e4df] bg-[#faf9f7] py-16 md:py-24">
-        <Container>
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,360px)_1fr] lg:gap-16">
-            {/* left panel */}
-            <div className="lg:sticky lg:top-28 lg:self-start">
-              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">
-                Good to know
-              </p>
-              <h2 className="mt-4 text-3xl font-bold leading-[1.12] tracking-tight text-ink md:text-4xl">
-                Frequently asked questions
-              </h2>
-              <p className="mt-5 text-base leading-relaxed text-body-muted">
-                Quick answers about where we work, what we supply, and how we deliver
-                across the UAE.
-              </p>
-              <Link
-                href="/contact"
-                className="btn-brand mt-8 inline-flex min-h-11 rounded-xl px-6 py-2.5 text-[0.72rem] font-semibold uppercase tracking-[0.14em]"
-              >
-                <span className="btn-brand__content gap-2">
-                  Talk to our team
-                  <span className="btn-brand__arrow h-8 w-8" aria-hidden>
-                    <ArrowRight className="size-4" strokeWidth={2} />
-                  </span>
-                </span>
-              </Link>
-            </div>
-
-            {/* right accordion list */}
-            <div className="space-y-4">
-              {faqs.map(({ q, a }, i) => (
-                <details
-                  key={q}
-                  className="group overflow-hidden rounded-2xl border border-[#e8e4df] bg-white transition-shadow open:shadow-[0_12px_40px_rgba(20,19,31,0.08)]"
-                  {...(i === 0 ? { open: true } : {})}
-                >
-                  <summary className="flex cursor-pointer list-none items-start gap-4 px-6 py-5 [&::-webkit-details-marker]:hidden">
-                    <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <span className="flex flex-1 items-center justify-between gap-4">
-                      <span className="text-left text-base font-bold leading-snug text-ink">
-                        {q}
-                      </span>
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#e8e4df] bg-[#faf9f7] text-body-muted transition-colors group-open:border-primary group-open:bg-primary group-open:text-white">
-                        <Plus
-                          className="h-4 w-4 transition-transform duration-300 group-open:rotate-45"
-                          strokeWidth={2}
-                          aria-hidden
-                        />
-                      </span>
-                    </span>
-                  </summary>
-                  <div className="border-t border-[#e8e4df] px-6 pb-6 pt-4 pl-[4.5rem]">
-                    <p className="text-sm leading-[1.85] text-body-muted">{a}</p>
-                  </div>
-                </details>
-              ))}
-            </div>
-          </div>
-        </Container>
-      </section>
     </main>
   );
 }

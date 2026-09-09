@@ -46,6 +46,13 @@ export type ProductRow = {
   subCategoryName: string | null;
 };
 
+type ProductPagination = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
 type ProductCard = {
   id: string;
   slug: string;
@@ -351,11 +358,13 @@ function CategoryTabStrip({
 export default function FeaturedProductsClient({
   categories,
   products,
+  pagination,
   catalogError = "",
   compactTop = false,
 }: {
   categories: CategoryRow[];
   products: ProductRow[];
+  pagination?: ProductPagination;
   catalogError?: string;
   compactTop?: boolean;
 }) {
@@ -368,6 +377,9 @@ export default function FeaturedProductsClient({
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(SHOP_INITIAL_VISIBLE);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [pageLoading, setPageLoading] = useState(false);
+  const [pagedProducts, setPagedProducts] = useState(products);
+  const [pagedMeta, setPagedMeta] = useState<ProductPagination | null>(pagination ?? null);
   const productGridRef = useRef<HTMLDivElement>(null);
   const skipFilterScrollRef = useRef(true);
   const isShopCatalogue = compactTop;
@@ -411,9 +423,11 @@ export default function FeaturedProductsClient({
     [activeCategory, categories]
   );
 
+  const productSource = isShopCatalogue ? pagedProducts : products;
+
   const productCards = useMemo<ProductCard[]>(
     () =>
-      products.map((product) => {
+      productSource.map((product) => {
         const resolved = resolveCategoryForProduct(
           {
             categoryId: product.categoryId,
@@ -439,15 +453,15 @@ export default function FeaturedProductsClient({
           tag: product.tag,
         };
       }),
-    [categories, products]
+    [categories, productSource]
   );
 
   const filtered = useMemo(() => {
+    if (isShopCatalogue) return productCards;
+
     let list =
       activeTab === ALL_TAB
-        ? isShopCatalogue
-          ? [...productCards]
-          : productCards.filter((product) => product.tag === "Popular" || product.tag === "New")
+        ? productCards.filter((product) => product.tag === "Popular" || product.tag === "New")
         : productCards.filter((product) => {
             const category = categories.find((item) => item.id === activeTab);
             if (!category) return false;
@@ -483,11 +497,12 @@ export default function FeaturedProductsClient({
   }, [activeTab, categories, highlight, isShopCatalogue, productCards, search, selectedEquipment]);
 
   const displayed = useMemo(() => {
+    if (isShopCatalogue) return productCards;
     if (sortOrder !== "a-z") return orderSimilarProductsTogether(filtered);
     return [...filtered].sort((a, b) =>
       a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
     );
-  }, [filtered, sortOrder]);
+  }, [filtered, isShopCatalogue, productCards, sortOrder]);
 
   const equipmentFilterKey = useMemo(
     () => [...selectedEquipment].sort().join("\0"),
@@ -498,10 +513,13 @@ export default function FeaturedProductsClient({
   const homepageRowOne = homepageGridProducts.slice(0, CARDS_PER_ROW);
   const homepageRowTwo = homepageGridProducts.slice(CARDS_PER_ROW, PAGE_SIZE);
 
-  const visibleProducts = displayed.slice(0, visibleCount);
-  const canLoadMore = visibleCount < displayed.length;
+  const resultCount = isShopCatalogue ? pagedMeta?.total ?? displayed.length : displayed.length;
+  const visibleProducts = isShopCatalogue ? displayed : displayed.slice(0, visibleCount);
+  const canLoadMore = isShopCatalogue
+    ? displayed.length < resultCount
+    : visibleCount < displayed.length;
   const loadingSkeletonCount = loadingMore
-    ? Math.min(SHOP_LOAD_MORE_STEP, displayed.length - visibleCount)
+    ? Math.min(SHOP_LOAD_MORE_STEP, Math.max(0, resultCount - displayed.length))
     : 0;
 
   function scrollToProductGridStart() {
@@ -522,11 +540,64 @@ export default function FeaturedProductsClient({
     setLoadingMore(false);
   }
 
+  const fetchShopProductPage = useCallback(async (page: number, append: boolean, signal?: AbortSignal) => {
+    const params = new URLSearchParams({
+      page: String(page),
+      pageSize: String(SHOP_INITIAL_VISIBLE),
+      highlight,
+      sortOrder,
+    });
+    if (activeTab !== ALL_TAB) params.set("categoryId", activeTab);
+    if (search.trim()) params.set("search", search.trim());
+    if (selectedEquipment.size) {
+      params.set("subcategories", [...selectedEquipment].sort().join(","));
+    }
+
+    if (append) setLoadingMore(true);
+    else {
+      setPageLoading(true);
+      setPagedProducts([]);
+    }
+
+    try {
+      const response = await fetch(`/api/catalogue/products?${params.toString()}`, {
+        signal,
+      });
+      if (!response.ok) throw new Error("Could not load products");
+      const data = (await response.json()) as {
+        products?: ProductRow[];
+        pagination?: ProductPagination;
+      };
+      if (signal?.aborted) return;
+      setPagedProducts((current) => [
+        ...(append ? current : []),
+        ...(data.products ?? []),
+      ]);
+      setPagedMeta(data.pagination ?? null);
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === "AbortError")) {
+        setPagedProducts((current) => (append ? current : []));
+      }
+    } finally {
+      if (!signal?.aborted) {
+        if (append) setLoadingMore(false);
+        else setPageLoading(false);
+      }
+    }
+  }, [activeTab, highlight, search, selectedEquipment, sortOrder]);
+
   useEffect(() => {
     if (!isShopCatalogue) return;
-    setVisibleCount(SHOP_INITIAL_VISIBLE);
-    setLoadingMore(false);
-  }, [activeTab, search, highlight, equipmentFilterKey, sortOrder, isShopCatalogue]);
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      void fetchShopProductPage(1, false, controller.signal);
+    }, 180);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [equipmentFilterKey, fetchShopProductPage, isShopCatalogue]);
 
   useEffect(() => {
     if (!isShopCatalogue) return;
@@ -546,6 +617,10 @@ export default function FeaturedProductsClient({
 
   function loadMore() {
     if (!canLoadMore || loadingMore) return;
+    if (isShopCatalogue) {
+      void fetchShopProductPage((pagedMeta?.page ?? 1) + 1, true);
+      return;
+    }
     setLoadingMore(true);
     window.setTimeout(() => {
       setVisibleCount((count) => Math.min(count + SHOP_LOAD_MORE_STEP, displayed.length));
@@ -634,17 +709,17 @@ export default function FeaturedProductsClient({
   ];
 
   function ShopProductCount({ className = "" }: { className?: string }) {
-    if (displayed.length <= SHOP_INITIAL_VISIBLE && !loadingMore) return null;
+    if (resultCount <= SHOP_INITIAL_VISIBLE && !loadingMore && !pageLoading) return null;
 
     return (
       <p className={`text-[11px] text-muted ${className}`}>
-        Showing {Math.min(visibleCount, displayed.length)} of {displayed.length}
+        Showing {displayed.length} of {resultCount}
       </p>
     );
   }
 
   function ShopLoadMoreButton() {
-    if (displayed.length <= SHOP_INITIAL_VISIBLE && !loadingMore) return null;
+    if (resultCount <= SHOP_INITIAL_VISIBLE && !loadingMore) return null;
     if (!canLoadMore && !loadingMore) return null;
 
     return (
@@ -1023,7 +1098,7 @@ export default function FeaturedProductsClient({
                       onClick={closeMobileFilters}
                       className="min-h-11 flex-1 rounded-xl bg-[#322b81] px-4 text-sm font-semibold text-white transition-opacity hover:opacity-95"
                     >
-                      Show {displayed.length} {displayed.length === 1 ? "item" : "items"}
+                      Show {resultCount} {resultCount === 1 ? "item" : "items"}
                     </button>
                   </div>
                 </div>
@@ -1047,7 +1122,7 @@ export default function FeaturedProductsClient({
                   : undefined
               }
             >
-            {catalogError || (productCards.length === 0 && !hasActiveFilters) ? (
+            {pageLoading || catalogError || (productCards.length === 0 && !hasActiveFilters) ? (
               <div className="min-w-0 space-y-4" aria-busy="true" aria-label="Loading products">
                 <p className="sr-only">{catalogError || "Products are loading."}</p>
                 {isShopCatalogue ? (

@@ -160,7 +160,7 @@ export default function TrustBar() {
       />
 
       <Container className="relative z-10 flex w-full flex-col max-sm:min-h-[calc(100vw*1774/887)] max-sm:pt-10 max-sm:pb-0 sm:block sm:min-h-0 md:block">
-        <p className="w-full text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-accent-dark">
+        <p className="w-fit rounded-full border border-white/70 bg-white/45 px-3.5 py-1.5 text-left text-[11px] font-semibold uppercase tracking-[0.24em] text-accent-dark shadow-[0_10px_30px_rgba(27,43,75,0.12),inset_0_1px_1px_rgba(255,255,255,0.85)] backdrop-blur-md">
           Trusted across the UAE &amp; GCC
         </p>
         <h2 className="mt-3 w-full text-left font-display text-lg font-medium leading-snug tracking-tight text-ink sm:text-xl sm:leading-tight md:text-2xl lg:text-[1.85rem] xl:text-3xl">

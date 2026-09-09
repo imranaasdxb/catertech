@@ -15,7 +15,7 @@ export default async function ShopPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   await searchParams;
-  const catalogueData = await getCatalogueProductData();
+  const catalogueData = await getCatalogueProductData({ page: 1, pageSize: 12 });
 
   return (
     <>

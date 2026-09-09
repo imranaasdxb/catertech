@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { AuthCateringPattern } from "./AuthCateringPattern";
 
 type Tab = "login" | "signup";
+type LoginStep = "credentials" | "forgot" | "reset";
 type SignupStep = "details" | "otp";
 
 function safeStaffDashboardRedirect(from: string | null): string {
@@ -164,6 +165,11 @@ export default function AuthPageClient() {
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [loginStep, setLoginStep] = useState<LoginStep>("credentials");
+  const [resetCode, setResetCode] = useState("");
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetConfirmPassword, setResetConfirmPassword] = useState("");
+  const [resetMessage, setResetMessage] = useState("");
   const [loginErr, setLoginErr] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
 
@@ -189,6 +195,7 @@ export default function AuthPageClient() {
   async function onLogin(e: FormEvent) {
     e.preventDefault();
     setLoginErr("");
+    setResetMessage("");
     setLoginLoading(true);
     const res = await fetch("/api/auth/login", {
       method: "POST",
@@ -213,6 +220,87 @@ export default function AuthPageClient() {
     }
     router.replace(safeStaffDashboardRedirect(searchParams.get("from")));
     router.refresh();
+  }
+
+  async function sendPasswordResetCode() {
+    setLoginErr("");
+    setResetMessage("");
+    setLoginLoading(true);
+    const res = await fetch("/api/auth/password-reset/send-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: loginEmail.trim().toLowerCase() }),
+    });
+    setLoginLoading(false);
+    const data = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      otpTtlMinutes?: number;
+    };
+    if (!res.ok) {
+      setLoginErr(data.error || "Could not send reset code");
+      return;
+    }
+    setLoginStep("reset");
+    setResetCode("");
+    setResetPassword("");
+    setResetConfirmPassword("");
+    setResetMessage(`If this admin email exists, a reset code was sent. It expires in ${data.otpTtlMinutes || 10} minutes.`);
+  }
+
+  async function onSendPasswordResetCode(e: FormEvent) {
+    e.preventDefault();
+    await sendPasswordResetCode();
+  }
+
+  async function onVerifyPasswordReset(e: FormEvent) {
+    e.preventDefault();
+    setLoginErr("");
+    setResetMessage("");
+    setLoginLoading(true);
+    const res = await fetch("/api/auth/password-reset/verify-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: loginEmail.trim().toLowerCase(),
+        code: resetCode.trim(),
+        password: resetPassword,
+        confirmPassword: resetConfirmPassword,
+      }),
+    });
+    setLoginLoading(false);
+    const data = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      role?: string;
+    };
+    if (!res.ok) {
+      setLoginErr(data.error || "Could not reset password");
+      return;
+    }
+    if (!isStaffRole(data.role)) {
+      setLoginErr("This account cannot access the dashboard.");
+      return;
+    }
+    router.replace(safeStaffDashboardRedirect(searchParams.get("from")));
+    router.refresh();
+  }
+
+  function showForgotPassword() {
+    setLoginErr("");
+    setResetMessage("");
+    setLoginPassword("");
+    setResetCode("");
+    setResetPassword("");
+    setResetConfirmPassword("");
+    setLoginStep("forgot");
+  }
+
+  function backToLogin() {
+    setLoginErr("");
+    setResetMessage("");
+    setResetCode("");
+    setResetPassword("");
+    setResetConfirmPassword("");
+    setLoginStep("credentials");
   }
 
   async function onSendOtp(e: FormEvent) {
@@ -295,6 +383,9 @@ export default function AuthPageClient() {
   }
 
   function goTab(next: Tab) {
+    setLoginErr("");
+    setResetMessage("");
+    setLoginStep("credentials");
     setSignupErr("");
     if (next === "signup") setSignupStep("details");
     const from = searchParams.get("from");
@@ -424,11 +515,19 @@ export default function AuthPageClient() {
                   {tab === "login" ? "Welcome back" : "Create account"}
                 </p>
                 <h2 className="mt-2 text-2xl font-bold tracking-tight text-admin-ink sm:text-[28px]">
-                  {tab === "login" ? "Sign in to your dashboard" : "Join the team"}
+                  {tab === "login"
+                    ? loginStep === "credentials"
+                      ? "Sign in to your dashboard"
+                      : "Reset your password"
+                    : "Join the team"}
                 </h2>
                 {tab === "login" ? (
                   <p className="mt-2 text-sm text-admin-ink/50">
-                    Use your staff email and password to continue.
+                    {loginStep === "credentials"
+                      ? "Use your staff email and password to continue."
+                      : loginStep === "forgot"
+                        ? "Enter your staff email and we will send a reset code."
+                        : "Enter the code from your email and choose a new password."}
                   </p>
                 ) : null}
               </div>
@@ -461,7 +560,16 @@ export default function AuthPageClient() {
               {/* Form card */}
               <div className={admin.formModernCard}>
                 {tab === "login" ? (
-                  <form onSubmit={onLogin} className="space-y-5">
+                  <form
+                    onSubmit={
+                      loginStep === "credentials"
+                        ? onLogin
+                        : loginStep === "forgot"
+                          ? onSendPasswordResetCode
+                          : onVerifyPasswordReset
+                    }
+                    className="space-y-5"
+                  >
                     <AuthField id="login-email" label="Email address">
                       <div className="relative">
                         <Mail
@@ -481,47 +589,159 @@ export default function AuthPageClient() {
                       </div>
                     </AuthField>
 
-                    <AuthField id="login-password" label="Password">
-                      <div className="relative">
-                        <Lock
-                          className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-admin-ink/30"
-                          aria-hidden
-                        />
+                    {loginStep === "reset" ? (
+                      <AuthField id="reset-code" label="Verification code">
                         <input
-                          id="login-password"
-                          type="password"
-                          autoComplete="current-password"
-                          value={loginPassword}
-                          onChange={(e) => setLoginPassword(e.target.value)}
-                          className={cn(admin.fieldModern, "pl-10")}
-                          placeholder="Enter your password"
+                          id="reset-code"
+                          type="text"
+                          inputMode="numeric"
+                          autoComplete="one-time-code"
+                          maxLength={6}
+                          pattern="[0-9]{6}"
+                          value={resetCode}
+                          onChange={(e) =>
+                            setResetCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                          }
+                          className={cn(
+                            admin.fieldModern,
+                            "text-center text-2xl font-bold tracking-[0.35em] tabular-nums",
+                          )}
+                          placeholder="000000"
                           required
                         />
-                      </div>
-                    </AuthField>
+                      </AuthField>
+                    ) : null}
+
+                    {loginStep === "credentials" ? (
+                      <AuthField id="login-password" label="Password">
+                        <div className="relative">
+                          <Lock
+                            className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-admin-ink/30"
+                            aria-hidden
+                          />
+                          <input
+                            id="login-password"
+                            type="password"
+                            autoComplete="current-password"
+                            value={loginPassword}
+                            onChange={(e) => setLoginPassword(e.target.value)}
+                            className={cn(admin.fieldModern, "pl-10")}
+                            placeholder="Enter your password"
+                            required
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={showForgotPassword}
+                          className="mt-2 text-sm font-semibold text-admin-accent transition-opacity hover:opacity-80"
+                        >
+                          Forgot password?
+                        </button>
+                      </AuthField>
+                    ) : null}
+
+                    {loginStep === "reset" ? (
+                      <>
+                        <AuthField id="reset-password" label="New password">
+                          <div className="relative">
+                            <Lock
+                              className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-admin-ink/30"
+                              aria-hidden
+                            />
+                            <input
+                              id="reset-password"
+                              type="password"
+                              autoComplete="new-password"
+                              minLength={8}
+                              value={resetPassword}
+                              onChange={(e) => setResetPassword(e.target.value)}
+                              className={cn(admin.fieldModern, "pl-10")}
+                              placeholder="Min. 8 characters"
+                              required
+                            />
+                          </div>
+                        </AuthField>
+
+                        <AuthField id="reset-confirm-password" label="Confirm new password">
+                          <div className="relative">
+                            <Lock
+                              className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-admin-ink/30"
+                              aria-hidden
+                            />
+                            <input
+                              id="reset-confirm-password"
+                              type="password"
+                              autoComplete="new-password"
+                              minLength={8}
+                              value={resetConfirmPassword}
+                              onChange={(e) => setResetConfirmPassword(e.target.value)}
+                              className={cn(admin.fieldModern, "pl-10")}
+                              placeholder="Repeat password"
+                              required
+                            />
+                          </div>
+                        </AuthField>
+                      </>
+                    ) : null}
+
+                    {resetMessage ? (
+                      <p className="rounded-xl border border-admin-accent/20 bg-admin-accent-tint/40 px-4 py-3 text-sm leading-relaxed text-admin-ink/70">
+                        {resetMessage}
+                      </p>
+                    ) : null}
 
                     {loginErr ? <AuthAlert message={loginErr} /> : null}
 
-                    <PrimaryButton disabled={loginLoading}>
+                    <PrimaryButton
+                      disabled={
+                        loginLoading ||
+                        !loginEmail.trim() ||
+                        (loginStep === "credentials" && !loginPassword) ||
+                        (loginStep === "reset" &&
+                          (resetCode.length !== 6 ||
+                            resetPassword.length < 8 ||
+                            !resetConfirmPassword))
+                      }
+                    >
                       {loginLoading ? (
                         <span className="inline-flex items-center gap-2">
                           <Loader2 className="size-4 animate-spin" aria-hidden />
-                          Signing in…
+                          {loginStep === "credentials"
+                            ? "Signing in…"
+                            : loginStep === "forgot"
+                              ? "Sending code…"
+                              : "Resetting…"}
                         </span>
-                      ) : (
+                      ) : loginStep === "credentials" ? (
                         "Sign in"
+                      ) : loginStep === "forgot" ? (
+                        "Send reset code"
+                      ) : (
+                        "Verify and continue"
                       )}
                     </PrimaryButton>
 
-                    <p className="text-center text-sm text-admin-ink/45">
-                      Admin?{" "}
-                      <Link
-                        href="/admin/login"
-                        className="font-semibold text-admin-accent hover:underline"
-                      >
-                        Admin sign in
-                      </Link>
-                    </p>
+                    {loginStep !== "credentials" ? (
+                      <div className="flex items-center justify-between gap-3 text-sm">
+                        <button
+                          type="button"
+                          onClick={backToLogin}
+                          className="font-semibold text-admin-ink/55 transition-colors hover:text-admin-ink"
+                        >
+                          Back to sign in
+                        </button>
+                        {loginStep === "reset" ? (
+                          <button
+                            type="button"
+                            onClick={() => void sendPasswordResetCode()}
+                            disabled={loginLoading || !loginEmail.trim()}
+                            className="font-semibold text-admin-accent transition-opacity hover:opacity-80 disabled:opacity-50"
+                          >
+                            Resend code
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </form>
                 ) : signupDone ? (
                   <div className="py-6 text-center">

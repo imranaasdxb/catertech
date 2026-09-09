@@ -7,8 +7,8 @@ export {
 } from "@/lib/sanitize";
 
 type Bucket = {
-  count: number;
-  resetAt: number;
+  tokens: number;
+  updatedAt: number;
 };
 
 type LoginAttempt = {
@@ -44,26 +44,37 @@ export function checkRateLimit({
   key,
   limit,
   windowMs,
+  burst = limit,
 }: {
   key: string;
   limit: number;
   windowMs: number;
+  burst?: number;
 }): { ok: true } | { ok: false; retryAfterSec: number } {
   const now = Date.now();
+  const capacity = Math.max(1, burst);
+  const refillPerMs = limit / windowMs;
   const existing = rateLimitBuckets.get(key);
-  if (!existing || existing.resetAt <= now) {
-    rateLimitBuckets.set(key, { count: 1, resetAt: now + windowMs });
+
+  if (!existing) {
+    rateLimitBuckets.set(key, { tokens: capacity - 1, updatedAt: now });
     return { ok: true };
   }
 
-  existing.count += 1;
-  if (existing.count > limit) {
+  const elapsedMs = Math.max(0, now - existing.updatedAt);
+  const tokens = Math.min(capacity, existing.tokens + elapsedMs * refillPerMs);
+
+  if (tokens < 1) {
+    existing.tokens = tokens;
+    existing.updatedAt = now;
     return {
       ok: false,
-      retryAfterSec: Math.max(1, Math.ceil((existing.resetAt - now) / 1000)),
+      retryAfterSec: Math.max(1, Math.ceil((1 - tokens) / refillPerMs / 1000)),
     };
   }
 
+  existing.tokens = tokens - 1;
+  existing.updatedAt = now;
   return { ok: true };
 }
 

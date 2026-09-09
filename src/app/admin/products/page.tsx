@@ -1,8 +1,8 @@
-import { asc, desc } from "drizzle-orm";
+import { asc } from "drizzle-orm";
 import AdminProductsTable from "@/components/admin/AdminProductsTable";
 import { admin } from "@/components/admin/admin-theme";
 import { getDb } from "@/db";
-import { productCategories, products } from "@/db/schema";
+import { productCategories } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -50,25 +50,6 @@ export default async function AdminProductsPage() {
     return <p className={`${admin.page} ${admin.muted}`}>Configure DATABASE_URL.</p>;
   }
 
-  const selectFields = {
-    id: products.id,
-    title: products.title,
-    slug: products.slug,
-    pricePerDayAed: products.pricePerDayAed,
-    category: products.category,
-    categoryId: products.categoryId,
-    published: products.published,
-    isFeatured: products.isFeatured,
-    isAvailable: products.isAvailable,
-    attributes: products.attributes,
-    updatedAt: products.updatedAt,
-    images: products.images,
-  };
-
-  const raw = await retryBusyDatabase(() =>
-    db.select(selectFields).from(products).orderBy(desc(products.updatedAt))
-  );
-
   const categories = await retryBusyDatabase(() =>
     db
       .select({
@@ -80,22 +61,6 @@ export default async function AdminProductsPage() {
       .orderBy(asc(productCategories.sortOrder), asc(productCategories.name))
   );
 
-  const rows = raw.map((r) => ({
-    id: r.id,
-    title: r.title,
-    slug: r.slug,
-    pricePerDayAed: r.pricePerDayAed,
-    category: r.category ?? null,
-    categoryId: r.categoryId ?? null,
-    galleryCount: r.images?.filter(Boolean).length ?? 0,
-    published: r.published,
-    isFeatured: r.isFeatured,
-    isAvailable: r.isAvailable,
-    attributes: r.attributes,
-    updatedAt: r.updatedAt,
-    thumbUrl: r.images?.[0] ?? null,
-  }));
-
   return (
     <div className={admin.page}>
       <div className={admin.headerRow}>
@@ -104,7 +69,7 @@ export default async function AdminProductsPage() {
           <p className={`${admin.muted} mt-1`}>Manage catalogue items and publishing.</p>
         </div>
       </div>
-      <AdminProductsTable rows={rows} categories={categories} emptyMessage="No products yet." />
+      <AdminProductsTable rows={[]} categories={categories} emptyMessage="No products yet." />
     </div>
   );
 }

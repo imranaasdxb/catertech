@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ne, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, inArray, ne, or, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import {
   productCategories,
@@ -34,6 +34,24 @@ export type CatalogueProductRow = {
   categoryName: string | null;
   categorySlug: string | null;
   subCategoryName: string | null;
+};
+
+export type CatalogueProductPagination = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
+export type CatalogueProductQueryOptions = {
+  featuredOnly?: boolean;
+  page?: number;
+  pageSize?: number;
+  categoryId?: string;
+  subcategoryNames?: string[];
+  search?: string;
+  highlight?: "all" | "Popular" | "New";
+  sortOrder?: "default" | "a-z";
 };
 
 const RETRY_DELAYS_MS = [150, 400];
@@ -483,11 +501,17 @@ function plainText(value: string | null) {
 
 export async function getCatalogueProductData({
   featuredOnly = false,
-}: {
-  featuredOnly?: boolean;
-} = {}): Promise<{
+  page = 1,
+  pageSize,
+  categoryId,
+  subcategoryNames = [],
+  search = "",
+  highlight = "all",
+  sortOrder = "default",
+}: CatalogueProductQueryOptions = {}): Promise<{
   categories: CatalogueCategoryRow[];
   products: CatalogueProductRow[];
+  pagination?: CatalogueProductPagination;
   catalogError?: string;
 }> {
   const db = getDb();
@@ -514,8 +538,38 @@ export async function getCatalogueProductData({
         .orderBy(asc(productSubcategories.sortOrder), asc(productSubcategories.name))
     );
 
-    const storefrontProducts = await retryBusyDatabase(() =>
-      db
+    const safePage = Math.max(1, page);
+    const safePageSize =
+      pageSize === undefined ? undefined : Math.min(60, Math.max(1, pageSize));
+    const trimmedSearch = search.trim();
+    const searchLike = `%${trimmedSearch}%`;
+    const newSince = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const productWhere = and(
+      eq(products.published, true),
+      featuredOnly ? eq(products.isFeatured, true) : undefined,
+      categoryId ? eq(products.categoryId, categoryId) : undefined,
+      subcategoryNames.length ? inArray(productSubcategories.name, subcategoryNames) : undefined,
+      highlight === "Popular" ? eq(products.isFeatured, true) : undefined,
+      highlight === "New" ? gte(products.createdAt, newSince) : undefined,
+      trimmedSearch
+        ? or(
+            ilike(products.title, searchLike),
+            ilike(products.slug, searchLike),
+            ilike(products.category, searchLike),
+            ilike(products.pricePerDayAed, searchLike),
+            ilike(productCategories.name, searchLike),
+            ilike(productSubcategories.name, searchLike),
+            sql`${products.description}::text ILIKE ${searchLike}`,
+            sql`${products.attributes}::text ILIKE ${searchLike}`
+          )
+        : undefined
+    );
+    const productOrder =
+      sortOrder === "a-z"
+        ? [asc(products.title)]
+        : [desc(products.isFeatured), desc(products.createdAt)];
+
+    const storefrontQuery = db
         .select({
           id: products.id,
           categoryId: products.categoryId,
@@ -540,18 +594,38 @@ export async function getCatalogueProductData({
           eq(products.subCategoryId, productSubcategories.id)
         )
         .where(
-          featuredOnly
-            ? and(eq(products.published, true), eq(products.isFeatured, true))
-            : eq(products.published, true)
+          productWhere
         )
-        .orderBy(desc(products.isFeatured), desc(products.createdAt))
-    );
+        .orderBy(...productOrder);
+
+    const [storefrontProducts, totalRows] = await Promise.all([
+      retryBusyDatabase(() =>
+        safePageSize
+          ? storefrontQuery.limit(safePageSize).offset((safePage - 1) * safePageSize)
+          : storefrontQuery
+      ),
+      safePageSize
+        ? retryBusyDatabase(() =>
+            db
+              .select({ total: count() })
+              .from(products)
+              .leftJoin(productCategories, eq(products.categoryId, productCategories.id))
+              .leftJoin(
+                productSubcategories,
+                eq(products.subCategoryId, productSubcategories.id)
+              )
+              .where(productWhere)
+          )
+        : Promise.resolve([]),
+    ]);
 
     const categoryRows = categories.map((category) => ({
       id: category.id,
       name: category.name,
       slug: category.slug,
     }));
+
+    const total = Number(totalRows[0]?.total ?? storefrontProducts.length);
 
     return {
       categories: categories.map((category) => ({
@@ -585,6 +659,14 @@ export async function getCatalogueProductData({
           categoryName: mapped.categoryName ?? resolved.name,
         };
       }),
+      pagination: safePageSize
+        ? {
+            page: safePage,
+            pageSize: safePageSize,
+            total,
+            totalPages: Math.max(1, Math.ceil(total / safePageSize)),
+          }
+        : undefined,
     };
   } catch {
     return {

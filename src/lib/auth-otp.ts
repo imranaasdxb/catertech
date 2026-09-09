@@ -31,6 +31,7 @@ export function generateNumericOtp(digits = 6): string {
 }
 
 export const SIGNUP_OTP_PURPOSE = "signup";
+export const PASSWORD_RESET_OTP_PURPOSE = "password-reset";
 export const OTP_TTL_MIN = 10;
 export const OTP_RESEND_COOLDOWN_SEC = 55;
 export const OTP_MAX_ATTEMPTS = 8;

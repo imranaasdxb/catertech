@@ -1,4 +1,4 @@
-import { desc, eq, like } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, isNull, like, or, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { isAdminSession } from "@/lib/auth-user";
@@ -37,6 +37,17 @@ const createSchema = z.object({
   productTitlePresetId: z.union([z.string().uuid(), z.null()]).optional(),
 });
 
+const listQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(10),
+  categoryId: z.string().uuid().optional(),
+  search: z.string().trim().max(160).default(""),
+  missingPrice: z
+    .preprocess((value) => value === "true" || value === "1", z.boolean())
+    .default(false),
+  sort: z.enum(["default", "a-z"]).default("default"),
+});
+
 function hasSavedAttributes(attributes: Record<string, ProductAttributeValue>) {
   return Object.values(attributes).some((value) => {
     if (!value) return false;
@@ -45,7 +56,7 @@ function hasSavedAttributes(attributes: Record<string, ProductAttributeValue>) {
   });
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   if (!(await isAdminSession())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -54,12 +65,82 @@ export async function GET() {
   if (!db)
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
 
-  const rows = await db
-    .select()
-    .from(products)
-    .orderBy(desc(products.updatedAt));
+  const url = new URL(request.url);
+  const parsed = listQuerySchema.safeParse({
+    page: url.searchParams.get("page") || undefined,
+    pageSize: url.searchParams.get("pageSize") || undefined,
+    categoryId: url.searchParams.get("categoryId") || undefined,
+    search: url.searchParams.get("search") || undefined,
+    missingPrice: url.searchParams.get("missingPrice") || undefined,
+    sort: url.searchParams.get("sort") || undefined,
+  });
 
-  return NextResponse.json(rows);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const { page, pageSize, categoryId, search, missingPrice, sort } = parsed.data;
+  const searchLike = `%${search}%`;
+  const where = and(
+    categoryId ? eq(products.categoryId, categoryId) : undefined,
+    missingPrice ? or(isNull(products.pricePerDayAed), eq(products.pricePerDayAed, "")) : undefined,
+    search
+      ? or(
+          ilike(products.title, searchLike),
+          ilike(products.slug, searchLike),
+          ilike(products.category, searchLike),
+          ilike(products.pricePerDayAed, searchLike),
+          sql`${products.attributes}::text ILIKE ${searchLike}`
+        )
+      : undefined
+  );
+
+  const rows = await db
+    .select({
+      id: products.id,
+      title: products.title,
+      slug: products.slug,
+      pricePerDayAed: products.pricePerDayAed,
+      category: products.category,
+      categoryId: products.categoryId,
+      published: products.published,
+      isFeatured: products.isFeatured,
+      isAvailable: products.isAvailable,
+      attributes: products.attributes,
+      updatedAt: products.updatedAt,
+      images: products.images,
+    })
+    .from(products)
+    .where(where)
+    .orderBy(...(sort === "a-z" ? [asc(products.title)] : [desc(products.updatedAt)]))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize);
+
+  const [{ total }] = await db.select({ total: count() }).from(products).where(where);
+
+  return NextResponse.json({
+    products: rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      slug: r.slug,
+      pricePerDayAed: r.pricePerDayAed,
+      category: r.category ?? null,
+      categoryId: r.categoryId ?? null,
+      galleryCount: r.images?.filter(Boolean).length ?? 0,
+      published: r.published,
+      isFeatured: r.isFeatured,
+      isAvailable: r.isAvailable,
+      attributes: r.attributes,
+      updatedAt: r.updatedAt,
+      thumbUrl: r.images?.[0] ?? null,
+    })),
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
+    },
+  });
 }
 
 export async function POST(request: Request) {

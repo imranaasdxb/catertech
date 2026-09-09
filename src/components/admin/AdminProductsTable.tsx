@@ -37,6 +37,13 @@ export type AdminProductCategoryOption = {
   slug: string;
 };
 
+type AdminProductPagination = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
 type ProductRow = InferSelectModel<typeof products>;
 
 type FilterKey = "all" | string;
@@ -272,6 +279,13 @@ export default function AdminProductsTable({
   const [toggleAction, setToggleAction] = useState<ToggleAction | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [loadingRows, setLoadingRows] = useState(true);
+  const [pagination, setPagination] = useState<AdminProductPagination>({
+    page: 1,
+    pageSize: PAGE_SIZE,
+    total: rows.length,
+    totalPages: Math.max(1, Math.ceil(rows.length / PAGE_SIZE)),
+  });
 
   const [viewProduct, setViewProduct] = useState<ProductRow | null>(null);
   const [viewLoadErr, setViewLoadErr] = useState("");
@@ -281,7 +295,7 @@ export default function AdminProductsTable({
   useEffect(() => {
     // Refresh the optimistic table copy after a server navigation.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLocalRows(rows);
+    if (rows.length) setLocalRows(rows);
   }, [rows]);
 
   useEffect(() => {
@@ -290,80 +304,81 @@ export default function AdminProductsTable({
     setSearchInput(initialSearch);
   }, [initialSearch]);
 
-  const categoryFilteredRows = useMemo(() => {
-    return localRows.filter((r) => {
-      if (filter === "all") return true;
-      if (r.categoryId === filter) return true;
-      const selected = categories.find((category) => category.id === filter);
-      if (!selected) return false;
-      const categoryLabel = r.category?.trim().toLowerCase() ?? "";
-      const categoryName = selected.name.trim().toLowerCase();
-      const matchesCategory = (
-        categoryLabel === categoryName ||
-        categoryLabel.startsWith(`${categoryName} ›`) ||
-        categoryLabel.startsWith(`${categoryName} >`)
-      );
-
-      if (!matchesCategory) return false;
-
-      return true;
-    });
-  }, [localRows, filter, categories]);
-
-  const filteredRows = useMemo(() => {
-    const searchTerm = searchInput.trim().toLowerCase();
-    return categoryFilteredRows.filter((r) => {
-      if (searchTerm) {
-        const attributeText = Object.entries(r.attributes)
-          .map(([key, value]) => `${key} ${formatAttribute(value)}`)
-          .join(" ");
-        const searchable = [
-          r.title,
-          r.slug,
-          r.category ?? "",
-          r.pricePerDayAed ?? "",
-          attributeText,
-        ]
-          .join(" ")
-          .toLowerCase();
-
-        if (!searchable.includes(searchTerm)) return false;
-      }
-
-      return true;
-    }).filter((r) => {
-      // Temporary admin cleanup filter: remove this state/button/filter block after all prices are filled.
-      if (!showMissingPriceOnly) return true;
-      return isMissingPrice(r);
-    });
-  }, [categoryFilteredRows, searchInput, showMissingPriceOnly]);
-
-  const sortedRows = useMemo(() => {
-    if (sortOrder !== "a-z") return filteredRows;
-    return [...filteredRows].sort((a, b) =>
-      a.title.localeCompare(b.title, undefined, { sensitivity: "base" }),
-    );
-  }, [filteredRows, sortOrder]);
+  const filteredRows = localRows;
+  const sortedRows = localRows;
 
   const activeCategoryName =
     filter === "all" ? null : categories.find((category) => category.id === filter)?.name ?? null;
   const hasSearch = searchInput.trim().length > 0;
   const missingPriceCount = useMemo(
-    () => categoryFilteredRows.filter(isMissingPrice).length,
-    [categoryFilteredRows]
+    () => (showMissingPriceOnly ? pagination.total : localRows.filter(isMissingPrice).length),
+    [localRows, pagination.total, showMissingPriceOnly]
   );
 
-  const totalPages = Math.max(1, Math.ceil(sortedRows.length / PAGE_SIZE));
+  const totalPages = pagination.totalPages;
   const currentPage = Math.min(page, totalPages);
   const pageStart = (currentPage - 1) * PAGE_SIZE;
-  const paginatedRows = sortedRows.slice(pageStart, pageStart + PAGE_SIZE);
-  const showingFrom = sortedRows.length === 0 ? 0 : pageStart + 1;
-  const showingTo = Math.min(pageStart + PAGE_SIZE, sortedRows.length);
+  const paginatedRows = sortedRows;
+  const showingFrom = pagination.total === 0 ? 0 : pageStart + 1;
+  const showingTo = Math.min(pageStart + paginatedRows.length, pagination.total);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(1);
-  }, [filter, searchInput, rows.length, sortOrder, showMissingPriceOnly]);
+  }, [filter, searchInput, sortOrder, showMissingPriceOnly]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      const params = new URLSearchParams({
+        page: String(page),
+        pageSize: String(PAGE_SIZE),
+        sort: sortOrder,
+      });
+      if (filter !== "all") params.set("categoryId", filter);
+      if (searchInput.trim()) params.set("search", searchInput.trim());
+      if (showMissingPriceOnly) params.set("missingPrice", "true");
+
+      setLoadingRows(true);
+      setLocalRows([]);
+      fetch(`/api/admin/products?${params.toString()}`, { signal: controller.signal })
+        .then((response) => {
+          if (!response.ok) throw new Error("Could not load products");
+          return response.json() as Promise<{
+            products?: AdminProductListRow[];
+            pagination?: AdminProductPagination;
+          }>;
+        })
+        .then((data) => {
+          if (cancelled) return;
+          setLocalRows(data.products ?? []);
+          setPagination(
+            data.pagination ?? {
+              page,
+              pageSize: PAGE_SIZE,
+              total: data.products?.length ?? 0,
+              totalPages: 1,
+            }
+          );
+        })
+        .catch((error) => {
+          if (!cancelled && !(error instanceof DOMException && error.name === "AbortError")) {
+            setLocalRows([]);
+            setPagination({ page, pageSize: PAGE_SIZE, total: 0, totalPages: 1 });
+          }
+        })
+        .finally(() => {
+          if (!cancelled) setLoadingRows(false);
+        });
+    }, 180);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [filter, page, searchInput, showMissingPriceOnly, sortOrder]);
 
   useEffect(() => {
     if (page > totalPages) {
@@ -563,8 +578,8 @@ export default function AdminProductsTable({
             <option value="a-z">A–Z</option>
           </select>
           <p className="hidden shrink-0 text-sm text-gray-500 lg:block">
-            <span className="font-semibold text-gray-800">{sortedRows.length}</span>
-            {sortedRows.length === 1 ? " product" : " products"}
+            <span className="font-semibold text-gray-800">{pagination.total}</span>
+            {pagination.total === 1 ? " product" : " products"}
             {activeCategoryName ? ` in ${activeCategoryName}` : ""}
           </p>
         </div>
@@ -690,6 +705,11 @@ export default function AdminProductsTable({
               throw new Error("Delete failed");
             }
             setLocalRows((prev) => prev.filter((row) => row.id !== deletedId));
+            setPagination((current) => ({
+              ...current,
+              total: Math.max(0, current.total - 1),
+              totalPages: Math.max(1, Math.ceil(Math.max(0, current.total - 1) / PAGE_SIZE)),
+            }));
             if (viewId === deletedId) closeView();
             notifyProductTaxonomyChanged();
             router.refresh();
@@ -844,7 +864,14 @@ export default function AdminProductsTable({
                   </td>
                 </tr>
               ))}
-              {filteredRows.length === 0 ? (
+              {loadingRows && paginatedRows.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-16 text-center text-sm text-gray-400">
+                    Loading products...
+                  </td>
+                </tr>
+              ) : null}
+              {!loadingRows && filteredRows.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-16 text-center text-sm text-gray-400">
                     {hasSearch ? "No products match your search." : emptyMessage}
@@ -855,7 +882,7 @@ export default function AdminProductsTable({
           </table>
         </div>
 
-        {filteredRows.length > 0 ? (
+        {pagination.total > 0 ? (
           <div className="flex flex-col gap-3 border-t border-admin-border px-4 py-3 sm:flex-row sm:items-center sm:justify-end sm:gap-4">
             <p className="text-right text-sm text-gray-500">
               Showing{" "}
@@ -863,7 +890,7 @@ export default function AdminProductsTable({
                 {showingFrom}-{showingTo}
               </span>{" "}
               of{" "}
-              <span className="font-semibold tabular-nums text-gray-800">{filteredRows.length}</span>
+              <span className="font-semibold tabular-nums text-gray-800">{pagination.total}</span>
             </p>
             <div className="flex items-center justify-end gap-2">
               <button

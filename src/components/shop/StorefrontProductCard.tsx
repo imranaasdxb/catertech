@@ -162,7 +162,7 @@ export default function StorefrontProductCard({
       <div
         className={`flex min-w-0 flex-1 flex-col ${
           shopCompact
-            ? "gap-1 px-2.5 pb-2.5 pt-1.5 lg:gap-1.5 lg:px-5 lg:pb-4 lg:pt-2"
+            ? "gap-1.5 px-2.5 pb-2.5 pt-1.5 lg:px-5 lg:pb-4 lg:pt-2"
             : "gap-1.5 px-5 pb-4 pt-2"
         }`}
       >
@@ -197,25 +197,23 @@ export default function StorefrontProductCard({
           {product.description || "Product details available on request."}
         </h2>
 
-        <div className="mt-auto flex items-end justify-between gap-2 pt-1.5 lg:pt-2">
-          <div className="min-w-0 text-left">
+        <div className="flex flex-col items-center justify-end gap-1.5 pt-0 xl:flex-row xl:items-end xl:justify-between xl:gap-2 xl:pt-2">
+          <div className="min-w-0 text-center xl:text-left">
             {hasDailyPrice ? (
-              <>
-                <p
-                  className={`font-sans font-bold leading-none text-[#1a1a1a] ${
-                    shopCompact ? "text-sm lg:text-lg" : "text-lg"
-                  }`}
-                >
-                  AED {priceValue}
-                </p>
-                <p
-                  className={`mt-0.5 font-sans font-semibold uppercase tracking-wide text-[#888888] ${
-                    shopCompact ? "text-[8px] lg:text-[10px]" : "text-[10px]"
+              <p
+                className={`whitespace-nowrap font-sans font-bold leading-none text-[#1a1a1a] ${
+                  shopCompact ? "text-[10px] min-[390px]:text-[11px] min-[430px]:text-xs xl:text-lg" : "text-[11px] sm:text-sm xl:text-lg"
+                }`}
+              >
+                AED {priceValue}
+                <span
+                  className={`ml-1 font-semibold uppercase text-[#888888] ${
+                    shopCompact ? "text-[7px] min-[390px]:text-[8px] xl:text-[10px]" : "text-[8px] sm:text-[10px]"
                   }`}
                 >
                   per day
-                </p>
-              </>
+                </span>
+              </p>
             ) : (
               <p
                 className={`font-sans font-semibold leading-none text-[#888888] ${
@@ -229,7 +227,7 @@ export default function StorefrontProductCard({
           <BrandCta
             href={productHref}
             size="xs"
-            className="ml-auto w-fit shrink-0 whitespace-nowrap px-2 py-0.5 [&_.btn-brand__content]:shrink-0 [&_.btn-brand__content]:whitespace-nowrap max-sm:[&_.btn-brand__content]:gap-0.5 max-sm:[&_.btn-brand__content]:text-[7px] max-sm:[&_.btn-brand__content]:tracking-normal max-sm:[&_.btn-brand__arrow]:size-4"
+            className="mx-auto w-fit shrink-0 whitespace-nowrap px-2 py-0.5 xl:mx-0 xl:ml-auto [&_.btn-brand__content]:shrink-0 [&_.btn-brand__content]:whitespace-nowrap max-sm:[&_.btn-brand__content]:gap-0.5 max-sm:[&_.btn-brand__content]:text-[7px] max-sm:[&_.btn-brand__content]:tracking-normal max-sm:[&_.btn-brand__arrow]:size-4 max-[360px]:px-1.5 max-[360px]:[&_.btn-brand__content]:text-[6.5px] max-[360px]:[&_.btn-brand__arrow]:h-3.5 max-[360px]:[&_.btn-brand__arrow]:w-3.5"
           >
             View &amp; quote
           </BrandCta>
