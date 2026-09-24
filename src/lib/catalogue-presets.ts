@@ -1,5 +1,7 @@
 import { and, asc, count, desc, eq, gte, ilike, inArray, ne, or, sql } from "drizzle-orm";
 import { getDb } from "@/db";
+import { productSearchText } from "@/db/product-search";
+import { escapeSearchPattern } from "@/lib/search";
 import {
   productCategories,
   productSubcategories,
@@ -542,7 +544,14 @@ export async function getCatalogueProductData({
     const safePageSize =
       pageSize === undefined ? undefined : Math.min(60, Math.max(1, pageSize));
     const trimmedSearch = search.trim();
-    const searchLike = `%${trimmedSearch}%`;
+    const searchLike = escapeSearchPattern(trimmedSearch);
+    const needle = trimmedSearch.toLowerCase();
+    const matchingCategoryIds = trimmedSearch
+      ? categories.filter((category) => category.name.toLowerCase().includes(needle)).map((category) => category.id)
+      : [];
+    const matchingSubcategoryIds = trimmedSearch
+      ? subcategories.filter((category) => category.name.toLowerCase().includes(needle)).map((category) => category.id)
+      : [];
     const newSince = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const productWhere = and(
       eq(products.published, true),
@@ -553,21 +562,16 @@ export async function getCatalogueProductData({
       highlight === "New" ? gte(products.createdAt, newSince) : undefined,
       trimmedSearch
         ? or(
-            ilike(products.title, searchLike),
-            ilike(products.slug, searchLike),
-            ilike(products.category, searchLike),
-            ilike(products.pricePerDayAed, searchLike),
-            ilike(productCategories.name, searchLike),
-            ilike(productSubcategories.name, searchLike),
-            sql`${products.description}::text ILIKE ${searchLike}`,
-            sql`${products.attributes}::text ILIKE ${searchLike}`
+            ilike(productSearchText(products), searchLike),
+            matchingCategoryIds.length ? inArray(products.categoryId, matchingCategoryIds) : undefined,
+            matchingSubcategoryIds.length ? inArray(products.subCategoryId, matchingSubcategoryIds) : undefined
           )
         : undefined
     );
     const productOrder =
       sortOrder === "a-z"
-        ? [asc(products.title)]
-        : [desc(products.isFeatured), desc(products.createdAt)];
+        ? [asc(products.title), asc(products.id)]
+        : [desc(products.isFeatured), desc(products.createdAt), asc(products.id)];
 
     const storefrontQuery = db
         .select({

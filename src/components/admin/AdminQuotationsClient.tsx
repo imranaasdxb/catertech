@@ -1,4 +1,5 @@
 "use client";
+import SubmitSearch from "@/components/ui/SubmitSearch";
 
 import { formatUtcDateTime } from "@/lib/format-datetime";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -192,29 +193,13 @@ export default function AdminQuotationsClient({
           >
             Search
           </label>
-          <div className="relative">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.35-4.35" />
-            </svg>
-            <input
+          <SubmitSearch
               id="q-search"
-              type="search"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onSearch={setSearch}
               placeholder="Name, email, phone, product…"
-              className="w-full border border-border rounded-xl pl-10 pr-4 py-3 text-sm text-charcoal placeholder:text-muted/60 bg-white outline-none focus:border-sand transition-colors"
-              autoComplete="off"
+              inputClassName="w-full border border-border rounded-xl py-3 text-sm text-charcoal placeholder:text-muted/60 bg-white outline-none focus:border-sand transition-colors"
             />
-          </div>
         </div>
         <div className="flex flex-wrap gap-3">
           <div>

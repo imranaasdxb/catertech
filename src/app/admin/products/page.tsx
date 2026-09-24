@@ -3,6 +3,7 @@ import AdminProductsTable from "@/components/admin/AdminProductsTable";
 import { admin } from "@/components/admin/admin-theme";
 import { getDb } from "@/db";
 import { productCategories } from "@/db/schema";
+import { MAX_SEARCH_LENGTH, MIN_SEARCH_LENGTH, normalizeSearch } from "@/lib/search";
 
 export const dynamic = "force-dynamic";
 
@@ -44,7 +45,12 @@ async function retryBusyDatabase<T>(query: () => Promise<T>) {
   throw new Error("Database query failed.");
 }
 
-export default async function AdminProductsPage() {
+export default async function AdminProductsPage({ searchParams }: {
+  searchParams: Promise<{ q?: string | string[] }>;
+}) {
+  const { q } = await searchParams;
+  const query = normalizeSearch(typeof q === "string" ? q : "");
+  const initialSearch = query.length >= MIN_SEARCH_LENGTH && query.length <= MAX_SEARCH_LENGTH ? query : "";
   const db = getDb();
   if (!db) {
     return <p className={`${admin.page} ${admin.muted}`}>Configure DATABASE_URL.</p>;
@@ -69,7 +75,7 @@ export default async function AdminProductsPage() {
           <p className={`${admin.muted} mt-1`}>Manage catalogue items and publishing.</p>
         </div>
       </div>
-      <AdminProductsTable rows={[]} categories={categories} emptyMessage="No products yet." />
+      <AdminProductsTable key={initialSearch} initialSearch={initialSearch} rows={[]} categories={categories} emptyMessage="No products yet." />
     </div>
   );
 }

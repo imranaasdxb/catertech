@@ -1,6 +1,7 @@
 "use client";
 
 import { admin } from "@/components/admin/admin-theme";
+import SubmitSearch from "@/components/ui/SubmitSearch";
 import type { TaxonomyRow } from "@/components/admin/ProductCategorySelects";
 import type {
   ProductAttributeValue,
@@ -13,7 +14,6 @@ import {
   Loader2,
   Pencil,
   Plus,
-  Search,
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -91,7 +91,7 @@ export function AdminProductPresetsPanel({
   const [pagination, setPagination] = useState(EMPTY_PAGINATION);
   const [categoryCounts, setCategoryCounts] = useState<CategoryCount[]>([]);
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [reloadVersion, setReloadVersion] = useState(0);
   const [categoryId, setCategoryId] = useState("");
   const [subCategoryId, setSubCategoryId] = useState("");
   const [page, setPage] = useState(1);
@@ -109,19 +109,9 @@ export function AdminProductPresetsPanel({
   const subcategories = selectedCategory?.subcategories ?? [];
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const nextSearch = search.trim();
-      if (nextSearch !== debouncedSearch) {
-        setLoading(true);
-        setPage(1);
-        setDebouncedSearch(nextSearch);
-      }
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [debouncedSearch, search]);
-
-  useEffect(() => {
     const controller = new AbortController();
+    setLoading(true);
+    setErr("");
     const params = new URLSearchParams({
       mode: "manage",
       page: String(page),
@@ -129,7 +119,7 @@ export function AdminProductPresetsPanel({
     });
     if (categoryId) params.set("categoryId", categoryId);
     if (subCategoryId) params.set("subCategoryId", subCategoryId);
-    if (debouncedSearch) params.set("search", debouncedSearch);
+    if (search) params.set("search", search);
 
     void fetch(`/api/admin/product-presets?${params}`, {
       signal: controller.signal,
@@ -143,12 +133,13 @@ export function AdminProductPresetsPanel({
         };
       })
       .then((data) => {
+        if (controller.signal.aborted) return;
         setRows(data.presets ?? []);
         setPagination(data.pagination ?? EMPTY_PAGINATION);
         setCategoryCounts(data.categoryCounts ?? []);
       })
       .catch((error: unknown) => {
-        if ((error as { name?: string }).name !== "AbortError") {
+        if (!controller.signal.aborted && (error as { name?: string }).name !== "AbortError") {
           setErr("Could not load product presets.");
         }
       })
@@ -157,7 +148,7 @@ export function AdminProductPresetsPanel({
       });
 
     return () => controller.abort();
-  }, [categoryId, debouncedSearch, page, subCategoryId]);
+  }, [categoryId, search, page, subCategoryId, reloadVersion]);
 
   function startEdit(row: PresetRow) {
     setEditDraft({
@@ -252,6 +243,7 @@ export function AdminProductPresetsPanel({
   }, [editDraft, templateFields]);
 
   function selectCategoryChip(nextCategoryId: string) {
+    if (nextCategoryId === categoryId && !subCategoryId && page === 1) return;
     setLoading(true);
     setErr("");
     setCategoryId(nextCategoryId);
@@ -262,20 +254,21 @@ export function AdminProductPresetsPanel({
   return (
     <section className="overflow-hidden border border-black/6 bg-white">
       <div className="flex flex-col gap-3 border-b border-black/6 bg-admin-bg/60 px-4 py-4 sm:px-6 lg:flex-row lg:items-center">
-        <div className="relative min-w-0 flex-1">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-admin-ink/35"
-            aria-hidden
-          />
-          <input
-            type="search"
+        <SubmitSearch
+            className="flex-1"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            loading={loading}
+            onSearch={(query) => {
+              if (query === search && !err) return;
+              setLoading(true);
+              setPage(1);
+              if (query === search) setReloadVersion((version) => version + 1);
+              setSearch(query);
+            }}
             placeholder="Search product preset titles..."
-            className={`${admin.fieldModern} py-2.5 pl-9 text-sm`}
-            aria-label="Search product preset titles"
+            inputClassName={`${admin.fieldModern} py-2.5 text-sm`}
+            label="Search product preset titles"
           />
-        </div>
         <select
           value={categoryId}
           onChange={(event) => {
@@ -396,14 +389,19 @@ export function AdminProductPresetsPanel({
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="h-64 text-center text-admin-ink/45">
-                  <Loader2 className="mx-auto h-5 w-5 animate-spin" aria-label="Loading" />
+                <td colSpan={6} className="px-4 py-6" aria-busy="true">
+                  <span className="sr-only" role="status">Searching product presets...</span>
+                  <div className="space-y-4" aria-hidden>
+                    {Array.from({ length: 6 }, (_, index) => (
+                      <div key={index} className="h-12 animate-pulse rounded bg-admin-bg" />
+                    ))}
+                  </div>
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
                 <td colSpan={6} className="h-64 text-center text-sm text-admin-ink/45">
-                  No product presets match these filters.
+                  {err ? "Product presets could not be loaded." : "No product presets match these filters."}
                 </td>
               </tr>
             ) : (

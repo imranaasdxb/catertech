@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { getCatalogueProductData } from "@/lib/catalogue-presets";
 import { z } from "zod";
+import { searchQuerySchema } from "@/lib/search-query-schema";
 
 const querySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().min(1).max(60).default(12),
   categoryId: z.string().uuid().optional(),
   subcategories: z.string().trim().max(500).default(""),
-  search: z.string().trim().max(160).default(""),
+  search: searchQuerySchema,
   highlight: z.enum(["all", "Popular", "New"]).default("all"),
   sortOrder: z.enum(["default", "a-z"]).default("default"),
 });

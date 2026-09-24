@@ -1,4 +1,7 @@
-import { and, asc, count, desc, eq, ilike, isNull, like, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, isNull, like, or } from "drizzle-orm";
+import { productSearchText } from "@/db/product-search";
+import { searchQuerySchema } from "@/lib/search-query-schema";
+import { escapeSearchPattern } from "@/lib/search";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { isAdminSession } from "@/lib/auth-user";
@@ -41,7 +44,7 @@ const listQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(10),
   categoryId: z.string().uuid().optional(),
-  search: z.string().trim().max(160).default(""),
+  search: searchQuerySchema,
   missingPrice: z
     .preprocess((value) => value === "true" || value === "1", z.boolean())
     .default(false),
@@ -80,43 +83,22 @@ export async function GET(request: Request) {
   }
 
   const { page, pageSize, categoryId, search, missingPrice, sort } = parsed.data;
-  const searchLike = `%${search}%`;
   const where = and(
     categoryId ? eq(products.categoryId, categoryId) : undefined,
     missingPrice ? or(isNull(products.pricePerDayAed), eq(products.pricePerDayAed, "")) : undefined,
-    search
-      ? or(
-          ilike(products.title, searchLike),
-          ilike(products.slug, searchLike),
-          ilike(products.category, searchLike),
-          ilike(products.pricePerDayAed, searchLike),
-          sql`${products.attributes}::text ILIKE ${searchLike}`
-        )
-      : undefined
+    search ? ilike(productSearchText(products), escapeSearchPattern(search)) : undefined
   );
 
-  const rows = await db
-    .select({
-      id: products.id,
-      title: products.title,
-      slug: products.slug,
-      pricePerDayAed: products.pricePerDayAed,
-      category: products.category,
-      categoryId: products.categoryId,
-      published: products.published,
-      isFeatured: products.isFeatured,
-      isAvailable: products.isAvailable,
-      attributes: products.attributes,
-      updatedAt: products.updatedAt,
-      images: products.images,
-    })
+  const rowsQuery = db
+    .select()
     .from(products)
     .where(where)
-    .orderBy(...(sort === "a-z" ? [asc(products.title)] : [desc(products.updatedAt)]))
+    .orderBy(...(sort === "a-z" ? [asc(products.title), asc(products.id)] : [desc(products.updatedAt), asc(products.id)]))
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 
-  const [{ total }] = await db.select({ total: count() }).from(products).where(where);
+  const totalQuery = db.select({ total: count() }).from(products).where(where);
+  const [rows, [{ total }]] = await Promise.all([rowsQuery, totalQuery]);
 
   return NextResponse.json({
     products: rows.map((r) => ({
@@ -133,6 +115,7 @@ export async function GET(request: Request) {
       attributes: r.attributes,
       updatedAt: r.updatedAt,
       thumbUrl: r.images?.[0] ?? null,
+      detail: r,
     })),
     pagination: {
       page,

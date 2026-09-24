@@ -2,7 +2,8 @@
 
 import { admin } from "@/components/admin/admin-theme";
 import { AdminPanelModal } from "@/components/admin/AdminPanelModal";
-import { MessageSquare, Search } from "lucide-react";
+import { MessageSquare } from "lucide-react";
+import SubmitSearch from "@/components/ui/SubmitSearch";
 import { formatUtcDateTime } from "@/lib/format-datetime";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -163,21 +164,14 @@ export default function AdminEnquiriesClient({
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-          <div className="relative min-w-0 w-full sm:max-w-xs sm:flex-1 sm:w-auto">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-              aria-hidden
-            />
-            <input
+          <SubmitSearch
+              className="w-full sm:max-w-xs sm:flex-1 sm:w-auto"
               id="enq-search"
-              type="search"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onSearch={setSearch}
               placeholder="Company, contact, email, phone, message…"
-              className="w-full rounded-lg border border-admin-border bg-white py-2.5 pl-9 pr-3 text-sm text-admin-ink outline-none placeholder:text-admin-ink/40 focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15"
-              autoComplete="off"
+              inputClassName="w-full rounded-lg border border-admin-border bg-white py-2.5 text-sm text-admin-ink outline-none placeholder:text-admin-ink/40 focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15"
             />
-          </div>
           <select
             id="enq-status"
             value={statusFilter}

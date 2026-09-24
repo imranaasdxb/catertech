@@ -1,4 +1,5 @@
 "use client";
+import SubmitSearch from "@/components/ui/SubmitSearch";
 
 import { admin, ADMIN_PURPLE } from "@/components/admin/admin-theme";
 import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
@@ -13,7 +14,6 @@ import {
   PackageSearch,
   Pencil,
   Plus,
-  Search,
   Trash2,
   X,
 } from "lucide-react";
@@ -402,23 +402,17 @@ export default function AdminProductTaxonomyClient() {
               </form>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className="relative min-w-0 flex-1">
-                  <Search
-                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-admin-ink/35"
-                    aria-hidden
-                  />
-                  <input
-                    type="search"
+                <SubmitSearch
+                    className="flex-1"
                     value={search}
-                    onChange={(e) => {
-                      setSearch(e.target.value);
+                    onSearch={(query) => {
+                      setSearch(query);
                       setPage(0);
                     }}
                     placeholder="Search categories or sub-categories…"
-                    className={`${admin.fieldModern} w-full py-2.5 pl-9 text-sm`}
-                    aria-label="Search categories"
+                    inputClassName={`${admin.fieldModern} w-full py-2.5 text-sm`}
+                    label="Search categories"
                   />
-                </div>
                 <div className="w-full sm:w-[180px] sm:shrink-0">
                   <label htmlFor="taxonomy-filter" className="sr-only">
                     Filter

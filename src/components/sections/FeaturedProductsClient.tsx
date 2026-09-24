@@ -10,6 +10,7 @@ import Container from "@/components/layout/PageContainer";
 import StorefrontProductCard from "@/components/shop/StorefrontProductCard";
 import SectionHeader from "@/components/ui/SectionHeader";
 import BrandCta from "@/components/ui/BrandCta";
+import SubmitSearch from "@/components/ui/SubmitSearch";
 import { productMatchesCategory, resolveCategoryForProduct } from "@/lib/product-category-match";
 import { slugify } from "@/lib/slug";
 import type { ProductAttributeValue } from "@/lib/category-template";
@@ -71,11 +72,6 @@ type ProductCard = {
 
 function norm(s: string) {
   return s.toLowerCase().trim();
-}
-
-function formatAttributeValue(value: ProductAttributeValue) {
-  if (typeof value === "string") return value.trim();
-  return `${value.value}${value.unit ? ` ${value.unit}` : ""}`.trim();
 }
 
 const PRODUCT_TYPE_GROUPS = [
@@ -380,9 +376,19 @@ export default function FeaturedProductsClient({
   const [pageLoading, setPageLoading] = useState(false);
   const [pagedProducts, setPagedProducts] = useState(products);
   const [pagedMeta, setPagedMeta] = useState<ProductPagination | null>(pagination ?? null);
+  const [requestError, setRequestError] = useState("");
+  const [reloadVersion, setReloadVersion] = useState(0);
+  const requestRef = useRef<AbortController | null>(null);
+  const pageCache = useRef(new Map<string, {
+    products: ProductRow[];
+    pagination: ProductPagination;
+    expiresAt: number;
+  }>());
+  const initialPageSeeded = useRef(false);
   const productGridRef = useRef<HTMLDivElement>(null);
   const skipFilterScrollRef = useRef(true);
   const isShopCatalogue = compactTop;
+  const usesRemoteProducts = isShopCatalogue || Boolean(search);
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category");
 
@@ -423,7 +429,7 @@ export default function FeaturedProductsClient({
     [activeCategory, categories]
   );
 
-  const productSource = isShopCatalogue ? pagedProducts : products;
+  const productSource = usesRemoteProducts ? pagedProducts : products;
 
   const productCards = useMemo<ProductCard[]>(
     () =>
@@ -457,7 +463,7 @@ export default function FeaturedProductsClient({
   );
 
   const filtered = useMemo(() => {
-    if (isShopCatalogue) return productCards;
+    if (usesRemoteProducts) return productCards;
 
     let list =
       activeTab === ALL_TAB
@@ -476,33 +482,16 @@ export default function FeaturedProductsClient({
       list = list.filter((p) => p.subCategoryName && selectedEquipment.has(p.subCategoryName));
     }
 
-    const q = norm(search);
-    if (q) {
-      list = list.filter((p) => {
-        const hay = [
-          p.name,
-          p.category,
-          p.subCategoryName ?? "",
-          p.tag ?? "",
-          p.description,
-          ...Object.values(p.attributes).map(formatAttributeValue),
-        ]
-          .join(" ")
-          .toLowerCase();
-        return hay.includes(q);
-      });
-    }
-
     return list;
-  }, [activeTab, categories, highlight, isShopCatalogue, productCards, search, selectedEquipment]);
+  }, [activeTab, categories, highlight, usesRemoteProducts, productCards, selectedEquipment]);
 
   const displayed = useMemo(() => {
-    if (isShopCatalogue) return productCards;
+    if (usesRemoteProducts) return productCards;
     if (sortOrder !== "a-z") return orderSimilarProductsTogether(filtered);
     return [...filtered].sort((a, b) =>
       a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
     );
-  }, [filtered, isShopCatalogue, productCards, sortOrder]);
+  }, [filtered, usesRemoteProducts, productCards, sortOrder]);
 
   const equipmentFilterKey = useMemo(
     () => [...selectedEquipment].sort().join("\0"),
@@ -513,9 +502,9 @@ export default function FeaturedProductsClient({
   const homepageRowOne = homepageGridProducts.slice(0, CARDS_PER_ROW);
   const homepageRowTwo = homepageGridProducts.slice(CARDS_PER_ROW, PAGE_SIZE);
 
-  const resultCount = isShopCatalogue ? pagedMeta?.total ?? displayed.length : displayed.length;
-  const visibleProducts = isShopCatalogue ? displayed : displayed.slice(0, visibleCount);
-  const canLoadMore = isShopCatalogue
+  const resultCount = usesRemoteProducts ? pagedMeta?.total ?? displayed.length : displayed.length;
+  const visibleProducts = usesRemoteProducts ? displayed : displayed.slice(0, visibleCount);
+  const canLoadMore = usesRemoteProducts
     ? displayed.length < resultCount
     : visibleCount < displayed.length;
   const loadingSkeletonCount = loadingMore
@@ -540,7 +529,12 @@ export default function FeaturedProductsClient({
     setLoadingMore(false);
   }
 
-  const fetchShopProductPage = useCallback(async (page: number, append: boolean, signal?: AbortSignal) => {
+  const fetchShopProductPage = useCallback(async (page: number, append: boolean) => {
+    if (append && requestRef.current) return;
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
+    const { signal } = controller;
     const params = new URLSearchParams({
       page: String(page),
       pageSize: String(SHOP_INITIAL_VISIBLE),
@@ -553,33 +547,46 @@ export default function FeaturedProductsClient({
       params.set("subcategories", [...selectedEquipment].sort().join(","));
     }
 
+    setRequestError("");
     if (append) setLoadingMore(true);
     else {
+      setLoadingMore(false);
       setPageLoading(true);
       setPagedProducts([]);
     }
 
     try {
-      const response = await fetch(`/api/catalogue/products?${params.toString()}`, {
-        signal,
+      const cacheKey = params.toString();
+      const cached = pageCache.current.get(cacheKey);
+      let data: { products: ProductRow[]; pagination: ProductPagination };
+      if (cached && cached.expiresAt > Date.now()) {
+        data = cached;
+      } else {
+        const response = await fetch(`/api/catalogue/products?${cacheKey}`, { signal });
+        if (!response.ok) throw new Error("Could not load products");
+        data = await response.json();
+        if (!Array.isArray(data.products) || !data.pagination) throw new Error("Invalid product response");
+        if (signal.aborted) return;
+        if (pageCache.current.size >= 20) {
+          const oldest = pageCache.current.keys().next().value;
+          if (oldest !== undefined) pageCache.current.delete(oldest);
+        }
+        pageCache.current.set(cacheKey, { ...data, expiresAt: Date.now() + 30_000 });
+      }
+      if (signal.aborted || requestRef.current !== controller) return;
+      setPagedProducts((current) => {
+        const merged = [...(append ? current : []), ...data.products];
+        return [...new Map(merged.map((product) => [product.id, product])).values()];
       });
-      if (!response.ok) throw new Error("Could not load products");
-      const data = (await response.json()) as {
-        products?: ProductRow[];
-        pagination?: ProductPagination;
-      };
-      if (signal?.aborted) return;
-      setPagedProducts((current) => [
-        ...(append ? current : []),
-        ...(data.products ?? []),
-      ]);
-      setPagedMeta(data.pagination ?? null);
-    } catch (error) {
-      if (!(error instanceof DOMException && error.name === "AbortError")) {
+      setPagedMeta(data.pagination);
+    } catch {
+      if (!signal.aborted && requestRef.current === controller) {
+        setRequestError("Could not load products. Please try again.");
         setPagedProducts((current) => (append ? current : []));
       }
     } finally {
-      if (!signal?.aborted) {
+      if (!signal.aborted && requestRef.current === controller) {
+        requestRef.current = null;
         if (append) setLoadingMore(false);
         else setPageLoading(false);
       }
@@ -587,17 +594,27 @@ export default function FeaturedProductsClient({
   }, [activeTab, highlight, search, selectedEquipment, sortOrder]);
 
   useEffect(() => {
-    if (!isShopCatalogue) return;
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      void fetchShopProductPage(1, false, controller.signal);
-    }, 180);
+    if (!initialPageSeeded.current) {
+      initialPageSeeded.current = true;
+      if (pagination && !catalogError) {
+        const initialKey = new URLSearchParams({
+          page: "1", pageSize: String(SHOP_INITIAL_VISIBLE), highlight: "all", sortOrder: "default",
+        }).toString();
+        pageCache.current.set(initialKey, { products, pagination, expiresAt: Date.now() + 30_000 });
+      }
+    }
+    if (!usesRemoteProducts) {
+      setPageLoading(false);
+      setRequestError("");
+      return;
+    }
+    void fetchShopProductPage(1, false);
 
     return () => {
-      window.clearTimeout(timer);
-      controller.abort();
+      requestRef.current?.abort();
+      requestRef.current = null;
     };
-  }, [equipmentFilterKey, fetchShopProductPage, isShopCatalogue]);
+  }, [fetchShopProductPage, usesRemoteProducts, reloadVersion, pagination, products, catalogError]);
 
   useEffect(() => {
     if (!isShopCatalogue) return;
@@ -616,8 +633,8 @@ export default function FeaturedProductsClient({
   }, [activeTab, highlight, equipmentFilterKey, sortOrder, isShopCatalogue]);
 
   function loadMore() {
-    if (!canLoadMore || loadingMore) return;
-    if (isShopCatalogue) {
+    if (!canLoadMore || loadingMore || pageLoading) return;
+    if (usesRemoteProducts) {
       void fetchShopProductPage((pagedMeta?.page ?? 1) + 1, true);
       return;
     }
@@ -656,11 +673,21 @@ export default function FeaturedProductsClient({
   }
 
   function updateSearch(nextSearch: string) {
+    if (nextSearch === search && !requestError) return;
+    requestRef.current?.abort();
+    requestRef.current = null;
+    setPageLoading(isShopCatalogue || Boolean(nextSearch));
+    setRequestError("");
+    if (nextSearch === search) setReloadVersion((version) => version + 1);
     setSearch(nextSearch);
     resetProductWindow();
   }
 
   function clearFilters() {
+    requestRef.current?.abort();
+    requestRef.current = null;
+    setRequestError("");
+    setPageLoading(isShopCatalogue);
     setSearch("");
     setHighlight("all");
     setSortOrder("default");
@@ -760,23 +787,16 @@ export default function FeaturedProductsClient({
           <label htmlFor="featured-shop-mobile-search" className="sr-only">
             Search products
           </label>
-          <div className="relative min-w-0 flex-1">
-            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="7" />
-                <path d="M21 21l-4.3-4.3" strokeLinecap="round" />
-              </svg>
-            </span>
-            <input
+          <SubmitSearch
+              className="flex-1"
               id="featured-shop-mobile-search"
-              type="search"
               value={search}
-              onChange={(e) => updateSearch(e.target.value)}
+              onSearch={updateSearch}
+              loading={pageLoading}
+              label="Search products"
               placeholder="Search products..."
-              autoComplete="off"
-              className="h-11 w-full rounded-xl border border-border bg-[#FEFEFE] pl-10 pr-3 text-sm text-charcoal shadow-[0_2px_12px_rgba(26,31,46,0.04)] outline-none placeholder:text-muted/80 focus:border-ink/20 focus:ring-2 focus:ring-ink/10"
+              inputClassName="h-11 w-full rounded-xl border border-border bg-[#FEFEFE] text-sm text-charcoal shadow-[0_2px_12px_rgba(26,31,46,0.04)] outline-none placeholder:text-muted/80 focus:border-ink/20 focus:ring-2 focus:ring-ink/10"
             />
-          </div>
           <button
             type="button"
             onClick={() => setMobileFiltersOpen(true)}
@@ -958,7 +978,7 @@ export default function FeaturedProductsClient({
 
         {isShopCatalogue ? <div className="h-5 md:h-6" aria-hidden /> : null}
 
-        {isShopCatalogue ? <ShopMobileStickyControls /> : null}
+        {isShopCatalogue ? ShopMobileStickyControls() : null}
 
         {!isShopCatalogue ? (
         <div className="mb-6 min-w-0 border-b border-border md:mb-10">
@@ -992,23 +1012,15 @@ export default function FeaturedProductsClient({
               <label htmlFor="featured-shop-search" className="sr-only">
                 Search featured products
               </label>
-              <div className="relative">
-                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="M21 21l-4.3-4.3" strokeLinecap="round" />
-                  </svg>
-                </span>
-                <input
+              <SubmitSearch
                   id="featured-shop-search"
-                  type="search"
                   value={search}
-                  onChange={(e) => updateSearch(e.target.value)}
+                  onSearch={updateSearch}
+                  loading={pageLoading}
+                  label="Search products"
                   placeholder="Search product, category, size..."
-                  autoComplete="off"
-                  className="w-full rounded-xl border border-border bg-[#FEFEFE] pl-11 pr-4 py-3 text-sm text-charcoal shadow-[0_2px_12px_rgba(26,31,46,0.04)] placeholder:text-muted/80 outline-none focus:border-ink/20 focus:ring-2 focus:ring-ink/10"
+                  inputClassName="w-full rounded-xl border border-border bg-[#FEFEFE] py-3 text-sm text-charcoal shadow-[0_2px_12px_rgba(26,31,46,0.04)] placeholder:text-muted/80 outline-none focus:border-ink/20 focus:ring-2 focus:ring-ink/10"
                 />
-              </div>
             </div>
 
             <div className={`items-center gap-2 lg:hidden ${isShopCatalogue ? "hidden" : "flex"}`}>
@@ -1122,9 +1134,16 @@ export default function FeaturedProductsClient({
                   : undefined
               }
             >
-            {pageLoading || catalogError || (productCards.length === 0 && !hasActiveFilters) ? (
+            {requestError || (!usesRemoteProducts && catalogError) ? (
+              <div role="alert" className="py-8 text-center text-sm text-charcoal">
+                <p>{requestError || catalogError}</p>
+                {usesRemoteProducts ? <button type="button" className="mt-3 underline" onClick={() => {
+                  void fetchShopProductPage(pagedProducts.length ? (pagedMeta?.page ?? 1) + 1 : 1, pagedProducts.length > 0);
+                }}>Retry</button> : null}
+              </div>
+            ) : pageLoading ? (
               <div className="min-w-0 space-y-4" aria-busy="true" aria-label="Loading products">
-                <p className="sr-only">{catalogError || "Products are loading."}</p>
+                <p className="sr-only" role="status">Searching products...</p>
                 {isShopCatalogue ? (
                   <div className="grid min-w-0 grid-cols-2 gap-2.5 sm:gap-3.5 md:gap-4 lg:grid-cols-4 lg:gap-6">
                     {Array.from({ length: SHOP_INITIAL_VISIBLE }, (_, index) => (
@@ -1156,7 +1175,7 @@ export default function FeaturedProductsClient({
                   Clear filters
                 </button>
               </div>
-            ) : isShopCatalogue ? (
+            ) : usesRemoteProducts ? (
               <div className="min-w-0 space-y-4">
                 <div
                   key={`${activeTab}-${equipmentFilterKey}-${highlight}-${search}-${sortOrder}`}
@@ -1182,22 +1201,14 @@ export default function FeaturedProductsClient({
             ) : (
               <div className="space-y-4">
                 {[homepageRowOne, homepageRowTwo].map((rowProducts, rowIndex) => {
-                  const slots = Array.from(
-                    { length: CARDS_PER_ROW },
-                    (_, i) => rowProducts[i] ?? null,
-                  );
                   return (
                     <div
                       key={rowIndex}
                       className="grid min-w-0 grid-cols-2 gap-2.5 sm:gap-3.5 md:gap-4 lg:grid-cols-4 lg:gap-6"
                     >
-                      {slots.map((product, slotIndex) =>
-                        product ? (
-                          <StorefrontProductCard key={product.id} product={product} />
-                        ) : (
-                          <ProductCardSkeleton key={`empty-${rowIndex}-${slotIndex}`} />
-                        ),
-                      )}
+                      {rowProducts.map((product) => (
+                        <StorefrontProductCard key={product.id} product={product} />
+                      ))}
                     </div>
                   );
                 })}

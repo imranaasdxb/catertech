@@ -5,15 +5,17 @@ import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import AdminProductViewEditPanel from "@/components/admin/AdminProductViewEditPanel";
 import AdminProductViewPanel from "@/components/admin/AdminProductViewPanel";
 import { AdminPanelModal } from "@/components/admin/AdminPanelModal";
+import SubmitSearch from "@/components/ui/SubmitSearch";
 import { notifyProductTaxonomyChanged } from "@/components/admin/ProductCategorySelects";
 import { products, type ProductAttributeValue } from "@/db/schema";
 import type { InferSelectModel } from "drizzle-orm";
-import { Check, ChevronLeft, ChevronRight, DollarSign, Eye, Loader2, Pencil, Search, Trash2, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, DollarSign, Eye, Loader2, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { formatUtcDate } from "@/lib/format-datetime";
 import { normalizePricePerDayAed } from "@/lib/product-pricing";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+type ProductRow = InferSelectModel<typeof products>;
 
 export type AdminProductListRow = {
   id: string;
@@ -29,6 +31,7 @@ export type AdminProductListRow = {
   attributes: Record<string, ProductAttributeValue>;
   updatedAt: Date | string;
   thumbUrl: string | null;
+  detail?: ProductRow;
 };
 
 export type AdminProductCategoryOption = {
@@ -44,7 +47,10 @@ type AdminProductPagination = {
   totalPages: number;
 };
 
-type ProductRow = InferSelectModel<typeof products>;
+type ProductsPagePayload = {
+  products: AdminProductListRow[];
+  pagination: AdminProductPagination;
+};
 
 type FilterKey = "all" | string;
 type SortOrder = "default" | "a-z";
@@ -55,6 +61,8 @@ type ToggleAction = {
   field: "published" | "isFeatured" | "isAvailable";
   nextValue: boolean;
 };
+
+type TogglePatch = Partial<Pick<AdminProductListRow, ToggleAction["field"]>>;
 
 const PAGE_SIZE = 10;
 
@@ -79,6 +87,25 @@ function formatAttribute(value: ProductAttributeValue) {
 
 function isMissingPrice(row: AdminProductListRow) {
   return !row.pricePerDayAed?.trim();
+}
+
+function productToListRow(product: ProductRow): AdminProductListRow {
+  return {
+    id: product.id,
+    title: product.title,
+    slug: product.slug,
+    pricePerDayAed: product.pricePerDayAed ?? null,
+    category: product.category ?? null,
+    categoryId: product.categoryId ?? null,
+    galleryCount: product.images?.filter(Boolean).length ?? 0,
+    published: product.published,
+    isFeatured: product.isFeatured,
+    isAvailable: product.isAvailable,
+    attributes: (product.attributes ?? {}) as Record<string, ProductAttributeValue>,
+    updatedAt: product.updatedAt,
+    thumbUrl: product.images?.[0] ?? null,
+    detail: product,
+  };
 }
 
 function Specifications({
@@ -267,7 +294,8 @@ export default function AdminProductsTable({
   initialSearch?: string;
   emptyMessage?: string;
 }) {
-  const router = useRouter();
+  const pageCacheRef = useRef(new Map<string, ProductsPagePayload>());
+  const productCacheRef = useRef(new Map<string, ProductRow>());
   const [localRows, setLocalRows] = useState(rows);
   const [searchInput, setSearchInput] = useState(initialSearch);
   const [filter, setFilter] = useState<FilterKey>("all");
@@ -280,6 +308,8 @@ export default function AdminProductsTable({
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [loadingRows, setLoadingRows] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [reloadVersion, setReloadVersion] = useState(0);
   const [pagination, setPagination] = useState<AdminProductPagination>({
     page: 1,
     pageSize: PAGE_SIZE,
@@ -292,11 +322,65 @@ export default function AdminProductsTable({
   const [viewLoading, setViewLoading] = useState(false);
   const [viewEditing, setViewEditing] = useState(false);
 
+  const cacheProducts = useCallback((productsToCache: AdminProductListRow[]) => {
+    productsToCache.forEach((product) => {
+      if (product.detail) productCacheRef.current.set(product.id, product.detail);
+    });
+  }, []);
+
+  const syncUpdatedProduct = useCallback((updated: ProductRow) => {
+    const updatedRow = productToListRow(updated);
+    productCacheRef.current.set(updated.id, updated);
+    pageCacheRef.current.forEach((entry, key) => {
+      let changed = false;
+      const products = entry.products.map((product) => {
+        if (product.id !== updated.id) return product;
+        changed = true;
+        return updatedRow;
+      });
+      if (changed) pageCacheRef.current.set(key, { ...entry, products });
+    });
+    setLocalRows((prev) => prev.map((row) => (row.id === updated.id ? updatedRow : row)));
+    setViewProduct((current) => (current?.id === updated.id ? updated : current));
+  }, []);
+
+  const patchCachedProductRow = useCallback((
+    id: string,
+    patch: TogglePatch
+  ) => {
+    const cachedProduct = productCacheRef.current.get(id);
+    if (cachedProduct) productCacheRef.current.set(id, { ...cachedProduct, ...patch });
+    pageCacheRef.current.forEach((entry, key) => {
+      let changed = false;
+      const products = entry.products.map((product) => {
+        if (product.id !== id) return product;
+        changed = true;
+        return {
+          ...product,
+          ...patch,
+          detail: product.detail ? { ...product.detail, ...patch } : product.detail,
+        };
+      });
+      if (changed) pageCacheRef.current.set(key, { ...entry, products });
+    });
+    setLocalRows((prev) =>
+      prev.map((row) =>
+        row.id === id
+          ? { ...row, ...patch, detail: row.detail ? { ...row.detail, ...patch } : row.detail }
+          : row
+      )
+    );
+    setViewProduct((current) => (current?.id === id ? { ...current, ...patch } : current));
+  }, []);
+
   useEffect(() => {
     // Refresh the optimistic table copy after a server navigation.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (rows.length) setLocalRows(rows);
-  }, [rows]);
+    if (rows.length) {
+      cacheProducts(rows);
+      setLocalRows(rows);
+    }
+  }, [cacheProducts, rows]);
 
   useEffect(() => {
     // Keep optional initial search text in sync after navigation.
@@ -323,80 +407,100 @@ export default function AdminProductsTable({
   const showingTo = Math.min(pageStart + paginatedRows.length, pagination.total);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPage(1);
-  }, [filter, searchInput, sortOrder, showMissingPriceOnly]);
-
-  useEffect(() => {
     const controller = new AbortController();
     let cancelled = false;
-    const timer = window.setTimeout(() => {
-      const params = new URLSearchParams({
-        page: String(page),
-        pageSize: String(PAGE_SIZE),
-        sort: sortOrder,
-      });
-      if (filter !== "all") params.set("categoryId", filter);
-      if (searchInput.trim()) params.set("search", searchInput.trim());
-      if (showMissingPriceOnly) params.set("missingPrice", "true");
+    const params = new URLSearchParams({
+      page: String(page),
+      pageSize: String(PAGE_SIZE),
+      sort: sortOrder,
+    });
+    if (filter !== "all") params.set("categoryId", filter);
+    if (searchInput) params.set("search", searchInput);
+    if (showMissingPriceOnly) params.set("missingPrice", "true");
+    const cacheKey = params.toString();
+    const cached = pageCacheRef.current.get(cacheKey);
 
-      setLoadingRows(true);
-      setLocalRows([]);
-      fetch(`/api/admin/products?${params.toString()}`, { signal: controller.signal })
-        .then((response) => {
-          if (!response.ok) throw new Error("Could not load products");
-          return response.json() as Promise<{
-            products?: AdminProductListRow[];
-            pagination?: AdminProductPagination;
-          }>;
-        })
-        .then((data) => {
-          if (cancelled) return;
-          setLocalRows(data.products ?? []);
-          setPagination(
-            data.pagination ?? {
-              page,
-              pageSize: PAGE_SIZE,
-              total: data.products?.length ?? 0,
-              totalPages: 1,
-            }
-          );
-        })
-        .catch((error) => {
-          if (!cancelled && !(error instanceof DOMException && error.name === "AbortError")) {
-            setLocalRows([]);
-            setPagination({ page, pageSize: PAGE_SIZE, total: 0, totalPages: 1 });
-          }
-        })
-        .finally(() => {
-          if (!cancelled) setLoadingRows(false);
-        });
-    }, 180);
+    if (cached) {
+      cacheProducts(cached.products);
+      setLocalRows(cached.products);
+      setPagination(cached.pagination);
+      setLoadError("");
+      setLoadingRows(false);
+      return () => {
+        cancelled = true;
+        controller.abort();
+      };
+    }
+
+    setLoadingRows(true);
+    setLoadError("");
+    setLocalRows([]);
+    fetch(`/api/admin/products?${cacheKey}`, { cache: "no-store", signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error("Could not load products");
+        return response.json() as Promise<{
+          products?: AdminProductListRow[];
+          pagination?: AdminProductPagination;
+        }>;
+      })
+      .then((data) => {
+        if (cancelled) return;
+        const products = data.products ?? [];
+        const pagination = data.pagination ?? {
+          page,
+          pageSize: PAGE_SIZE,
+          total: products.length,
+          totalPages: 1,
+        };
+        cacheProducts(products);
+        pageCacheRef.current.set(cacheKey, { products, pagination });
+        setLocalRows(products);
+        setPagination(pagination);
+      })
+      .catch((error) => {
+        if (!cancelled && !(error instanceof DOMException && error.name === "AbortError")) {
+          setLocalRows([]);
+          setLoadError("Could not load products. Please try again.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingRows(false);
+      });
 
     return () => {
       cancelled = true;
-      window.clearTimeout(timer);
       controller.abort();
     };
-  }, [filter, page, searchInput, showMissingPriceOnly, sortOrder]);
+  }, [cacheProducts, filter, page, searchInput, showMissingPriceOnly, sortOrder, reloadVersion]);
 
   useEffect(() => {
-    if (page > totalPages) {
+    if (!loadingRows && !loadError && page > totalPages) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setPage(totalPages);
     }
-  }, [page, totalPages]);
+  }, [page, totalPages, loadingRows, loadError]);
 
   useEffect(() => {
     if (!viewId) return;
+    const cached = productCacheRef.current.get(viewId);
+    if (cached) {
+      setViewProduct(cached);
+      setViewLoadErr("");
+      setViewLoading(false);
+      return;
+    }
     let cancelled = false;
-    fetch(`/api/admin/products/${viewId}`)
+    setViewLoading(true);
+    fetch(`/api/admin/products/${viewId}`, { cache: "no-store" })
       .then((r) => {
         if (!r.ok) throw new Error();
         return r.json();
       })
       .then((data: ProductRow) => {
-        if (!cancelled) setViewProduct(data);
+        if (!cancelled) {
+          productCacheRef.current.set(data.id, data);
+          setViewProduct(data);
+        }
       })
       .catch(() => {
         if (!cancelled) setViewLoadErr("Unable to load this product.");
@@ -412,9 +516,12 @@ export default function AdminProductsTable({
   const viewRowMeta = localRows.find((r) => r.id === viewId);
 
   function openView(id: string, startEditing = false) {
-    setViewProduct(null);
+    const row = localRows.find((product) => product.id === id);
+    const cachedProduct = productCacheRef.current.get(id) ?? row?.detail ?? null;
+    if (cachedProduct) productCacheRef.current.set(id, cachedProduct);
+    setViewProduct(cachedProduct);
     setViewLoadErr("");
-    setViewLoading(true);
+    setViewLoading(!cachedProduct);
     setViewEditing(startEditing);
     setViewId(id);
   }
@@ -427,9 +534,13 @@ export default function AdminProductsTable({
     setViewEditing(false);
   }
 
-  function handleSearchSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setSearchInput((current) => current.trim());
+  function handleSearchSubmit(query: string) {
+    if (query === searchInput && !loadError) return;
+    setLoadingRows(true);
+    setLocalRows([]);
+    setPage(1);
+    if (query === searchInput) setReloadVersion((version) => version + 1);
+    setSearchInput(query);
   }
 
   function toggleCopy(action: ToggleAction) {
@@ -473,39 +584,15 @@ export default function AdminProductsTable({
         body: JSON.stringify({ [action.field]: action.nextValue }),
       });
       if (!res.ok) throw new Error();
-      setLocalRows((prev) =>
-        prev.map((r) => (r.id === action.id ? { ...r, [action.field]: action.nextValue } : r))
-      );
-      router.refresh();
+      patchCachedProductRow(action.id, { [action.field]: action.nextValue } as TogglePatch);
+      setToggleAction(null);
     } finally {
       setTogglingId(null);
     }
   }
 
   function handleInlinePriceSaved(updated: ProductRow) {
-    setLocalRows((prev) =>
-      prev.map((r) =>
-        r.id === updated.id
-          ? {
-              ...r,
-              title: updated.title,
-              slug: updated.slug,
-              category: updated.category,
-              categoryId: updated.categoryId ?? null,
-              pricePerDayAed: updated.pricePerDayAed ?? null,
-              galleryCount: updated.images?.length ?? 0,
-              published: updated.published,
-              isFeatured: updated.isFeatured,
-              isAvailable: updated.isAvailable,
-              attributes: (updated.attributes ?? {}) as Record<string, ProductAttributeValue>,
-              updatedAt: updated.updatedAt,
-              thumbUrl: updated.images?.[0] ?? null,
-            }
-          : r
-      )
-    );
-    if (viewProduct?.id === updated.id) setViewProduct(updated);
-    router.refresh();
+    syncUpdatedProduct(updated);
   }
 
   const confirmCopy = toggleAction ? toggleCopy(toggleAction) : null;
@@ -514,33 +601,20 @@ export default function AdminProductsTable({
     <div className="mx-auto w-full max-w-[1560px] px-1 sm:px-2 lg:px-4">
       <div className="mb-5 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(7.5rem,9rem)] gap-2 sm:gap-3 lg:grid-cols-[minmax(18rem,2fr)_9rem_auto_5.75rem_auto] xl:flex xl:items-center xl:gap-2">
-          <form onSubmit={handleSearchSubmit} className="relative min-w-0 xl:min-w-[22rem] xl:max-w-md xl:flex-1">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-              aria-hidden
-            />
-            <input
-              type="search"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search products…"
-              className="w-full rounded-lg border border-admin-border bg-white py-2.5 pl-9 pr-9 text-sm text-admin-ink outline-none placeholder:text-admin-ink/40 focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15"
-            />
-            {searchInput ? (
-              <button
-                type="button"
-                onClick={() => setSearchInput("")}
-                className="absolute right-2 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-admin-ink/35 transition-colors hover:bg-admin-bg hover:text-admin-ink"
-                aria-label="Clear product search"
-                title="Clear search"
-              >
-                <X className="h-3.5 w-3.5" aria-hidden />
-              </button>
-            ) : null}
-          </form>
+          <SubmitSearch
+            value={searchInput}
+            onSearch={handleSearchSubmit}
+            loading={loadingRows}
+            label="Search products"
+            placeholder="Search products…"
+            className="xl:min-w-[22rem] xl:max-w-md xl:flex-1"
+          />
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value as FilterKey)}
+            onChange={(e) => {
+              setPage(1);
+              setFilter(e.target.value as FilterKey);
+            }}
             aria-label="Filter products by category"
             className="h-[42px] w-full min-w-0 shrink-0 cursor-pointer rounded-lg border border-admin-border bg-white px-2.5 text-sm text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15 lg:w-36 xl:w-36"
           >
@@ -555,7 +629,10 @@ export default function AdminProductsTable({
             type="button"
             aria-pressed={showMissingPriceOnly}
             title="Show products without a saved price"
-            onClick={() => setShowMissingPriceOnly((current) => !current)}
+            onClick={() => {
+              setPage(1);
+              setShowMissingPriceOnly((current) => !current);
+            }}
             className={`inline-flex h-[42px] w-full shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-3 text-sm font-semibold transition-colors lg:w-auto ${
               showMissingPriceOnly
                 ? "border-admin-accent/45 bg-admin-accent/10 text-admin-accent"
@@ -570,7 +647,10 @@ export default function AdminProductsTable({
           </button>
           <select
             value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+            onChange={(e) => {
+              setPage(1);
+              setSortOrder(e.target.value as SortOrder);
+            }}
             aria-label="Sort products alphabetically"
             className="h-[42px] w-full shrink-0 cursor-pointer rounded-lg border border-admin-border bg-white px-2.5 text-sm font-semibold text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15 lg:w-[5.75rem]"
           >
@@ -655,30 +735,8 @@ export default function AdminProductsTable({
             product={viewProduct}
             onCancel={() => setViewEditing(false)}
             onSaved={(updated) => {
-              setViewProduct(updated);
               setViewEditing(false);
-              setLocalRows((prev) =>
-                prev.map((r) =>
-                  r.id === updated.id
-                    ? {
-                        ...r,
-                        title: updated.title,
-                        slug: updated.slug,
-                        category: updated.category,
-                        categoryId: updated.categoryId ?? null,
-                        pricePerDayAed: updated.pricePerDayAed ?? null,
-                        galleryCount: updated.images?.length ?? 0,
-                        published: updated.published,
-                        isFeatured: updated.isFeatured,
-                        isAvailable: updated.isAvailable,
-                        attributes: (updated.attributes ?? {}) as Record<string, ProductAttributeValue>,
-                        updatedAt: updated.updatedAt,
-                        thumbUrl: updated.images?.[0] ?? null,
-                      }
-                    : r
-                )
-              );
-              router.refresh();
+              syncUpdatedProduct(updated);
             }}
           />
         ) : viewProduct ? (
@@ -704,6 +762,8 @@ export default function AdminProductsTable({
               alert("Could not delete this product. Please try again.");
               throw new Error("Delete failed");
             }
+            pageCacheRef.current.clear();
+            productCacheRef.current.delete(deletedId);
             setLocalRows((prev) => prev.filter((row) => row.id !== deletedId));
             setPagination((current) => ({
               ...current,
@@ -712,7 +772,6 @@ export default function AdminProductsTable({
             }));
             if (viewId === deletedId) closeView();
             notifyProductTaxonomyChanged();
-            router.refresh();
           } finally {
             setDeletingId(null);
           }
@@ -866,12 +925,23 @@ export default function AdminProductsTable({
               ))}
               {loadingRows && paginatedRows.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-16 text-center text-sm text-gray-400">
-                    Loading products...
+                  <td colSpan={7} className="px-4 py-6" aria-busy="true" aria-label="Searching products">
+                    <span className="sr-only" role="status">Searching products...</span>
+                    <div className="space-y-4" aria-hidden>
+                      {Array.from({ length: PAGE_SIZE }, (_, index) => (
+                        <div key={index} className="h-12 animate-pulse rounded bg-admin-bg" />
+                      ))}
+                    </div>
                   </td>
                 </tr>
               ) : null}
-              {!loadingRows && filteredRows.length === 0 ? (
+              {!loadingRows && loadError ? (
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-sm" role="alert">
+                  {loadError}
+                  <button type="button" onClick={() => setReloadVersion((version) => version + 1)} className="ml-3 underline">Retry</button>
+                </td></tr>
+              ) : null}
+              {!loadingRows && !loadError && filteredRows.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-16 text-center text-sm text-gray-400">
                     {hasSearch ? "No products match your search." : emptyMessage}

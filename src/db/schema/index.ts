@@ -10,6 +10,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import { presetSearchText, productSearchText } from "@/db/product-search";
 
 /** Master list: product categories (dropdown + filters). */
 export const productCategories = pgTable("product_categories", {
@@ -94,6 +95,7 @@ export const productTitlePresets = pgTable(
   (t) => [
     index("product_title_presets_category_idx").on(t.categoryId),
     index("product_title_presets_sub_category_idx").on(t.subCategoryId),
+    index("product_title_presets_search_trgm_idx").using("gin", sql`${presetSearchText(t)} gin_trgm_ops`),
     uniqueIndex("product_title_presets_category_source_uidx").on(
       t.categoryId,
       t.sourceLabel
@@ -148,6 +150,8 @@ export const products = pgTable(
       .where(sql`${t.published} = true`),
     index("products_updated_at_idx").on(t.updatedAt.desc()),
     index("products_category_idx").on(t.categoryId),
+    index("products_sub_category_idx").on(t.subCategoryId),
+    index("products_search_trgm_idx").using("gin", sql`${productSearchText(t)} gin_trgm_ops`),
     index("products_product_title_preset_idx").on(t.productTitlePresetId),
   ]
 );

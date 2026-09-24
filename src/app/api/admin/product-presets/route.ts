@@ -1,6 +1,9 @@
 import { and, asc, count, eq, ilike, or, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
+import { presetSearchText } from "@/db/product-search";
+import { searchQuerySchema } from "@/lib/search-query-schema";
+import { escapeSearchPattern } from "@/lib/search";
 import {
   productCategories,
   products,
@@ -28,7 +31,7 @@ const manageQuerySchema = z.object({
   subCategoryId: z.string().uuid().optional(),
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().min(1).max(50).default(20),
-  search: z.string().trim().max(160).default(""),
+  search: searchQuerySchema,
 });
 
 const createSchema = z.object({
@@ -60,10 +63,7 @@ export async function GET(request: Request) {
 
     const { categoryId, subCategoryId, page, pageSize, search } = parsed.data;
     const searchFilter = search
-      ? or(
-          ilike(productTitlePresets.title, `%${search}%`),
-          ilike(productTitlePresets.sourceLabel, `%${search}%`)
-        )
+      ? ilike(presetSearchText(productTitlePresets), escapeSearchPattern(search))
       : undefined;
     const where = and(
       categoryId ? eq(productTitlePresets.categoryId, categoryId) : undefined,
@@ -91,7 +91,7 @@ export async function GET(request: Request) {
           eq(productTitlePresets.subCategoryId, productSubcategories.id)
         )
         .where(where)
-        .orderBy(asc(productCategories.sortOrder), asc(productTitlePresets.sortOrder))
+        .orderBy(asc(productCategories.sortOrder), asc(productTitlePresets.sortOrder), asc(productTitlePresets.id))
         .limit(pageSize)
         .offset((page - 1) * pageSize),
       db.select({ total: count() }).from(productTitlePresets).where(where),

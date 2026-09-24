@@ -1,4 +1,5 @@
 "use client";
+import SubmitSearch from "@/components/ui/SubmitSearch";
 
 import { formatUtcDateTime } from "@/lib/format-datetime";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -11,7 +12,6 @@ import {
   Pencil,
   Plus,
   Save,
-  Search,
   Send,
   Shield,
   ShieldCheck,
@@ -634,19 +634,13 @@ export default function AdminUsersClient() {
             <Plus className="size-4 shrink-0" aria-hidden />
             <span className="text-center">Add user</span>
           </button>
-          <label className="relative block w-full sm:min-w-[20rem]">
-            <Search
-              className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-admin-muted"
-              aria-hidden
-            />
-            <input
-              type="search"
+          <SubmitSearch
+              className="block w-full sm:min-w-[20rem]"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onSearch={setSearch}
               placeholder="Search users..."
-              className={`${admin.fieldModern} pl-10`}
+              inputClassName={admin.fieldModern}
             />
-          </label>
         </div>
       </div>
 

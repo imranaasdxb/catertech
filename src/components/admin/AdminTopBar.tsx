@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { Bell, Menu, Search } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { Bell, Menu } from "lucide-react";
+import SubmitSearch from "@/components/ui/SubmitSearch";
 import { SUPERADMIN_ROLE } from "@/lib/admin-roles";
 import { cn } from "@/lib/utils";
 import { useAdminChrome } from "./AdminChromeContext";
@@ -104,43 +105,6 @@ function HeaderIconButton({
   );
 }
 
-function SearchField({
-  id,
-  value,
-  onChange,
-  onSubmit,
-}: {
-  id: string;
-  value: string;
-  onChange: (v: string) => void;
-  onSubmit: (e: FormEvent) => void;
-}) {
-  return (
-    <form onSubmit={onSubmit} className="flex min-w-0 flex-1 sm:justify-center">
-      <label htmlFor={id} className="sr-only">
-        Search products
-      </label>
-      <div className="relative w-full max-w-xl lg:max-w-[32rem]">
-        <Search
-          className="pointer-events-none absolute left-4 top-1/2 size-[18px] -translate-y-1/2 text-admin-faint"
-          strokeWidth={2}
-          aria-hidden
-        />
-        <input
-          id={id}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="Search something here..."
-          className="h-11 w-full rounded-full border border-admin-border bg-admin-surface pl-11 pr-20 text-sm text-admin-ink outline-none transition-all duration-200 ease-in-out placeholder:text-admin-faint focus:border-admin-accent/40 focus:ring-2 focus:ring-admin-accent/15"
-        />
-        <kbd className="pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 items-center gap-0.5 rounded-lg border border-admin-border bg-admin-bg px-2 py-1 text-[10px] font-medium text-admin-muted sm:inline-flex">
-          ⌘ K
-        </kbd>
-      </div>
-    </form>
-  );
-}
-
 export function AdminTopBar() {
   const router = useRouter();
   const pathname = usePathname();
@@ -148,6 +112,7 @@ export function AdminTopBar() {
   const pageTitle = titleForPath(pathname);
 
   const [q, setQ] = useState("");
+  const [searchPending, startSearchTransition] = useTransition();
   const [stats, setStats] = useState<Stats | null>(null);
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -215,11 +180,11 @@ export function AdminTopBar() {
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
 
-  function onSearch(e: FormEvent) {
-    e.preventDefault();
-    const s = q.trim();
-    if (!s) return;
-    router.push(`/admin/products?q=${encodeURIComponent(s)}`);
+  function onSearch(query: string) {
+    setQ(query);
+    startSearchTransition(() => {
+      router.push(query ? `/admin/products?q=${encodeURIComponent(query)}` : "/admin/products");
+    });
   }
 
   const bellBadge = stats?.newQuotes ?? 0;
@@ -242,7 +207,16 @@ export function AdminTopBar() {
         <h1 className="truncate text-base font-bold tracking-tight text-admin-ink">{pageTitle}</h1>
       </div>
 
-      <SearchField id="admin-search" value={q} onChange={setQ} onSubmit={onSearch} />
+      <SubmitSearch
+        id="admin-search"
+        value={q}
+        onSearch={onSearch}
+        loading={searchPending}
+        label="Search products"
+        placeholder="Search products..."
+        className="flex-1 max-w-xl lg:max-w-[32rem]"
+        inputClassName="h-11 w-full rounded-full border border-admin-border bg-admin-surface text-sm text-admin-ink outline-none placeholder:text-admin-faint focus:border-admin-accent/40 focus:ring-2 focus:ring-admin-accent/15"
+      />
 
       <div ref={panelRef} className="ml-auto flex shrink-0 items-center gap-2 sm:gap-2.5">
         <div className="relative">

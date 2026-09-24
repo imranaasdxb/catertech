@@ -1,4 +1,5 @@
 "use client";
+import SubmitSearch from "@/components/ui/SubmitSearch";
 
 import { formatUtcDateTime } from "@/lib/format-datetime";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -147,16 +148,13 @@ export default function AdminContactsDirectoryClient({
       </div>
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <label className="block max-w-md flex-1">
-          <span className="sr-only">Search</span>
-          <input
-            type="search"
+        <SubmitSearch
+            className="block max-w-md flex-1"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onSearch={setSearch}
             placeholder="Search name, company, email, phone, address…"
-            className="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm text-charcoal shadow-[0_2px_12px_rgba(26,31,46,0.04)] placeholder:text-muted focus:border-navy focus:outline-none focus:ring-2 focus:ring-navy/15"
+            inputClassName="w-full rounded-xl border border-border bg-white px-4 py-2.5 text-sm text-charcoal shadow-[0_2px_12px_rgba(26,31,46,0.04)] placeholder:text-muted focus:border-navy focus:outline-none focus:ring-2 focus:ring-navy/15"
           />
-        </label>
         <div className="flex flex-wrap gap-2">
           {(
             [
