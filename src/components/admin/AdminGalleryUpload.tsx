@@ -2,6 +2,7 @@
 
 import { admin } from "@/components/admin/admin-theme";
 import { uploadMediaPublicUrl } from "@/lib/upload-media-client";
+import { imageKitUrl } from "@/lib/imagekit-optimizer";
 import { ArrowLeft, ArrowRight, ImagePlus, Loader2, X } from "lucide-react";
 import {
   forwardRef,
@@ -393,7 +394,7 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
                 </button>
                 <div className="relative aspect-square w-full bg-neutral-100">
                   <img
-                    src={it.kind === "remote" ? it.url : it.previewUrl}
+                    src={it.kind === "remote" ? imageKitUrl(it.url, { width: 360 }) : it.previewUrl}
                     alt=""
                     className="h-full w-full object-cover"
                     loading="lazy"

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import BrandCta from "@/components/ui/BrandCta";
 import type { ProductAttributeValue } from "@/lib/category-template";
+import { imageKitUrl } from "@/lib/imagekit-optimizer";
 import { formatPricePerDayAed } from "@/lib/product-pricing";
 import { cn } from "@/lib/utils";
 
@@ -73,6 +74,7 @@ export default function StorefrontProductCard({
   }, [product.image, product.images]);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const hasImageSlider = galleryImages.length > 1;
+  const imageWidth = shopCompact ? 520 : 720;
   const cardTitleClass = `font-sans !font-normal tracking-normal text-[#1a1a1a] ${
     shopCompact ? "text-sm lg:text-lg xl:text-xl" : "text-lg sm:text-xl"
   }`;
@@ -112,7 +114,7 @@ export default function StorefrontProductCard({
             {galleryImages.map((image, index) => (
               <Image
                 key={`${image}-${index}`}
-                src={image}
+                src={imageKitUrl(image, { width: imageWidth })}
                 alt={product.name}
                 fill
                 loading={lazyImage || index > 0 ? "lazy" : undefined}

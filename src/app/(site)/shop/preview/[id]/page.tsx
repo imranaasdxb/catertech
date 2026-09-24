@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getDb } from "@/db";
 import { products, type ProductAttributeValue } from "@/db/schema";
 import { isAdminGuestAuthed } from "@/lib/admin-guest-auth";
+import { imageKitUrl } from "@/lib/imagekit-optimizer";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -60,7 +61,7 @@ export default async function AdminProductPreviewPage({ params, searchParams }: 
             imgs.map((src) => (
               <div key={src} className="rounded-lg border border-border overflow-hidden bg-white">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" className="w-full object-cover max-h-80" />
+                <img src={imageKitUrl(src, { width: 900 })} alt="" className="w-full object-cover max-h-80" />
               </div>
             ))
           ) : (

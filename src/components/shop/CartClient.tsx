@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Container from "@/components/layout/PageContainer";
 import { useCart, type CartItem } from "@/lib/cart-context";
+import { imageKitUrl } from "@/lib/imagekit-optimizer";
 import {
   buildQuoteWhatsAppMessage,
   buildWhatsAppUrl,
@@ -482,9 +483,10 @@ function CartItemCard({
           <div className="relative h-24 w-24 overflow-hidden rounded-xl border border-[#e5e7eb] bg-[#FEFEFE] sm:h-28 sm:w-28 sm:rounded-2xl">
             {item.image ? (
               <Image
-                src={item.image}
+                src={imageKitUrl(item.image, { width: 260 })}
                 alt={item.name}
                 fill
+                unoptimized
                 className="object-contain object-center p-2"
                 sizes="(max-width: 640px) 96px, 112px"
               />

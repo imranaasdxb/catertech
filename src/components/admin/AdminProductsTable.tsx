@@ -12,6 +12,7 @@ import type { InferSelectModel } from "drizzle-orm";
 import { Check, ChevronLeft, ChevronRight, DollarSign, Eye, Loader2, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { formatUtcDate } from "@/lib/format-datetime";
+import { imageKitUrl } from "@/lib/imagekit-optimizer";
 import { normalizePricePerDayAed } from "@/lib/product-pricing";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -76,7 +77,7 @@ function Thumb({ url }: { url: string | null }) {
   }
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={url} alt="" className="h-10 w-10 rounded-md object-cover" />
+    <img src={imageKitUrl(url, { width: 96 })} alt="" className="h-10 w-10 rounded-md object-cover" />
   );
 }
 
@@ -295,7 +296,9 @@ export default function AdminProductsTable({
   emptyMessage?: string;
 }) {
   const pageCacheRef = useRef(new Map<string, ProductsPagePayload>());
+  const pageRequestRef = useRef(new Map<string, Promise<ProductsPagePayload>>());
   const productCacheRef = useRef(new Map<string, ProductRow>());
+  const productRequestRef = useRef(new Map<string, Promise<ProductRow>>());
   const [localRows, setLocalRows] = useState(rows);
   const [searchInput, setSearchInput] = useState(initialSearch);
   const [filter, setFilter] = useState<FilterKey>("all");
@@ -373,6 +376,66 @@ export default function AdminProductsTable({
     setViewProduct((current) => (current?.id === id ? { ...current, ...patch } : current));
   }, []);
 
+  const loadProductDetail = useCallback((id: string) => {
+    const cached = productCacheRef.current.get(id);
+    if (cached) return Promise.resolve(cached);
+
+    const existingRequest = productRequestRef.current.get(id);
+    if (existingRequest) return existingRequest;
+
+    const request = fetch(`/api/admin/products/${id}`, { cache: "no-store" })
+      .then((r) => {
+        if (!r.ok) throw new Error();
+        return r.json() as Promise<ProductRow>;
+      })
+      .then((data) => {
+        productCacheRef.current.set(data.id, data);
+        return data;
+      })
+      .finally(() => {
+        productRequestRef.current.delete(id);
+      });
+
+    productRequestRef.current.set(id, request);
+    return request;
+  }, []);
+
+  const loadProductsPage = useCallback((cacheKey: string, fallbackPage: number) => {
+    const cached = pageCacheRef.current.get(cacheKey);
+    if (cached) return Promise.resolve(cached);
+
+    const existingRequest = pageRequestRef.current.get(cacheKey);
+    if (existingRequest) return existingRequest;
+
+    const request = fetch(`/api/admin/products?${cacheKey}`, { cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) throw new Error("Could not load products");
+        return response.json() as Promise<{
+          products?: AdminProductListRow[];
+          pagination?: AdminProductPagination;
+        }>;
+      })
+      .then((data) => {
+        const products = data.products ?? [];
+        const pagination = data.pagination ?? {
+          page: fallbackPage,
+          pageSize: PAGE_SIZE,
+          total: products.length,
+          totalPages: 1,
+        };
+        const payload = { products, pagination };
+        cacheProducts(products);
+        pageCacheRef.current.set(cacheKey, payload);
+        return payload;
+      })
+      .finally(() => {
+        pageRequestRef.current.delete(cacheKey);
+      });
+
+    pageRequestRef.current.set(cacheKey, request);
+    return request;
+  }, [cacheProducts]);
+
   useEffect(() => {
     // Refresh the optimistic table copy after a server navigation.
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -407,7 +470,6 @@ export default function AdminProductsTable({
   const showingTo = Math.min(pageStart + paginatedRows.length, pagination.total);
 
   useEffect(() => {
-    const controller = new AbortController();
     let cancelled = false;
     const params = new URLSearchParams({
       page: String(page),
@@ -428,37 +490,20 @@ export default function AdminProductsTable({
       setLoadingRows(false);
       return () => {
         cancelled = true;
-        controller.abort();
       };
     }
 
     setLoadingRows(true);
     setLoadError("");
     setLocalRows([]);
-    fetch(`/api/admin/products?${cacheKey}`, { cache: "no-store", signal: controller.signal })
-      .then((response) => {
-        if (!response.ok) throw new Error("Could not load products");
-        return response.json() as Promise<{
-          products?: AdminProductListRow[];
-          pagination?: AdminProductPagination;
-        }>;
-      })
-      .then((data) => {
+    loadProductsPage(cacheKey, page)
+      .then(({ products, pagination }) => {
         if (cancelled) return;
-        const products = data.products ?? [];
-        const pagination = data.pagination ?? {
-          page,
-          pageSize: PAGE_SIZE,
-          total: products.length,
-          totalPages: 1,
-        };
-        cacheProducts(products);
-        pageCacheRef.current.set(cacheKey, { products, pagination });
         setLocalRows(products);
         setPagination(pagination);
       })
       .catch((error) => {
-        if (!cancelled && !(error instanceof DOMException && error.name === "AbortError")) {
+        if (!cancelled) {
           setLocalRows([]);
           setLoadError("Could not load products. Please try again.");
         }
@@ -469,9 +514,8 @@ export default function AdminProductsTable({
 
     return () => {
       cancelled = true;
-      controller.abort();
     };
-  }, [cacheProducts, filter, page, searchInput, showMissingPriceOnly, sortOrder, reloadVersion]);
+  }, [cacheProducts, filter, loadProductsPage, page, searchInput, showMissingPriceOnly, sortOrder, reloadVersion]);
 
   useEffect(() => {
     if (!loadingRows && !loadError && page > totalPages) {
@@ -482,7 +526,8 @@ export default function AdminProductsTable({
 
   useEffect(() => {
     if (!viewId) return;
-    const cached = productCacheRef.current.get(viewId);
+    const currentViewId = viewId;
+    const cached = productCacheRef.current.get(currentViewId);
     if (cached) {
       setViewProduct(cached);
       setViewLoadErr("");
@@ -491,15 +536,11 @@ export default function AdminProductsTable({
     }
     let cancelled = false;
     setViewLoading(true);
-    fetch(`/api/admin/products/${viewId}`, { cache: "no-store" })
-      .then((r) => {
-        if (!r.ok) throw new Error();
-        return r.json();
-      })
-      .then((data: ProductRow) => {
+    loadProductDetail(currentViewId)
+      .then((data) => {
         if (!cancelled) {
-          productCacheRef.current.set(data.id, data);
           setViewProduct(data);
+          setViewLoadErr("");
         }
       })
       .catch(() => {
@@ -511,7 +552,7 @@ export default function AdminProductsTable({
     return () => {
       cancelled = true;
     };
-  }, [viewId]);
+  }, [loadProductDetail, viewId]);
 
   const viewRowMeta = localRows.find((r) => r.id === viewId);
 
@@ -763,7 +804,9 @@ export default function AdminProductsTable({
               throw new Error("Delete failed");
             }
             pageCacheRef.current.clear();
+            pageRequestRef.current.clear();
             productCacheRef.current.delete(deletedId);
+            productRequestRef.current.delete(deletedId);
             setLocalRows((prev) => prev.filter((row) => row.id !== deletedId));
             setPagination((current) => ({
               ...current,

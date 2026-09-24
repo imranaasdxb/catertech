@@ -51,6 +51,47 @@ type Props = {
   }) => void;
 };
 
+const productPresetsCache = new Map<string, ProductPreset[]>();
+const productPresetsRequests = new Map<string, Promise<ProductPreset[]>>();
+
+function productPresetsKey(categoryId: string) {
+  return categoryId;
+}
+
+function loadProductPresets(categoryId: string) {
+  if (!categoryId) return Promise.resolve([]);
+
+  const key = productPresetsKey(categoryId);
+  const cached = productPresetsCache.get(key);
+  if (cached) return Promise.resolve(cached);
+
+  const existingRequest = productPresetsRequests.get(key);
+  if (existingRequest) return existingRequest;
+
+  const params = new URLSearchParams({ categoryId });
+  const request = fetch(`/api/admin/product-presets?${params}`, { cache: "no-store" })
+    .then(async (res) => {
+      if (!res.ok) throw new Error("load failed");
+      const data = (await res.json()) as { presets?: ProductPreset[] };
+      const presets = data.presets ?? [];
+      productPresetsCache.set(key, presets);
+      return presets;
+    })
+    .catch(() => [])
+    .finally(() => {
+      productPresetsRequests.delete(key);
+    });
+
+  productPresetsRequests.set(key, request);
+  return request;
+}
+
+function putCachedProductPresets(categoryId: string, updater: (current: ProductPreset[]) => ProductPreset[]) {
+  if (!categoryId) return;
+  const key = productPresetsKey(categoryId);
+  productPresetsCache.set(key, updater(productPresetsCache.get(key) ?? []));
+}
+
 function normalizePresetTitle(value: string) {
   return normalizeMatchText(value);
 }
@@ -97,21 +138,7 @@ export function ProductTitlePresetInput({
       _nextSubCategoryId: string,
       onLoaded: (nextPresets: ProductPreset[]) => void
     ) => {
-      if (!nextCategoryId) {
-        onLoaded([]);
-        return;
-      }
-
-      const params = new URLSearchParams({ categoryId: nextCategoryId });
-
-      try {
-        const res = await fetch(`/api/admin/product-presets?${params}`, { cache: "no-store" });
-        if (!res.ok) throw new Error("load failed");
-        const data = (await res.json()) as { presets?: ProductPreset[] };
-        onLoaded(data.presets ?? []);
-      } catch {
-        onLoaded([]);
-      }
+      onLoaded(await loadProductPresets(nextCategoryId));
     },
     []
   );
@@ -349,6 +376,10 @@ export function ProductTitlePresetInput({
     const data = (await res.json()) as { preset?: ProductPreset; existed?: boolean };
     if (data.preset) {
       setPresets((current) => {
+        const exists = current.some((preset) => preset.id === data.preset!.id);
+        return exists ? current : [data.preset!, ...current];
+      });
+      putCachedProductPresets(presetCategoryId, (current) => {
         const exists = current.some((preset) => preset.id === data.preset!.id);
         return exists ? current : [data.preset!, ...current];
       });

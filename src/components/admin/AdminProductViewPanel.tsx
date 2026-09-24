@@ -4,6 +4,8 @@ import { ADMIN_PURPLE, admin } from "@/components/admin/admin-theme";
 import { products } from "@/db/schema";
 import type { ProductAttributeValue, TemplateFieldDef } from "@/lib/category-template";
 import { formatAdminPricePerDayAed } from "@/lib/product-pricing";
+import { imageKitUrl } from "@/lib/imagekit-optimizer";
+import { loadCategoryTemplateFields } from "@/components/admin/ProductTemplateFields";
 import type { InferSelectModel } from "drizzle-orm";
 import {
   Check,
@@ -93,14 +95,9 @@ export default function AdminProductViewPanel({
     setTemplateLoading(true);
     setTemplateErr("");
 
-    const params = new URLSearchParams({ categoryId: product.categoryId });
-    if (product.subCategoryId) params.set("subCategoryId", product.subCategoryId);
-
-    void fetch(`/api/admin/category-templates?${params}`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error("load failed");
-        const data = (await res.json()) as { fields?: TemplateFieldDef[] };
-        if (!cancelled) setTemplateFields(data.fields ?? []);
+    void loadCategoryTemplateFields(product.categoryId, product.subCategoryId)
+      .then((fields) => {
+        if (!cancelled) setTemplateFields(fields);
       })
       .catch(() => {
         if (!cancelled) setTemplateErr("Could not load specs.");
@@ -148,7 +145,7 @@ export default function AdminProductViewPanel({
           <div className="mx-auto h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-admin-bg ring-1 ring-black/6 sm:mx-0 sm:h-[72px] sm:w-[72px]">
             {images[0] ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={images[0]} alt="" className="h-full w-full object-cover" />
+              <img src={imageKitUrl(images[0], { width: 180 })} alt="" className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-admin-ink/25">
                 <Package className="h-7 w-7" aria-hidden />
@@ -221,7 +218,7 @@ export default function AdminProductViewPanel({
                 title={`Open image ${idx + 1}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" className="h-full w-full object-cover transition group-hover:scale-105" />
+                <img src={imageKitUrl(src, { width: 160 })} alt="" className="h-full w-full object-cover transition group-hover:scale-105" />
                 <span className="absolute inset-x-0 bottom-0 bg-black/50 py-0.5 text-center text-[9px] font-semibold text-white">
                   {idx + 1}
                 </span>
@@ -333,9 +330,9 @@ export default function AdminProductViewPanel({
             </p>
             {keywords.length ? (
               <div className="mt-1.5 flex flex-wrap gap-1">
-                {keywords.map((kw) => (
+                {keywords.map((kw, index) => (
                   <span
-                    key={kw}
+                    key={`${kw}-${index}`}
                     className="inline-flex items-center gap-0.5 rounded-md bg-admin-bg px-1.5 py-0.5 text-[10px] font-medium text-admin-ink/65 ring-1 ring-black/5"
                   >
                     <Hash className="h-2.5 w-2.5 text-admin-ink/35" aria-hidden />

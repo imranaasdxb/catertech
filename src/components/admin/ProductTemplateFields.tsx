@@ -21,6 +21,42 @@ type Props = {
   onAttributesChange?: (attributes: Record<string, ProductAttributeValue>) => void;
 };
 
+const templateFieldsCache = new Map<string, TemplateFieldDef[]>();
+const templateFieldsRequests = new Map<string, Promise<TemplateFieldDef[]>>();
+
+function templateFieldsKey(categoryId: string, subCategoryId?: string | null) {
+  return `${categoryId}:${subCategoryId ?? ""}`;
+}
+
+export function loadCategoryTemplateFields(categoryId: string, subCategoryId?: string | null) {
+  if (!categoryId) return Promise.resolve([]);
+
+  const key = templateFieldsKey(categoryId, subCategoryId);
+  const cached = templateFieldsCache.get(key);
+  if (cached) return Promise.resolve(cached);
+
+  const existingRequest = templateFieldsRequests.get(key);
+  if (existingRequest) return existingRequest;
+
+  const params = new URLSearchParams({ categoryId });
+  if (subCategoryId) params.set("subCategoryId", subCategoryId);
+
+  const request = fetch(`/api/admin/category-templates?${params}`)
+    .then(async (res) => {
+      if (!res.ok) throw new Error("load failed");
+      const data = (await res.json()) as { fields?: TemplateFieldDef[] };
+      const fields = data.fields ?? [];
+      templateFieldsCache.set(key, fields);
+      return fields;
+    })
+    .finally(() => {
+      templateFieldsRequests.delete(key);
+    });
+
+  templateFieldsRequests.set(key, request);
+  return request;
+}
+
 function readAttr(
   attrs: Record<string, ProductAttributeValue> | undefined,
   key: string
@@ -46,14 +82,11 @@ export function ProductTemplateFields({
     if (!categoryId) return;
 
     let cancelled = false;
+    setLoading(true);
+    setErr("");
 
-    const params = new URLSearchParams({ categoryId });
-
-    void fetch(`/api/admin/category-templates?${params}`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error("load failed");
-        const data = (await res.json()) as { fields?: TemplateFieldDef[] };
-        const loaded = data.fields ?? [];
+    void loadCategoryTemplateFields(categoryId)
+      .then((loaded) => {
         if (!cancelled) {
           const visible =
             initialFieldKeys === undefined

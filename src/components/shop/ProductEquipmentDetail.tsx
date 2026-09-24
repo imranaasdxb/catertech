@@ -13,6 +13,7 @@ import StorefrontProductCard, {
   getProductSizeSummary,
   type StorefrontProductCardData,
 } from "@/components/shop/StorefrontProductCard";
+import { imageKitUrl } from "@/lib/imagekit-optimizer";
 import type { ProductTitleVariant } from "@/lib/storefront-product";
 import { useCart } from "@/lib/cart-context";
 
@@ -117,9 +118,10 @@ function VariantPickCard({
     >
       <div className="relative aspect-4/3 bg-cream">
         <Image
-          src={image}
+          src={imageKitUrl(image, { width: 360 })}
           alt=""
           fill
+          unoptimized
           className="object-cover"
           sizes="132px"
         />
@@ -253,9 +255,10 @@ function ProductTitleVariantTile({
       <div className="relative aspect-square bg-[#FEFEFE]">
         {variant.card.image ? (
           <Image
-            src={variant.card.image}
+            src={imageKitUrl(variant.card.image, { width: 260 })}
             alt=""
             fill
+            unoptimized
             className="object-contain object-center p-1.5"
             sizes="108px"
           />
@@ -280,9 +283,10 @@ function RelatedTile({ p }: { p: ShopProductCard }) {
     >
       <div className="relative aspect-square bg-cream overflow-hidden w-full">
         <Image
-          src={p.image}
+          src={imageKitUrl(p.image, { width: 360 })}
           alt={p.name}
           fill
+          unoptimized
           className="object-cover group-hover:scale-105 transition-transform duration-500"
           sizes="132px"
         />
@@ -559,7 +563,7 @@ export default function ProductEquipmentDetail({
             >
               {mainSrc ? (
                 <Image
-                  src={mainSrc}
+                  src={imageKitUrl(mainSrc, { width: 1200 })}
                   alt={product.name}
                   fill
                   unoptimized
@@ -636,9 +640,10 @@ export default function ProductEquipmentDetail({
                 >
                   {src ? (
                     <Image
-                      src={src}
+                      src={imageKitUrl(src, { width: 220 })}
                       alt={`${product.name} view ${i + 1}`}
                       fill
+                      unoptimized
                       className="object-contain object-center p-1.5"
                       sizes="96px"
                     />
