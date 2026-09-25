@@ -31,6 +31,15 @@ const importSchema = z.object({
   ),
 });
 
+function readOptionalPresetString(
+  preset: unknown,
+  key: "subcategory" | "description"
+) {
+  if (!preset || typeof preset !== "object" || !(key in preset)) return null;
+  const value = (preset as Record<typeof key, unknown>)[key];
+  return typeof value === "string" ? value : null;
+}
+
 export async function POST(request: Request) {
   const db = getDb();
   if (!db) {
@@ -119,11 +128,11 @@ export async function POST(request: Request) {
     const uniqueLabels = [...new Set((sourceLabels ?? []).map(normalizedPresetTitle))];
     const rows = dedicatedPresets
       ? dedicatedPresets.map((preset, index) => {
-          const subcategory = "subcategory" in preset ? preset.subcategory : "";
-          const description = "description" in preset ? preset.description : null;
+          const subcategory = readOptionalPresetString(preset, "subcategory");
+          const description = readOptionalPresetString(preset, "description");
           return {
             categoryId,
-            subCategoryId: subcategoryIds.get(subcategory) ?? null,
+            subCategoryId: subcategory ? subcategoryIds.get(subcategory) ?? null : null,
             title: cleanPresetProductTitle(preset.title),
             sourceLabel: preset.sourceLabel,
             description,
