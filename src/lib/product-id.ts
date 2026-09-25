@@ -13,6 +13,7 @@ const CATEGORY_PREFIXES: Record<string, string> = {
   "outdoor equipment": "OUT",
   "kitchen utensil": "KUT",
   "kitchen utensils": "KUT",
+  linen: "LIN",
 };
 
 export function normalizeProductTitleCode(title: string) {
