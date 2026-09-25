@@ -79,6 +79,7 @@ export async function GET(request: Request) {
           subCategoryId: productTitlePresets.subCategoryId,
           title: productTitlePresets.title,
           sourceLabel: productTitlePresets.sourceLabel,
+          description: productTitlePresets.description,
           pricePerDayAed: productTitlePresets.pricePerDayAed,
           attributes: productTitlePresets.attributes,
           categoryName: productCategories.name,
@@ -155,6 +156,7 @@ export async function GET(request: Request) {
         id: productTitlePresets.id,
         title: productTitlePresets.title,
         sourceLabel: productTitlePresets.sourceLabel,
+        description: productTitlePresets.description,
         pricePerDayAed: productTitlePresets.pricePerDayAed,
         attributes: productTitlePresets.attributes,
         subCategoryId: productTitlePresets.subCategoryId,
@@ -296,6 +298,7 @@ export async function POST(request: Request) {
       id: productTitlePresets.id,
       title: productTitlePresets.title,
       sourceLabel: productTitlePresets.sourceLabel,
+      description: productTitlePresets.description,
       pricePerDayAed: productTitlePresets.pricePerDayAed,
       attributes: productTitlePresets.attributes,
       created: sql<boolean>`exists (
@@ -339,6 +342,7 @@ export async function POST(request: Request) {
       id: productTitlePresets.id,
       title: productTitlePresets.title,
       sourceLabel: productTitlePresets.sourceLabel,
+      description: productTitlePresets.description,
       pricePerDayAed: productTitlePresets.pricePerDayAed,
       attributes: productTitlePresets.attributes,
     });

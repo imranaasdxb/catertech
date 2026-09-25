@@ -107,7 +107,8 @@ export default function RichText({
 
   useLayoutEffect(() => {
     const el = editorRef.current;
-    if (!el || initializedRef.current) return;
+    if (!el) return;
+    if (initializedRef.current && el.innerHTML === (defaultHtml || "")) return;
     el.innerHTML = defaultHtml || "";
     setHtml(el.innerHTML);
     initializedRef.current = true;

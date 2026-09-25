@@ -79,6 +79,7 @@ export const productTitlePresets = pgTable(
     }),
     title: text("title").notNull(),
     sourceLabel: text("source_label").notNull(),
+    description: text("description"),
     pricePerDayAed: text("price_per_day_aed"),
     attributes: jsonb("attributes")
       .$type<Record<string, ProductAttributeValue>>()

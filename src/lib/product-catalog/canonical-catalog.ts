@@ -143,6 +143,12 @@ export const CANONICAL_CATALOGUE: CatalogueCategory[] = [
       : includesAny(label, ["tray", "bucket", "basket", "board", "box", "flask", "holder", "cover", "divider"]) ? "Storage & Service"
       : "Other Kitchen Utensils",
   },
+  {
+    name: "Linen",
+    subcategories: [],
+    fields: [],
+    classify: () => "",
+  },
 ];
 
 const toMeasure = (value: string, unit: string): ProductAttributeValue => ({

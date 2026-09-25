@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import {
   DEFAULT_TEMPLATE_FIELDS,
 } from "@/lib/category-template";
+import { getDb } from "@/db";
+import { productCategories } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { LINEN_TEMPLATE_FIELDS } from "@/lib/product-catalog/linen-presets";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -13,14 +17,23 @@ export async function GET(request: Request) {
   }
 
   const subId = subCategoryId && subCategoryId !== "" ? subCategoryId : null;
+  const db = getDb();
+  const [category] = db
+    ? await db
+        .select({ name: productCategories.name })
+        .from(productCategories)
+        .where(eq(productCategories.id, categoryId))
+        .limit(1)
+    : [];
+  const fields = category?.name === "Linen" ? LINEN_TEMPLATE_FIELDS : DEFAULT_TEMPLATE_FIELDS;
 
   return NextResponse.json({
     categoryId,
     subCategoryId: subId,
-    fields: DEFAULT_TEMPLATE_FIELDS,
-    source: "default",
+    fields,
+    source: category?.name === "Linen" ? "linen" : "default",
     ownFields: null,
-    defaults: DEFAULT_TEMPLATE_FIELDS,
+    defaults: fields,
   });
 }
 

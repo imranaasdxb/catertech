@@ -20,6 +20,7 @@ import {
   GLASSWARE_PRESETS,
   GLASSWARE_SUBCATEGORIES,
 } from "@/lib/product-catalog/glassware-presets";
+import { LINEN_PRESETS } from "@/lib/product-catalog/linen-presets";
 import { uniqueCategorySlug, uniqueSubcategorySlug } from "@/lib/product-taxonomy";
 import { z } from "zod";
 
@@ -59,6 +60,8 @@ export async function POST(request: Request) {
         ? FURNITURE_PRESETS
         : config.name === "Glass Ware"
           ? GLASSWARE_PRESETS
+          : config.name === "Linen"
+            ? LINEN_PRESETS
           : null;
     const subcategoryNames =
       config.name === "Furniture"
@@ -115,14 +118,19 @@ export async function POST(request: Request) {
 
     const uniqueLabels = [...new Set((sourceLabels ?? []).map(normalizedPresetTitle))];
     const rows = dedicatedPresets
-      ? dedicatedPresets.map((preset, index) => ({
-          categoryId,
-          subCategoryId: subcategoryIds.get(preset.subcategory) ?? null,
-          title: cleanPresetProductTitle(preset.title),
-          sourceLabel: preset.sourceLabel,
-          attributes: preset.attributes ?? {},
-          sortOrder: index,
-        }))
+      ? dedicatedPresets.map((preset, index) => {
+          const subcategory = "subcategory" in preset ? preset.subcategory : "";
+          const description = "description" in preset ? preset.description : null;
+          return {
+            categoryId,
+            subCategoryId: subcategoryIds.get(subcategory) ?? null,
+            title: cleanPresetProductTitle(preset.title),
+            sourceLabel: preset.sourceLabel,
+            description,
+            attributes: preset.attributes ?? {},
+            sortOrder: index,
+          };
+        })
       : uniqueLabels.map((sourceLabel, index) => {
           const subcategory = config.classify(sourceLabel);
           return {
@@ -130,6 +138,7 @@ export async function POST(request: Request) {
             subCategoryId: subcategoryIds.get(subcategory) ?? null,
             title: cleanPresetProductTitle(sourceLabel),
             sourceLabel,
+            description: null,
             attributes: inferPresetAttributes(sourceLabel),
             sortOrder: index,
           };

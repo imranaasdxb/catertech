@@ -19,6 +19,7 @@ type ProductPreset = {
   id: string;
   title: string;
   sourceLabel: string;
+  description?: string | null;
   pricePerDayAed?: string | null;
   attributes: Record<string, ProductAttributeValue>;
   subCategoryId?: string | null;
@@ -34,7 +35,8 @@ type Props = {
   initialPresetId?: string | null;
   onPresetSelected: (
     attributes: Record<string, ProductAttributeValue>,
-    pricePerDayAed?: string | null
+    pricePerDayAed?: string | null,
+    description?: string | null
   ) => void;
   onTitleChange?: (title: string) => void;
   onPresetIdentityChange?: (presetId: string | null) => void;
@@ -63,7 +65,10 @@ function loadProductPresets(categoryId: string) {
 
   const key = productPresetsKey(categoryId);
   const cached = productPresetsCache.get(key);
-  if (cached) return Promise.resolve(cached);
+  if (cached && cached.every((preset) => "description" in preset)) {
+    return Promise.resolve(cached);
+  }
+  if (cached) productPresetsCache.delete(key);
 
   const existingRequest = productPresetsRequests.get(key);
   if (existingRequest) return existingRequest;
@@ -320,14 +325,14 @@ export function ProductTitlePresetInput({
   function selectPreset(preset: ProductPreset) {
     if (preset.created && preset.id !== initialPresetId) return;
     if (blurTimer.current) clearTimeout(blurTimer.current);
-    const nextTitle = preset.sourceLabel || preset.title;
+    const nextTitle = preset.title;
     setTitle(nextTitle);
     onTitleChange?.(nextTitle);
     setOpen(false);
     setCustomPresetOpen(false);
     setSelectedPresetId(preset.id);
     onPresetIdentityChange?.(preset.id);
-    onPresetSelected(preset.attributes, preset.pricePerDayAed ?? null);
+    onPresetSelected(preset.attributes, preset.pricePerDayAed ?? null, preset.description ?? null);
   }
 
   function requestCustomPreset() {

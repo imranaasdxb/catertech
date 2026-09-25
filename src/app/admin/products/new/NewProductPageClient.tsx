@@ -45,6 +45,13 @@ const emptyTaxonomySelection: TaxonomySelection = {
   subCategoryRequired: false,
 };
 
+function presetDescriptionToHtml(description: string) {
+  return `<p>${description
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")}</p>`;
+}
+
 export default function NewProductPageClient() {
   const router = useRouter();
   const galleryRef = useRef<AdminGalleryUploadHandle>(null);
@@ -66,6 +73,7 @@ export default function NewProductPageClient() {
   const [pricePerDayAed, setPricePerDayAed] = useState("");
   const [liveAttributes, setLiveAttributes] = useState<Record<string, ProductAttributeValue>>({});
   const [descriptionHtml, setDescriptionHtml] = useState("");
+  const [descriptionEditorKey, setDescriptionEditorKey] = useState(0);
   const [isPublished, setIsPublished] = useState(false);
   const [isAvailableForQuote, setIsAvailableForQuote] = useState(true);
   const [seoTitleOverride, setSeoTitleOverride] = useState<string | null>(null);
@@ -98,6 +106,7 @@ export default function NewProductPageClient() {
     setPricePerDayAed("");
     setLiveAttributes({});
     setDescriptionHtml("");
+    setDescriptionEditorKey((key) => key + 1);
     setIsPublished(false);
     setIsAvailableForQuote(true);
     setSeoTitleOverride(null);
@@ -378,9 +387,13 @@ export default function NewProductPageClient() {
                         setSelectedProductTitlePresetId(presetId);
                         if (!presetId) setPricePerDayAed("");
                       }}
-                      onPresetSelected={(attributes, presetPricePerDayAed) => {
+                      onPresetSelected={(attributes, presetPricePerDayAed, presetDescription) => {
                         setLiveAttributes(attributes);
                         setPricePerDayAed(presetPricePerDayAed ?? "");
+                        if (presetDescription) {
+                          setDescriptionHtml(presetDescriptionToHtml(presetDescription));
+                          setDescriptionEditorKey((key) => key + 1);
+                        }
                         setPresetFieldKeys(Object.keys(attributes));
                         setPresetRevision((revision) => revision + 1);
                       }}
@@ -511,8 +524,9 @@ export default function NewProductPageClient() {
                       <section>
                         <label className={admin.labelModern}>Description</label>
                         <RichText
+                          key={descriptionEditorKey}
                           name="description"
-                          defaultHtml=""
+                          defaultHtml={descriptionHtml}
                           onHtmlChange={setDescriptionHtml}
                           embed
                           editorMinHeight={220}
