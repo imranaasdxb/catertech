@@ -387,12 +387,28 @@ export default function NewProductPageClient() {
                         setSelectedProductTitlePresetId(presetId);
                         if (!presetId) setPricePerDayAed("");
                       }}
-                      onPresetSelected={(attributes, presetPricePerDayAed, presetDescription) => {
+                      onPresetSelected={(
+                        attributes,
+                        presetPricePerDayAed,
+                        presetDescription,
+                        presetSubCategoryId,
+                        presetSubCategoryName
+                      ) => {
                         setLiveAttributes(attributes);
                         setPricePerDayAed(presetPricePerDayAed ?? "");
                         if (presetDescription) {
                           setDescriptionHtml(presetDescriptionToHtml(presetDescription));
                           setDescriptionEditorKey((key) => key + 1);
+                        }
+                        if (presetSubCategoryId) {
+                          setTopSubCategoryId(presetSubCategoryId);
+                          setSelectedTaxonomy((current) => ({
+                            ...current,
+                            subCategoryId: presetSubCategoryId,
+                            subCategoryName: presetSubCategoryName ?? current.subCategoryName,
+                            hasSubcategories: true,
+                            subCategoryRequired: true,
+                          }));
                         }
                         setPresetFieldKeys(Object.keys(attributes));
                         setPresetRevision((revision) => revision + 1);

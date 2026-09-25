@@ -45,6 +45,29 @@ const COMMON_SIZE_FIELDS = [
   dimension("diameter", "Diameter", 3),
 ];
 
+const LINEN_SUBCATEGORIES = [
+  "Rectangle Table Cloths",
+  "Round Table Cloths",
+  "Square Table Cloths",
+  "Stretch Table Cloths",
+  "Table Overlays",
+  "Table Runners",
+  "Table Skirting",
+  "Buffet Cloths",
+  "Canopy Cloths",
+  "Napkins",
+  "Naprons",
+  "Place Mats",
+  "Chair Covers",
+  "Chair Bands & Sashes",
+  "Towels",
+  "Bedding",
+];
+
+const LINEN_TEMPLATE_FIELDS: TemplateFieldDef[] = [
+  { key: "size", label: "Size", type: "text", sortOrder: 0 },
+];
+
 export const CANONICAL_CATALOGUE: CatalogueCategory[] = [
   {
     name: "Furniture",
@@ -145,8 +168,8 @@ export const CANONICAL_CATALOGUE: CatalogueCategory[] = [
   },
   {
     name: "Linen",
-    subcategories: [],
-    fields: [],
+    subcategories: [...LINEN_SUBCATEGORIES],
+    fields: [...LINEN_TEMPLATE_FIELDS],
     classify: () => "",
   },
 ];

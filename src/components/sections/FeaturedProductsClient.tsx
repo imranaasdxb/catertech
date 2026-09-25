@@ -138,6 +138,7 @@ const SHOP_INITIAL_ROWS = 3;
 const SHOP_LOAD_MORE_ROWS = 2;
 const SHOP_INITIAL_VISIBLE = CARDS_PER_ROW * SHOP_INITIAL_ROWS;
 const SHOP_LOAD_MORE_STEP = CARDS_PER_ROW * SHOP_LOAD_MORE_ROWS;
+const SHOP_PAGE_CACHE_MS = 5 * 60 * 1000;
 
 function ProductCardSkeleton({ shopCompact = false }: { shopCompact?: boolean }) {
   return (
@@ -530,11 +531,6 @@ export default function FeaturedProductsClient({
   }
 
   const fetchShopProductPage = useCallback(async (page: number, append: boolean) => {
-    if (append && requestRef.current) return;
-    requestRef.current?.abort();
-    const controller = new AbortController();
-    requestRef.current = controller;
-    const { signal } = controller;
     const params = new URLSearchParams({
       page: String(page),
       pageSize: String(SHOP_INITIAL_VISIBLE),
@@ -546,6 +542,25 @@ export default function FeaturedProductsClient({
     if (selectedEquipment.size) {
       params.set("subcategories", [...selectedEquipment].sort().join(","));
     }
+    const cacheKey = params.toString();
+    const cached = pageCache.current.get(cacheKey);
+
+    if (!append && cached && cached.expiresAt > Date.now()) {
+      requestRef.current?.abort();
+      requestRef.current = null;
+      setRequestError("");
+      setLoadingMore(false);
+      setPageLoading(false);
+      setPagedProducts(cached.products);
+      setPagedMeta(cached.pagination);
+      return;
+    }
+
+    if (append && requestRef.current) return;
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
+    const { signal } = controller;
 
     setRequestError("");
     if (append) setLoadingMore(true);
@@ -556,8 +571,6 @@ export default function FeaturedProductsClient({
     }
 
     try {
-      const cacheKey = params.toString();
-      const cached = pageCache.current.get(cacheKey);
       let data: { products: ProductRow[]; pagination: ProductPagination };
       if (cached && cached.expiresAt > Date.now()) {
         data = cached;
@@ -567,11 +580,11 @@ export default function FeaturedProductsClient({
         data = await response.json();
         if (!Array.isArray(data.products) || !data.pagination) throw new Error("Invalid product response");
         if (signal.aborted) return;
-        if (pageCache.current.size >= 20) {
+        if (pageCache.current.size >= 40) {
           const oldest = pageCache.current.keys().next().value;
           if (oldest !== undefined) pageCache.current.delete(oldest);
         }
-        pageCache.current.set(cacheKey, { ...data, expiresAt: Date.now() + 30_000 });
+        pageCache.current.set(cacheKey, { ...data, expiresAt: Date.now() + SHOP_PAGE_CACHE_MS });
       }
       if (signal.aborted || requestRef.current !== controller) return;
       setPagedProducts((current) => {
@@ -600,7 +613,7 @@ export default function FeaturedProductsClient({
         const initialKey = new URLSearchParams({
           page: "1", pageSize: String(SHOP_INITIAL_VISIBLE), highlight: "all", sortOrder: "default",
         }).toString();
-        pageCache.current.set(initialKey, { products, pagination, expiresAt: Date.now() + 30_000 });
+        pageCache.current.set(initialKey, { products, pagination, expiresAt: Date.now() + SHOP_PAGE_CACHE_MS });
       }
     }
     if (!usesRemoteProducts) {

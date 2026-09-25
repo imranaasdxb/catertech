@@ -178,9 +178,9 @@ export default function StorefrontProductCard({
           {product.category || "Catering equipment"}
         </p>
 
-        <div className="flex min-w-0 flex-col gap-0.5 sm:flex-row sm:items-start sm:justify-between sm:gap-2">
+        <div className="grid min-w-0 gap-0.5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start sm:gap-2">
           <Link href={productHref} className="min-w-0 flex-1">
-            <h1 className={`line-clamp-1 sm:line-clamp-2 leading-tight ${cardTitleClass}`}>
+            <h1 className={`truncate leading-tight ${cardTitleClass}`}>
               {product.name}
             </h1>
           </Link>
@@ -195,16 +195,16 @@ export default function StorefrontProductCard({
           ) : null}
         </div>
 
-        <h2 className={`line-clamp-1 sm:line-clamp-2 ${cardDescClass}`}>
+        <h2 className={`truncate ${cardDescClass}`}>
           {product.description || "Product details available on request."}
         </h2>
 
-        <div className="flex flex-col items-center justify-end gap-1.5 pt-0 xl:flex-row xl:items-end xl:justify-between xl:gap-2 xl:pt-2">
-          <div className="min-w-0 text-center xl:text-left">
+        <div className="mt-auto flex min-w-0 flex-col gap-1.5 pt-2 min-[430px]:flex-row min-[430px]:items-end min-[430px]:justify-between min-[430px]:gap-2">
+          <div className="min-w-0 text-center min-[430px]:flex-1 min-[430px]:text-left">
             {hasDailyPrice ? (
               <p
-                className={`whitespace-nowrap font-sans font-bold leading-none text-[#1a1a1a] ${
-                  shopCompact ? "text-[10px] min-[390px]:text-[11px] min-[430px]:text-xs xl:text-lg" : "text-[11px] sm:text-sm xl:text-lg"
+                className={`truncate whitespace-nowrap font-sans font-bold leading-none text-[#1a1a1a] ${
+                  shopCompact ? "text-[10px] min-[390px]:text-[11px] md:text-xs xl:text-lg" : "text-[11px] sm:text-sm xl:text-lg"
                 }`}
               >
                 AED {priceValue}
@@ -229,7 +229,7 @@ export default function StorefrontProductCard({
           <BrandCta
             href={productHref}
             size="xs"
-            className="mx-auto w-fit shrink-0 whitespace-nowrap px-2 py-0.5 xl:mx-0 xl:ml-auto [&_.btn-brand__content]:shrink-0 [&_.btn-brand__content]:whitespace-nowrap max-sm:[&_.btn-brand__content]:gap-0.5 max-sm:[&_.btn-brand__content]:text-[7px] max-sm:[&_.btn-brand__content]:tracking-normal max-sm:[&_.btn-brand__arrow]:size-4 max-[360px]:px-1.5 max-[360px]:[&_.btn-brand__content]:text-[6.5px] max-[360px]:[&_.btn-brand__arrow]:h-3.5 max-[360px]:[&_.btn-brand__arrow]:w-3.5"
+            className="mx-auto w-fit shrink-0 whitespace-nowrap px-2 py-0.5 min-[430px]:mx-0 min-[430px]:ml-auto [&_.btn-brand__content]:shrink-0 [&_.btn-brand__content]:whitespace-nowrap max-sm:[&_.btn-brand__content]:gap-0.5 max-sm:[&_.btn-brand__content]:text-[7px] max-sm:[&_.btn-brand__content]:tracking-normal max-sm:[&_.btn-brand__arrow]:size-4 max-[360px]:px-1.5 max-[360px]:[&_.btn-brand__content]:text-[6.5px] max-[360px]:[&_.btn-brand__arrow]:h-3.5 max-[360px]:[&_.btn-brand__arrow]:w-3.5"
           >
             View &amp; quote
           </BrandCta>

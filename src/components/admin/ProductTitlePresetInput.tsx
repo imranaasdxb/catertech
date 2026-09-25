@@ -36,7 +36,9 @@ type Props = {
   onPresetSelected: (
     attributes: Record<string, ProductAttributeValue>,
     pricePerDayAed?: string | null,
-    description?: string | null
+    description?: string | null,
+    subCategoryId?: string | null,
+    subCategoryName?: string | null
   ) => void;
   onTitleChange?: (title: string) => void;
   onPresetIdentityChange?: (presetId: string | null) => void;
@@ -332,7 +334,14 @@ export function ProductTitlePresetInput({
     setCustomPresetOpen(false);
     setSelectedPresetId(preset.id);
     onPresetIdentityChange?.(preset.id);
-    onPresetSelected(preset.attributes, preset.pricePerDayAed ?? null, preset.description ?? null);
+    const presetSubcategory = presetSubcategories.find((row) => row.id === preset.subCategoryId);
+    onPresetSelected(
+      preset.attributes,
+      preset.pricePerDayAed ?? null,
+      preset.description ?? null,
+      preset.subCategoryId ?? null,
+      presetSubcategory?.name ?? null
+    );
   }
 
   function requestCustomPreset() {
