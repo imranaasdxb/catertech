@@ -11,6 +11,7 @@ import { useAdminChrome } from "./AdminChromeContext";
 
 const ACCENT = "#f87941";
 const ADMIN_STATS_CHANGED_EVENT = "admin:stats-changed";
+const VIEWED_NOTIFICATIONS_KEY = "catertech-admin-viewed-notifications";
 const STATS_RELATED_API_PREFIXES = [
   "/api/admin/products",
   "/api/admin/contacts",
@@ -22,6 +23,16 @@ const STATS_RELATED_API_PREFIXES = [
 type Stats = {
   newContacts: number;
   newQuotes: number;
+};
+
+type NotificationItem = {
+  id: string;
+  type: "contact" | "quotation" | "enquiry" | "rfq";
+  typeLabel: string;
+  title: string;
+  body: string;
+  href: string;
+  createdAt: string;
 };
 
 function titleForPath(pathname: string): string {
@@ -45,6 +56,35 @@ function roleLabel(role: string | undefined): string {
   const r = (role || "").trim().toLowerCase();
   if (r === SUPERADMIN_ROLE) return "Superadmin";
   return "Admin";
+}
+
+function relativeTimeLabel(value: string) {
+  const time = new Date(value).getTime();
+  if (!Number.isFinite(time)) return "";
+  const diffSeconds = Math.max(0, Math.floor((Date.now() - time) / 1000));
+  if (diffSeconds < 60) return "Just now";
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
+}
+
+function readViewedNotificationIds() {
+  if (typeof window === "undefined") return new Set<string>();
+  try {
+    const raw = window.localStorage.getItem(VIEWED_NOTIFICATIONS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(parsed) ? parsed.filter((id) => typeof id === "string") : []);
+  } catch {
+    return new Set<string>();
+  }
+}
+
+function writeViewedNotificationIds(ids: Set<string>) {
+  const recent = [...ids].slice(-200);
+  window.localStorage.setItem(VIEWED_NOTIFICATIONS_KEY, JSON.stringify(recent));
 }
 
 function requestPath(input: RequestInfo | URL): string {
@@ -114,7 +154,12 @@ export function AdminTopBar() {
   const [q, setQ] = useState("");
   const [searchPending, startSearchTransition] = useTransition();
   const [stats, setStats] = useState<Stats | null>(null);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [viewedNotificationIds, setViewedNotificationIds] = useState<Set<string>>(
+    () => new Set()
+  );
   const [notifOpen, setNotifOpen] = useState(false);
+  const [showAllNotifications, setShowAllNotifications] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -131,12 +176,24 @@ export function AdminTopBar() {
     });
   }, []);
 
+  const refreshNotifications = useCallback(async (signal?: AbortSignal) => {
+    const res = await fetch("/api/admin/notifications", {
+      cache: "no-store",
+      signal,
+    });
+    if (!res.ok) return;
+    const data = (await res.json()) as { notifications?: NotificationItem[] };
+    setNotifications(data.notifications ?? []);
+  }, []);
+
   useEffect(() => {
     const controller = new AbortController();
     refreshStats(controller.signal).catch(() => {});
+    refreshNotifications(controller.signal).catch(() => {});
 
     const onStatsChanged = () => {
       refreshStats().catch(() => {});
+      refreshNotifications().catch(() => {});
     };
 
     window.addEventListener(ADMIN_STATS_CHANGED_EVENT, onStatsChanged);
@@ -144,7 +201,11 @@ export function AdminTopBar() {
       controller.abort();
       window.removeEventListener(ADMIN_STATS_CHANGED_EVENT, onStatsChanged);
     };
-  }, [refreshStats]);
+  }, [refreshNotifications, refreshStats]);
+
+  useEffect(() => {
+    setViewedNotificationIds(readViewedNotificationIds());
+  }, []);
 
   useEffect(() => {
     const originalFetch = window.fetch.bind(window);
@@ -187,11 +248,29 @@ export function AdminTopBar() {
     });
   }
 
-  const bellBadge = stats?.newQuotes ?? 0;
-  const showContactAttention = Boolean(canAccessContacts && stats && stats.newContacts > 0);
-  const showQuoteAttention = Boolean(stats && stats.newQuotes > 0);
-  const notificationsCaughtUp =
-    stats != null && !showContactAttention && !showQuoteAttention;
+  function markNotificationsViewed(ids: string[]) {
+    setViewedNotificationIds((current) => {
+      const next = new Set(current);
+      ids.forEach((id) => next.add(id));
+      writeViewedNotificationIds(next);
+      return next;
+    });
+  }
+
+  const visibleNotifications = notifications.filter(
+    (item) =>
+      !viewedNotificationIds.has(item.id) &&
+      (item.type !== "contact" || canAccessContacts)
+  );
+  const displayedNotifications = showAllNotifications
+    ? visibleNotifications
+    : visibleNotifications.slice(0, 5);
+  const hiddenNotificationCount = Math.max(
+    0,
+    visibleNotifications.length - displayedNotifications.length
+  );
+  const bellBadge = visibleNotifications.length;
+  const notificationsCaughtUp = stats != null && visibleNotifications.length === 0;
 
   return (
     <header className="sticky top-0 z-30 flex h-[var(--admin-header-height)] shrink-0 items-center gap-3 bg-admin-bg px-4 sm:gap-4 sm:px-6 lg:px-7">
@@ -224,6 +303,7 @@ export function AdminTopBar() {
             badge={bellBadge > 0 ? bellBadge : undefined}
             onClick={() => {
               setNotifOpen((o) => !o);
+              setShowAllNotifications(false);
               setProfileOpen(false);
             }}
             aria-expanded={notifOpen}
@@ -235,33 +315,65 @@ export function AdminTopBar() {
 
           {notifOpen ? (
             <div
-              className="absolute right-0 top-full z-50 mt-2 w-[min(100vw-2rem,320px)] rounded-2xl border border-admin-border bg-admin-surface py-2 shadow-[0_10px_40px_rgba(0,0,0,0.08)]"
+              className="absolute right-0 top-full z-50 mt-2 w-[min(100vw-2rem,380px)] overflow-hidden rounded-2xl border border-admin-border bg-admin-surface shadow-[0_10px_40px_rgba(0,0,0,0.08)]"
               role="menu"
             >
-              <p className="px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-admin-muted">
-                Attention needed
-              </p>
-              {stats != null && stats.newContacts > 0 && canAccessContacts ? (
-                <Link
-                  href="/admin/contacts"
-                  onClick={() => setNotifOpen(false)}
-                  className="block px-4 py-2.5 text-sm text-admin-ink transition-colors hover:bg-admin-nav-hover"
-                  role="menuitem"
-                >
-                  <span className="font-semibold text-admin-accent">{stats.newContacts}</span> new contact
-                  message{stats.newContacts !== 1 ? "s" : ""}
-                </Link>
+              <div className="flex items-center justify-between gap-3 border-b border-admin-border px-4 py-3">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-admin-muted">
+                    Notifications
+                  </p>
+                  <p className="mt-0.5 text-xs text-admin-faint">
+                    {bellBadge ? `${bellBadge} unread` : "No unread notifications"}
+                  </p>
+                </div>
+                {visibleNotifications.length ? (
+                  <button
+                    type="button"
+                    onClick={() => markNotificationsViewed(visibleNotifications.map((item) => item.id))}
+                    className="shrink-0 text-xs font-semibold text-admin-accent hover:underline"
+                  >
+                    Clear all
+                  </button>
+                ) : null}
+              </div>
+              {displayedNotifications.length ? (
+                <div className="max-h-[360px] overflow-y-auto py-1">
+                  {displayedNotifications.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={item.href}
+                      onClick={() => {
+                        markNotificationsViewed([item.id]);
+                        setNotifOpen(false);
+                      }}
+                      className="block border-b border-admin-border/70 px-4 py-3 text-sm text-admin-ink transition-colors last:border-b-0 hover:bg-admin-nav-hover"
+                      role="menuitem"
+                    >
+                      <span className="mb-1 flex items-center justify-between gap-3">
+                        <span className="rounded-full bg-admin-accent/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-admin-accent">
+                          {item.typeLabel}
+                        </span>
+                        <span className="shrink-0 text-[11px] text-admin-faint">
+                          {relativeTimeLabel(item.createdAt)}
+                        </span>
+                      </span>
+                      <span className="block truncate font-semibold">{item.title}</span>
+                      <span className="mt-0.5 block truncate text-xs text-admin-muted">
+                        {item.body}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
               ) : null}
-              {stats != null && stats.newQuotes > 0 ? (
-                <Link
-                  href="/admin/quotations"
-                  onClick={() => setNotifOpen(false)}
-                  className="block px-4 py-2.5 text-sm text-admin-ink transition-colors hover:bg-admin-nav-hover"
-                  role="menuitem"
+              {hiddenNotificationCount > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setShowAllNotifications(true)}
+                  className="w-full border-t border-admin-border px-4 py-2.5 text-center text-xs font-semibold text-admin-accent transition-colors hover:bg-admin-nav-hover"
                 >
-                  <span className="font-semibold text-admin-accent">{stats.newQuotes}</span> new quotation
-                  {stats.newQuotes !== 1 ? "s" : ""}
-                </Link>
+                  View all ({visibleNotifications.length})
+                </button>
               ) : null}
               {notificationsCaughtUp ? (
                 <p className="px-4 py-3 text-sm text-admin-muted">You&apos;re all caught up.</p>

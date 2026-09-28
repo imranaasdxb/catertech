@@ -6,11 +6,14 @@ import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-lea
 import "leaflet/dist/leaflet.css";
 import { CATER_TECH_LOCATION } from "@/lib/site-location";
 
-/** Carto basemap — reliable in production (Wikimedia tiles often 403 off localhost). */
-const MAP_TILE_URL =
-  "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
-const MAP_TILE_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+const CARTO_BASEMAP_API_KEY = process.env.NEXT_PUBLIC_CARTO_BASEMAP_API_KEY?.trim();
+const CARTO_TILE_URL = CARTO_BASEMAP_API_KEY
+  ? `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${encodeURIComponent(CARTO_BASEMAP_API_KEY)}`
+  : null;
+const MAP_TILE_URL = CARTO_TILE_URL ?? "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const MAP_TILE_ATTRIBUTION = CARTO_TILE_URL
+  ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+  : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
 const OFFICE_COORDS = CATER_TECH_LOCATION.coords;
 
@@ -118,7 +121,7 @@ export default function FooterLocationMap({
       <TileLayer
         url={MAP_TILE_URL}
         attribution={MAP_TILE_ATTRIBUTION}
-        subdomains="abcd"
+        subdomains={CARTO_TILE_URL ? "abcd" : ""}
         maxZoom={20}
       />
       <MapResizeFix />

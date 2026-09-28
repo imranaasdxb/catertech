@@ -37,11 +37,6 @@ const FAQ_ITEMS = [
       "Yes. From planning and venue setup to catering, staffing, rentals, and execution, we manage every aspect of your event.",
   },
   {
-    question: "Can you customize the menu?",
-    answer:
-      "Yes. Our chefs can create customized menus based on your event type, cuisine preference, dietary requirements, and budget.",
-  },
-  {
     question: "Do you provide professional event staff?",
     answer:
       "Yes. We supply trained chefs, waiters, stewards, bartenders (where applicable), cleaners, supervisors, and event support staff.",
@@ -55,11 +50,6 @@ const FAQ_ITEMS = [
     question: "How can I request a quotation?",
     answer:
       "Simply fill out our enquiry form, call us, WhatsApp us, or email us with your event details. Our team will provide a customized quotation based on your requirements.",
-  },
-  {
-    question: "Do you offer on-site cooking services?",
-    answer:
-      "Yes. We can arrange live cooking stations and complete on-site kitchen setups where required.",
   },
   {
     question: "Why choose Catertech?",
