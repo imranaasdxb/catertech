@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import BrandCta from "@/components/ui/BrandCta";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { ProductAttributeValue } from "@/lib/category-template";
 import { imageKitUrl } from "@/lib/imagekit-optimizer";
 import { formatPricePerDayAed } from "@/lib/product-pricing";
@@ -74,6 +74,7 @@ export default function StorefrontProductCard({
   shopCompact?: boolean;
   className?: string;
 }) {
+  const router = useRouter();
   const productHref = `/shop/${product.slug}`;
   const sizeSummary = getProductSizeSummary(product.attributes);
   const priceLabel = formatPricePerDayAed(product.pricePerDayAed);
@@ -86,6 +87,7 @@ export default function StorefrontProductCard({
     return [...new Set(images)];
   }, [product.image, product.images]);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [quoteOpening, setQuoteOpening] = useState(false);
   const hasImageSlider = galleryImages.length > 1;
   const imageWidth = shopCompact ? 520 : 720;
   const cardTitleClass = `font-sans !font-normal tracking-normal text-[#1a1a1a] ${
@@ -101,7 +103,16 @@ export default function StorefrontProductCard({
 
   useEffect(() => {
     setActiveImageIndex(0);
+    setQuoteOpening(false);
   }, [product.id, galleryImages.length]);
+
+  const prefetchProduct = useCallback(() => {
+    try {
+      router.prefetch(productHref);
+    } catch {
+      // Navigation still works if prefetch is unavailable.
+    }
+  }, [productHref, router]);
 
   useEffect(() => {
     if (!hasImageSlider) return;
@@ -242,13 +253,38 @@ export default function StorefrontProductCard({
               </p>
             )}
           </div>
-          <BrandCta
+          <Link
             href={productHref}
-            size="xs"
-            className="w-fit shrink-0 self-center whitespace-nowrap px-2 py-0.5 sm:ml-auto sm:self-auto [&_.btn-brand__content]:shrink-0 [&_.btn-brand__content]:whitespace-nowrap max-sm:[&_.btn-brand__content]:gap-0.5 max-sm:[&_.btn-brand__content]:text-[7px] max-sm:[&_.btn-brand__content]:tracking-normal max-sm:[&_.btn-brand__arrow]:size-4 max-[360px]:px-1.5 max-[360px]:[&_.btn-brand__content]:text-[6.5px] max-[360px]:[&_.btn-brand__arrow]:h-3.5 max-[360px]:[&_.btn-brand__arrow]:w-3.5 [@media(max-width:366px)_and_(max-height:568px)]:self-start [@media(min-width:900px)_and_(max-width:1100px)_and_(max-height:820px)]:self-start"
+            aria-busy={quoteOpening}
+            onFocus={prefetchProduct}
+            onMouseEnter={prefetchProduct}
+            onPointerDown={prefetchProduct}
+            onTouchStart={prefetchProduct}
+            onClick={(event) => {
+              if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+              setQuoteOpening(true);
+            }}
+            className={`btn-brand w-fit shrink-0 self-center whitespace-nowrap rounded-md px-2 py-0.5 font-semibold uppercase transition-[transform,filter] duration-150 sm:ml-auto sm:self-auto active:scale-95 ${
+              quoteOpening ? "scale-95 border-transparent bg-primary text-white brightness-95" : ""
+            } [@media(max-width:366px)_and_(max-height:568px)]:self-start [@media(min-width:900px)_and_(max-width:1100px)_and_(max-height:820px)]:self-start`}
           >
-            Quote
-          </BrandCta>
+            <span className="btn-brand__content shrink-0 gap-1 whitespace-nowrap text-[8px] tracking-wide max-sm:gap-0.5 max-sm:text-[7px] max-sm:tracking-normal max-[360px]:text-[6.5px]">
+              Quote
+              <span className="btn-brand__arrow h-[18px] w-[18px] max-sm:size-4 max-[360px]:h-3.5 max-[360px]:w-3.5" aria-hidden>
+                <svg
+                  width="9"
+                  height="9"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                  className="size-2.5"
+                >
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </span>
+            </span>
+          </Link>
         </div>
       </div>
     </article>

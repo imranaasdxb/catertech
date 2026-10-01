@@ -52,6 +52,40 @@ export default function SiteRoutePrefetcher() {
   const router = useRouter();
 
   useEffect(() => {
+    if (pathname !== "/" || window.location.hash) return;
+
+    const previousScrollRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+
+    const scrollHomeToTop = () => {
+      if (window.location.pathname !== "/" || window.location.hash) return;
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    };
+
+    const onPageShow = () => {
+      scrollHomeToTop();
+      window.setTimeout(scrollHomeToTop, 150);
+    };
+
+    scrollHomeToTop();
+    const frame = window.requestAnimationFrame(scrollHomeToTop);
+    const timers = [50, 150, 350, 700, 1200].map((delay) =>
+      window.setTimeout(scrollHomeToTop, delay),
+    );
+
+    window.addEventListener("pageshow", onPageShow);
+    window.addEventListener("load", scrollHomeToTop);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      timers.forEach((timer) => window.clearTimeout(timer));
+      window.removeEventListener("pageshow", onPageShow);
+      window.removeEventListener("load", scrollHomeToTop);
+      window.history.scrollRestoration = previousScrollRestoration;
+    };
+  }, [pathname]);
+
+  useEffect(() => {
     const timers: number[] = [];
 
     const cancelIdle = scheduleIdle(() => {
