@@ -18,6 +18,7 @@ export default async function AdminQuotationsPage() {
 
   const serialized: QuotationAdminRow[] = rows.map((r) => ({
     id: r.id,
+    quoteNumber: r.quoteNumber,
     customerName: r.customerName,
     email: r.email,
     phone: r.phone,

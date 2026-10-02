@@ -115,6 +115,7 @@ function QuoteModal({
   const [errors, setErrors] = useState<Partial<QuoteFormFields>>({});
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [quoteNumber, setQuoteNumber] = useState<string | null>(null);
 
   const isWhatsApp = variant === "whatsapp";
   const totalQty = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -133,7 +134,7 @@ function QuoteModal({
   };
 
   const postQuote = async () => {
-    return fetch("/api/quote", {
+    const res = await fetch("/api/quote", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -151,6 +152,14 @@ function QuoteModal({
         })),
       }),
     });
+    const data = await res.json().catch(() => null);
+    return {
+      ok: res.ok,
+      quoteNumber:
+        data && typeof data === "object" && "quoteNumber" in data
+          ? String(data.quoteNumber || "")
+          : "",
+    };
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -162,6 +171,14 @@ function QuoteModal({
     }
 
     setSending(true);
+    const whatsappWindow = isWhatsApp ? window.open("", "_blank") : null;
+    if (whatsappWindow) {
+      try {
+        whatsappWindow.opener = null;
+      } catch {
+        // ignore
+      }
+    }
 
     const trimmedForm = {
       customerName: form.name.trim(),
@@ -177,30 +194,38 @@ function QuoteModal({
       price: item.price || undefined,
     }));
 
-    const waText = isWhatsApp
-      ? buildQuoteWhatsAppMessage({ ...trimmedForm, items: quoteItems })
-      : null;
-    const waUrl = waText ? buildWhatsAppUrl(waText) : null;
-
-    if (isWhatsApp && waUrl) {
-      openWhatsAppChat(waUrl);
-
+    if (isWhatsApp) {
       try {
         const res = await postQuote();
         if (!res.ok) {
+          whatsappWindow?.close();
           setErrors({
-            email: "WhatsApp opened, but we could not save your request. Please try again or contact us directly.",
+            email: "We could not save your request before opening WhatsApp. Please try again or contact us directly.",
           });
           setSending(false);
           return;
         }
 
+        const nextQuoteNumber = res.quoteNumber || null;
+        setQuoteNumber(nextQuoteNumber);
+        const waText = buildQuoteWhatsAppMessage({
+          ...trimmedForm,
+          quoteNumber: nextQuoteNumber ?? undefined,
+          items: quoteItems,
+        });
+        const waUrl = buildWhatsAppUrl(waText);
+        if (whatsappWindow) {
+          whatsappWindow.location.href = waUrl;
+        } else {
+          openWhatsAppChat(waUrl);
+        }
         setSending(false);
         setSent(true);
         setTimeout(onSuccess, 4000);
       } catch {
+        whatsappWindow?.close();
         setErrors({
-          email: "WhatsApp opened, but we could not save your request. Please try again or contact us directly.",
+          email: "We could not save your request before opening WhatsApp. Please try again or contact us directly.",
         });
         setSending(false);
       }
@@ -215,6 +240,7 @@ function QuoteModal({
         return;
       }
 
+      setQuoteNumber(res.quoteNumber || null);
       setSending(false);
       setSent(true);
       setTimeout(onSuccess, 2800);
@@ -337,6 +363,11 @@ function QuoteModal({
                     ? `Your request for ${items.length} item${items.length !== 1 ? "s" : ""} is saved and our team has been notified by email. Send the message in WhatsApp to complete your quote.`
                     : `Your request for ${items.length} item${items.length !== 1 ? "s" : ""} is saved. Our team will respond within 10 minutes.`}
                 </p>
+                {quoteNumber ? (
+                  <p className="mt-3 text-sm font-bold tracking-wide text-primary">
+                    Quote No. {quoteNumber}
+                  </p>
+                ) : null}
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4" noValidate>

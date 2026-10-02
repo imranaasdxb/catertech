@@ -1,5 +1,5 @@
 /** Digits only: country code, no + (e.g. 971557789673). */
-export const DEFAULT_WHATSAPP_NUMBER = "971557789673";
+export const DEFAULT_WHATSAPP_NUMBER = "971552515183";
 
 export function getWhatsAppDigits(): string {
   const raw =
@@ -23,6 +23,7 @@ export type QuoteLineForMessage = {
 };
 
 export function buildQuoteWhatsAppMessage(opts: {
+  quoteNumber?: string;
   customerName: string;
   email: string;
   phone: string;
@@ -33,6 +34,7 @@ export function buildQuoteWhatsAppMessage(opts: {
   const lines = [
     "Hello Catertech, I would like a quotation.",
     "",
+    ...(opts.quoteNumber ? [`Quote No.: ${opts.quoteNumber}`, ""] : []),
     "Customer details:",
     `Name: ${opts.customerName}`,
     `Email: ${opts.email}`,

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 export type QuotationAdminRow = {
   id: string;
+  quoteNumber: string | null;
   customerName: string;
   email: string;
   phone: string | null;
@@ -27,6 +28,7 @@ function rowMatchesSearch(row: QuotationAdminRow, q: string) {
   const n = norm(q);
   const hay = [
     row.customerName,
+    row.quoteNumber ?? "",
     row.email,
     row.phone ?? "",
     row.address ?? "",
@@ -44,7 +46,12 @@ function sameQuotationRows(a: QuotationAdminRow[], b: QuotationAdminRow[]) {
   if (a.length !== b.length) return false;
   return a.every((row, index) => {
     const next = b[index];
-    return next && row.id === next.id && row.status === next.status;
+    return (
+      next &&
+      row.id === next.id &&
+      row.status === next.status &&
+      row.quoteNumber === next.quoteNumber
+    );
   });
 }
 
@@ -285,7 +292,7 @@ export default function AdminQuotationsClient({
                     {formatUtcDateTime(r.createdAt)}
                   </p>
                   <p className="text-[10px] text-muted font-mono select-all">
-                    ID {r.id.slice(0, 8)}…
+                    {r.quoteNumber ?? "Quote No. pending"}
                   </p>
                 </div>
               </div>
@@ -297,6 +304,11 @@ export default function AdminQuotationsClient({
                     Customer
                   </p>
                   <div>
+                    {r.quoteNumber ? (
+                      <p className="mb-1 text-xs font-bold uppercase tracking-widest text-primary">
+                        {r.quoteNumber}
+                      </p>
+                    ) : null}
                     <p className="font-semibold text-charcoal text-base leading-snug">
                       {r.customerName}
                     </p>

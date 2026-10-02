@@ -270,6 +270,7 @@ export const authOtpChallenges = pgTable("auth_otp_challenges", {
 
 export const quotations = pgTable("quotations", {
   id: uuid("id").defaultRandom().primaryKey(),
+  quoteNumber: text("quote_number").unique(),
   customerName: text("customer_name").notNull(),
   email: text("email").notNull(),
   phone: text("phone"),

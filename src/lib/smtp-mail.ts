@@ -185,7 +185,7 @@ export async function sendAdminCreatedUserOtpEmail(opts: {
   }
 }
 
-const DEFAULT_QUOTE_NOTIFY = "aasimran26@gmail.com";
+const DEFAULT_QUOTE_NOTIFY = "sales@catertech.ae";
 
 export type QuoteNotifyItem = {
   name: string;
@@ -196,7 +196,7 @@ export type QuoteNotifyItem = {
 
 /** Notify admin inbox about a cart quotation (SMTP must be configured). */
 export async function sendQuoteRequestEmail(opts: {
-  quotationId: string;
+  quoteNumber: string;
   customerName: string;
   email: string;
   phone: string;
@@ -222,7 +222,6 @@ export async function sendQuoteRequestEmail(opts: {
     process.env.QUOTE_NOTIFY_EMAIL || DEFAULT_QUOTE_NOTIFY
   ).trim();
 
-  const sourceLabel = opts.source === "whatsapp" ? "WhatsApp" : "Email form";
   const hasPrice = opts.items.some((item) => item.price?.trim());
   const itemRows = opts.items
     .map((item) => {
@@ -234,17 +233,17 @@ export async function sendQuoteRequestEmail(opts: {
     .join("");
 
   const html = `
-<p><strong>New cart quotation</strong> — ${escapeHtml(sourceLabel)}</p>
-<p style="color:#666;font-size:13px">Quotation ID: <code>${escapeHtml(opts.quotationId)}</code></p>
+<p><strong>Quote request</strong></p>
 <table style="border-collapse:collapse;max-width:560px;margin:12px 0">
 <tbody>
+<tr><td style="padding:4px 8px 4px 0"><strong>Quote No.</strong></td><td>${escapeHtml(opts.quoteNumber)}</td></tr>
 <tr><td style="padding:4px 8px 4px 0"><strong>Name</strong></td><td>${escapeHtml(opts.customerName)}</td></tr>
 <tr><td style="padding:4px 8px 4px 0"><strong>Email</strong></td><td>${escapeHtml(opts.email)}</td></tr>
 <tr><td style="padding:4px 8px 4px 0"><strong>Phone</strong></td><td>${escapeHtml(opts.phone)}</td></tr>
 <tr><td style="padding:4px 8px 4px 0"><strong>Address</strong></td><td>${escapeHtml(opts.address)}</td></tr>
 ${opts.company ? `<tr><td style="padding:4px 8px 4px 0"><strong>Company</strong></td><td>${escapeHtml(opts.company)}</td></tr>` : ""}
+${opts.message ? `<tr><td style="padding:4px 8px 4px 0"><strong>Notes</strong></td><td style="white-space:pre-wrap">${escapeHtml(opts.message)}</td></tr>` : ""}
 </tbody></table>
-${opts.message ? `<p><strong>Notes</strong></p><p style="white-space:pre-wrap">${escapeHtml(opts.message)}</p>` : ""}
 <p><strong>Items</strong></p>
 <table style="border-collapse:collapse;font-size:13px;width:100%;max-width:640px">
 <thead><tr style="background:#f5f5f5"><th style="padding:8px;border:1px solid #eee;text-align:left">Product</th><th style="padding:8px;border:1px solid #eee;text-align:left">Category</th><th style="padding:8px;border:1px solid #eee;text-align:center">Qty</th>${hasPrice ? '<th style="padding:8px;border:1px solid #eee;text-align:left">Price</th>' : ""}</tr></thead>
@@ -252,15 +251,14 @@ ${opts.message ? `<p><strong>Notes</strong></p><p style="white-space:pre-wrap">$
 `;
 
   const textLines = [
-    `New cart quotation (${sourceLabel})`,
-    `Quotation ID: ${opts.quotationId}`,
-    "",
+    "Quote request",
+    `Quote No.: ${opts.quoteNumber}`,
     `Name: ${opts.customerName}`,
     `Email: ${opts.email}`,
     `Phone: ${opts.phone}`,
     `Address: ${opts.address}`,
     ...(opts.company ? [`Company: ${opts.company}`] : []),
-    ...(opts.message ? ["", "Notes:", opts.message] : []),
+    ...(opts.message ? [`Notes: ${opts.message}`] : []),
     "",
     "Items:",
     ...opts.items.map((item) => {
@@ -274,7 +272,7 @@ ${opts.message ? `<p><strong>Notes</strong></p><p style="white-space:pre-wrap">$
       from: `"${appName}" <${fromRaw}>`,
       to: toRaw,
       replyTo: opts.email,
-      subject: `[${appName}] Quote request — ${opts.customerName} (${sourceLabel})`,
+      subject: `${opts.customerName} - Quote request ${opts.quoteNumber} | ${appName}`,
       text: textLines.join("\n"),
       html,
     });

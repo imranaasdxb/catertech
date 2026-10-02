@@ -18,10 +18,10 @@ import {
 import { FaFacebook, FaInstagram, FaLinkedin, FaWhatsapp } from "react-icons/fa";
 
 const data = {
-  facebookLink: "https://facebook.com",
-  instaLink: "https://instagram.com",
-  linkedinLink: "https://linkedin.com",
-  whatsappLink: "https://wa.me/971504522867",
+  facebookLink: "https://www.facebook.com/share/1Ekz61r6HW/?mibextid=wwXIfr",
+  instaLink: "https://www.instagram.com/catertechofficial?stkn=MXQzdHRqeXp3amtubQ==",
+  linkedinLink: "https://www.linkedin.com/company/catertech-food-catering-services-llc/",
+  whatsappLink: "https://wa.me/971552515183",
   about: {
     about: "/about",
     journey: "/about/journey",
