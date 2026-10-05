@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image, { type StaticImageData } from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowRight, BadgeCheck, CircleDollarSign, PackageCheck, UsersRound } from "lucide-react";
 import furnitureImg from "@/assets/category-icons/furniture.png";
 import glasswareImg from "@/assets/category-icons/glassware.png";
@@ -69,11 +70,39 @@ function PartnerAside({ className }: { className?: string }) {
 const DESKTOP_MIN_WINDOW_WIDTH = 1536;
 const DESKTOP_GRID_MAX_CATEGORIES = 9;
 
-function CategoryCard({ category }: { category: CategoryItem }) {
+function CategoryCard({
+  category,
+  onPrefetch,
+}: {
+  category: CategoryItem;
+  onPrefetch: (href: string) => void;
+}) {
+  const href = `/shop?category=${category.slug}`;
+  const [isOpening, setIsOpening] = useState(false);
+
+  const prefetchCategory = useCallback(() => {
+    onPrefetch(href);
+  }, [href, onPrefetch]);
+
+  useEffect(() => {
+    setIsOpening(false);
+  }, [href]);
+
   return (
     <Link
-      href={`/shop?category=${category.slug}`}
-      className="hero-shop-category-card group flex w-[128px] shrink-0 flex-col overflow-hidden rounded-xl border border-primary/10 bg-white transition-transform duration-300 hover:-translate-y-0.5 sm:w-[140px] md:w-[148px] lg:w-[136px] lg:min-h-[196px]"
+      href={href}
+      aria-busy={isOpening}
+      onFocus={prefetchCategory}
+      onMouseEnter={prefetchCategory}
+      onPointerDown={prefetchCategory}
+      onTouchStart={prefetchCategory}
+      onClick={(event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        setIsOpening(true);
+      }}
+      className={`hero-shop-category-card group flex w-[128px] shrink-0 flex-col overflow-hidden rounded-xl border border-primary/10 bg-white transition-[transform,border-color,box-shadow,filter] duration-200 hover:-translate-y-0.5 active:scale-[0.98] sm:w-[140px] md:w-[148px] lg:w-[136px] lg:min-h-[196px] ${
+        isOpening ? "scale-[0.98] border-accent/60 shadow-[0_14px_32px_rgba(194,23,34,0.16)] brightness-[0.98]" : ""
+      }`}
     >
       <div className="relative h-[92px] shrink-0 bg-white sm:h-[98px] lg:h-[108px]">
         <div className="absolute inset-1 sm:inset-1.5 lg:inset-1">
@@ -99,8 +128,25 @@ function CategoryCard({ category }: { category: CategoryItem }) {
 }
 
 export default function HeroShopCategories() {
+  const router = useRouter();
   const viewportRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
+  const prefetchedCategoryHrefsRef = useRef<Set<string>>(new Set());
+
+  const prefetchCategory = useCallback(
+    (href: string) => {
+      if (prefetchedCategoryHrefsRef.current.has(href)) return;
+
+      prefetchedCategoryHrefsRef.current.add(href);
+
+      try {
+        router.prefetch(href);
+      } catch {
+        // Navigation still works if prefetch is unavailable.
+      }
+    },
+    [router],
+  );
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -149,6 +195,18 @@ export default function HeroShopCategories() {
     };
   }, []);
 
+  useEffect(() => {
+    const timers = CATEGORIES.map((category, index) =>
+      window.setTimeout(() => {
+        prefetchCategory(`/shop?category=${category.slug}`);
+      }, 700 + index * 140),
+    );
+
+    return () => {
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, [prefetchCategory]);
+
   return (
     <div className="hero-shop-categories bg-bg-warm/95 pt-4 pb-8 shadow-[inset_0_1px_0_rgba(27,43,75,0.08)] sm:pt-5 sm:pb-10 md:pb-12 xl:pt-4">
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_300px] lg:grid-rows-[auto_auto] lg:items-start lg:gap-x-3 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-x-3">
@@ -181,7 +239,7 @@ export default function HeroShopCategories() {
             className="hero-shop-categories-marquee flex w-max gap-2 sm:gap-2.5"
           >
             {CATEGORIES.map((category) => (
-              <CategoryCard key={category.slug} category={category} />
+              <CategoryCard key={category.slug} category={category} onPrefetch={prefetchCategory} />
             ))}
           </div>
         </div>

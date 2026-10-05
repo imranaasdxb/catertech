@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Container from "@/components/layout/PageContainer";
 import { useCart, type CartItem } from "@/lib/cart-context";
+import { isDisposableEmail } from "@/lib/email-domain";
 import { imageKitUrl } from "@/lib/imagekit-optimizer";
 import {
   buildQuoteWhatsAppMessage,
@@ -52,6 +53,8 @@ const purpleRadial =
 
 const inputClass =
   "w-full rounded-xl border border-[#e5e7eb] bg-white px-4 py-3 text-sm text-ink outline-none transition-colors placeholder:text-[#9ca3af] hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/20";
+
+const EMAIL_HELP_TEXT = "Use an email you can access. Our team will reply to this address.";
 
 type CartLinePrice = {
   itemId: string;
@@ -116,6 +119,7 @@ function QuoteModal({
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [quoteNumber, setQuoteNumber] = useState<string | null>(null);
+  const [whatsappRequestSaved, setWhatsappRequestSaved] = useState(true);
 
   const isWhatsApp = variant === "whatsapp";
   const totalQty = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -127,6 +131,8 @@ function QuoteModal({
     if (!form.email.trim()) nextErrors.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       nextErrors.email = "Enter a valid email";
+    } else if (isDisposableEmail(form.email)) {
+      nextErrors.email = "Temporary email addresses are not accepted";
     }
     if (!form.phone.trim()) nextErrors.phone = "Phone is required";
     if (!form.address.trim()) nextErrors.address = "Address is required";
@@ -171,6 +177,7 @@ function QuoteModal({
     }
 
     setSending(true);
+    setWhatsappRequestSaved(true);
     const whatsappWindow = isWhatsApp ? window.open("", "_blank") : null;
     if (whatsappWindow) {
       try {
@@ -195,40 +202,35 @@ function QuoteModal({
     }));
 
     if (isWhatsApp) {
+      let nextQuoteNumber: string | null = null;
+      let requestSaved = false;
+
       try {
         const res = await postQuote();
-        if (!res.ok) {
-          whatsappWindow?.close();
-          setErrors({
-            email: "We could not save your request before opening WhatsApp. Please try again or contact us directly.",
-          });
-          setSending(false);
-          return;
+        if (res.ok) {
+          requestSaved = true;
+          nextQuoteNumber = res.quoteNumber || null;
         }
-
-        const nextQuoteNumber = res.quoteNumber || null;
-        setQuoteNumber(nextQuoteNumber);
-        const waText = buildQuoteWhatsAppMessage({
-          ...trimmedForm,
-          quoteNumber: nextQuoteNumber ?? undefined,
-          items: quoteItems,
-        });
-        const waUrl = buildWhatsAppUrl(waText);
-        if (whatsappWindow) {
-          whatsappWindow.location.href = waUrl;
-        } else {
-          openWhatsAppChat(waUrl);
-        }
-        setSending(false);
-        setSent(true);
-        setTimeout(onSuccess, 4000);
       } catch {
-        whatsappWindow?.close();
-        setErrors({
-          email: "We could not save your request before opening WhatsApp. Please try again or contact us directly.",
-        });
-        setSending(false);
+        requestSaved = false;
       }
+
+      setQuoteNumber(nextQuoteNumber);
+      setWhatsappRequestSaved(requestSaved);
+      const waText = buildQuoteWhatsAppMessage({
+        ...trimmedForm,
+        quoteNumber: nextQuoteNumber ?? undefined,
+        items: quoteItems,
+      });
+      const waUrl = buildWhatsAppUrl(waText);
+      if (whatsappWindow) {
+        whatsappWindow.location.href = waUrl;
+      } else {
+        openWhatsAppChat(waUrl);
+      }
+      setSending(false);
+      setSent(true);
+      setTimeout(onSuccess, 4000);
       return;
     }
 
@@ -256,6 +258,7 @@ function QuoteModal({
     Icon: typeof User,
     type: string,
     placeholder: string,
+    helperText?: string,
   ) => (
     <div>
       <label className="mb-1.5 block text-sm text-body-muted">
@@ -277,7 +280,11 @@ function QuoteModal({
           className={`${inputClass} pl-10 ${errors[field] ? "border-accent bg-accent-soft/30" : ""}`}
         />
       </div>
-      {errors[field] ? <p className="mt-1 text-xs text-accent">{errors[field]}</p> : null}
+      {errors[field] ? (
+        <p className="mt-1 text-xs text-accent">{errors[field]}</p>
+      ) : helperText ? (
+        <p className="mt-1 text-xs leading-relaxed text-body-muted">{helperText}</p>
+      ) : null}
     </div>
   );
 
@@ -360,7 +367,9 @@ function QuoteModal({
                 </h3>
                 <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-body-muted">
                   {isWhatsApp
-                    ? `Your request for ${items.length} item${items.length !== 1 ? "s" : ""} is saved and our team has been notified by email. Send the message in WhatsApp to complete your quote.`
+                    ? whatsappRequestSaved
+                      ? `Your request for ${items.length} item${items.length !== 1 ? "s" : ""} is saved and our team has been notified by email. Send the message in WhatsApp to complete your quote.`
+                      : `WhatsApp opened with your quote details. Send the message there to complete your request.`
                     : `Your request for ${items.length} item${items.length !== 1 ? "s" : ""} is saved. Our team will respond within 10 minutes.`}
                 </p>
                 {quoteNumber ? (
@@ -378,7 +387,7 @@ function QuoteModal({
                 {renderField("name", "Full Name", User, "text", "Your full name")}
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {renderField("email", "Email Address", Mail, "email", "you@company.com")}
+                  {renderField("email", "Email Address", Mail, "email", "you@company.com", EMAIL_HELP_TEXT)}
                   {renderField("phone", "Phone Number", Phone, "tel", "+971 5X XXX XXXX")}
                 </div>
 

@@ -139,6 +139,11 @@ const SHOP_LOAD_MORE_ROWS = 2;
 const SHOP_INITIAL_VISIBLE = CARDS_PER_ROW * SHOP_INITIAL_ROWS;
 const SHOP_LOAD_MORE_STEP = CARDS_PER_ROW * SHOP_LOAD_MORE_ROWS;
 const SHOP_PAGE_CACHE_MS = 5 * 60 * 1000;
+const SHOP_PRODUCT_PAGE_CACHE = new Map<string, {
+  products: ProductRow[];
+  pagination: ProductPagination;
+  expiresAt: number;
+}>();
 
 function ProductCardSkeleton({ shopCompact = false }: { shopCompact?: boolean }) {
   return (
@@ -380,11 +385,7 @@ export default function FeaturedProductsClient({
   const [requestError, setRequestError] = useState("");
   const [reloadVersion, setReloadVersion] = useState(0);
   const requestRef = useRef<AbortController | null>(null);
-  const pageCache = useRef(new Map<string, {
-    products: ProductRow[];
-    pagination: ProductPagination;
-    expiresAt: number;
-  }>());
+  const pageCache = useRef(SHOP_PRODUCT_PAGE_CACHE);
   const initialPageSeeded = useRef(false);
   const productGridRef = useRef<HTMLDivElement>(null);
   const skipFilterScrollRef = useRef(true);

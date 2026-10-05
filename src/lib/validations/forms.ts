@@ -5,6 +5,7 @@ import {
   sanitizePhone,
   sanitizeText,
 } from "@/lib/sanitize";
+import { isDisposableEmail } from "@/lib/email-domain";
 
 function requiredText(max: number) {
   return z
@@ -50,6 +51,10 @@ const emailField = z
   .transform(sanitizeEmail)
   .pipe(z.string().email().max(320));
 
+const quoteEmailField = emailField.refine((email) => !isDisposableEmail(email), {
+  message: "Use an email you can access. Temporary email addresses are not accepted.",
+});
+
 const phoneField = z
   .string()
   .max(100)
@@ -82,7 +87,7 @@ export const enquirySchema = z.object({
 
 export const quoteSchema = z.object({
   customerName: requiredText(200),
-  email: emailField,
+  email: quoteEmailField,
   phone: phoneField,
   company: optionalText(300),
   address: requiredText(500),
