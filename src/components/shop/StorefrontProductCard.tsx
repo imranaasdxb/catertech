@@ -136,7 +136,7 @@ export default function StorefrontProductCard({
     >
       <div className="relative aspect-square w-full shrink-0 bg-[#FEFEFE]">
         {galleryImages.length > 0 ? (
-          <Link href={productHref} className="relative block h-full w-full">
+          <Link href={productHref} scroll className="relative block h-full w-full">
             {galleryImages.map((image, index) => (
               <Image
                 key={`${image}-${index}`}
@@ -205,7 +205,7 @@ export default function StorefrontProductCard({
         </p>
 
         <div className="grid min-w-0 gap-0.5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start sm:gap-2">
-          <Link href={productHref} className="min-w-0 flex-1">
+          <Link href={productHref} scroll className="min-w-0 flex-1">
             <h1 className={`truncate leading-tight ${cardTitleClass}`}>
               {product.name}
             </h1>
@@ -255,6 +255,7 @@ export default function StorefrontProductCard({
           </div>
           <Link
             href={productHref}
+            scroll
             aria-busy={quoteOpening}
             onFocus={prefetchProduct}
             onMouseEnter={prefetchProduct}

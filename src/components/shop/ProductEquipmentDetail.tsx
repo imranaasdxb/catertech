@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type CSSProperties, type PointerEvent } from "react";
 import {
   type ShopProductDetail,
@@ -292,6 +293,7 @@ function RelatedTile({ p }: { p: ShopProductCard }) {
   return (
     <Link
       href={`/shop/${p.id}`}
+      scroll
       className="group shrink-0 w-[118px] sm:w-[132px] snap-start bg-white rounded-lg border border-border hover:border-sand/50 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col"
     >
       <div className="relative aspect-square bg-cream overflow-hidden w-full">
@@ -342,6 +344,7 @@ export default function ProductEquipmentDetail({
   similarProducts?: StorefrontProductCardData[];
   categorySlug?: string | null;
 }) {
+  const router = useRouter();
   const { addItem, items, updateQty } = useCart();
   const [activeSlug, setActiveSlug] = useState(productSlug || initialProduct.slug || "");
   const product = useMemo(() => {
@@ -380,6 +383,14 @@ export default function ProductEquipmentDetail({
   useEffect(() => {
     setActiveSlug(productSlug || initialProduct.slug || "");
   }, [productSlug, initialProduct.slug]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const frame = window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [product.id]);
 
   useEffect(() => {
     setColorId(product.colors[0]?.id ?? "");
@@ -531,6 +542,14 @@ export default function ProductEquipmentDetail({
   const toggleSection = (key: AccordionKey) =>
     setOpenSection((prev) => (prev === key ? "description" : key));
 
+  const handleBackNavigation = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+      return;
+    }
+    router.push("/shop");
+  };
+
   return (
     <div className="min-h-screen bg-offwhite font-sans antialiased">
       {/* ── Breadcrumb ──────────────────────────────────────────────── */}
@@ -549,15 +568,16 @@ export default function ProductEquipmentDetail({
               {product.name}
             </span>
           </nav>
-          <Link
-            href="/shop"
+          <button
+            type="button"
+            onClick={handleBackNavigation}
             className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-sand transition-colors shrink-0"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M15 18l-6-6 6-6" />
             </svg>
-            Back to Shop
-          </Link>
+            Back
+          </button>
         </div>
       </div>
 
