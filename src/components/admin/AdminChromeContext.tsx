@@ -1,6 +1,7 @@
 "use client";
 
 import { SUPERADMIN_ROLE } from "@/lib/admin-roles";
+import type { ProductPermissions } from "@/lib/admin-permissions";
 import {
   createContext,
   useContext,
@@ -15,7 +16,7 @@ export type StaffProfile = {
   email: string;
   profileImageUrl: string | null;
   role: string;
-};
+} & ProductPermissions;
 
 const SIDEBAR_COLLAPSED_KEY = "admin-sidebar-collapsed";
 

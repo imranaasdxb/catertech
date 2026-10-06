@@ -17,6 +17,7 @@ import {
 import { ProductTitlePresetInput } from "@/components/admin/ProductTitlePresetInput";
 import { products } from "@/db/schema";
 import type { ProductAttributeValue, TemplateFieldDef } from "@/lib/category-template";
+import type { ProductPermissions } from "@/lib/admin-permissions";
 import { generateProductSeo } from "@/lib/product-seo";
 import type { InferSelectModel } from "drizzle-orm";
 import { ImageIcon } from "lucide-react";
@@ -35,11 +36,12 @@ type TaxonomySelection = {
 
 type Props = {
   product: ProductRow;
+  permissions: ProductPermissions;
   onCancel: () => void;
   onSaved: (product: ProductRow) => void;
 };
 
-export default function AdminProductViewEditPanel({ product, onCancel, onSaved }: Props) {
+export default function AdminProductViewEditPanel({ product, permissions, onCancel, onSaved }: Props) {
   const galleryRef = useRef<AdminGalleryUploadHandle>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -72,6 +74,10 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
     product.productTitlePresetId
   );
   const canShowFields = Boolean(selectedTaxonomy.categoryId);
+  const canSaveAnyProductField =
+    permissions.canUpdateProductDetails ||
+    permissions.canUpdateProductImages ||
+    permissions.canUpdateProductPrice;
 
   const handleTaxonomySelection = useCallback((selection: TaxonomySelection) => {
     setTopCategoryId((prev) => (prev === selection.categoryId ? prev : selection.categoryId));
@@ -109,21 +115,29 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
+    if (!canSaveAnyProductField) {
+      setError("You do not have permission to update products.");
+      return;
+    }
     const form = e.currentTarget;
 
     setLoading(true);
     setBlockingOpen(true);
     try {
-      setBlockingTitle("Uploading images...");
-      setBlockingSubtitle("Sending any new files to CaterTech storage.");
-      const commit = await galleryRef.current?.commitPendingUploads();
-      if (!commit) {
-        setError("Gallery is still loading. Please try again.");
-        return;
-      }
-      if (!commit.ok) {
-        setError(commit.message);
-        return;
+      let imageUrls = product.images;
+      if (permissions.canUpdateProductImages) {
+        setBlockingTitle("Uploading images...");
+        setBlockingSubtitle("Sending any new files to CaterTech storage.");
+        const commit = await galleryRef.current?.commitPendingUploads();
+        if (!commit) {
+          setError("Gallery is still loading. Please try again.");
+          return;
+        }
+        if (!commit.ok) {
+          setError(commit.message);
+          return;
+        }
+        imageUrls = commit.urls;
       }
 
       setBlockingTitle("Saving product...");
@@ -131,12 +145,12 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
 
       const fd = new FormData(form);
       const payload = {
+        ...(permissions.canUpdateProductDetails
+          ? {
         title: String(fd.get("title") || ""),
         description: String(fd.get("description") || "") || null,
-        pricePerDayAed: String(fd.get("pricePerDayAed") || "").trim() || null,
         categoryId: selectedTaxonomy.categoryId || null,
         subCategoryId: selectedTaxonomy.subCategoryId || null,
-        images: commit.urls,
         published: fd.get("published") === "on",
         isFeatured: fd.get("isFeatured") === "on",
         isAvailable: fd.get("isAvailable") === "on",
@@ -148,6 +162,12 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
           .map((keyword) => keyword.trim())
           .filter(Boolean),
         productTitlePresetId: selectedProductTitlePresetId,
+          }
+          : {}),
+        ...(permissions.canUpdateProductPrice
+          ? { pricePerDayAed: String(fd.get("pricePerDayAed") || "").trim() || null }
+          : {}),
+        ...(permissions.canUpdateProductImages ? { images: imageUrls } : {}),
       };
 
       const res = await fetch(`/api/admin/products/${product.id}`, {
@@ -195,7 +215,11 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
       <form onSubmit={(e) => void onSubmit(e)} className="grid items-start gap-3 sm:gap-3.5 lg:grid-cols-12 lg:gap-4">
         {/* Category + title band */}
         <div className="overflow-hidden rounded-xl border border-black/[0.07] bg-white lg:col-span-12">
-          <div className="border-b border-black/6 bg-admin-bg/50 px-3 py-3 sm:px-4">
+          <div
+            className={`border-b border-black/6 bg-admin-bg/50 px-3 py-3 sm:px-4 ${
+              permissions.canUpdateProductDetails ? "" : "pointer-events-none opacity-60"
+            }`}
+          >
             <ProductCategorySelects
               layout="row"
               initialCategoryId={product.categoryId}
@@ -206,7 +230,7 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
             />
           </div>
           <div className="space-y-3 p-3 sm:p-4">
-            {canShowFields ? (
+            {canShowFields && permissions.canUpdateProductDetails ? (
               <ProductTitlePresetInput
                 categoryId={selectedTaxonomy.categoryId}
                 subCategoryId={selectedTaxonomy.subCategoryId}
@@ -217,6 +241,14 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
                 onTitleChange={setLiveTitle}
                 onPresetSelected={handlePresetSelected}
                 onPresetIdentityChange={setSelectedProductTitlePresetId}
+              />
+            ) : canShowFields ? (
+              <input
+                type="text"
+                value={product.title}
+                disabled
+                className={`${admin.fieldModern} cursor-not-allowed opacity-75`}
+                aria-label="Product title"
               />
             ) : (
               <p className="rounded-lg border border-dashed border-black/10 py-4 text-center text-xs text-admin-ink/45">
@@ -233,9 +265,10 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
                 type="text"
                 inputMode="decimal"
                 value={pricePerDayAed}
+                disabled={!permissions.canUpdateProductPrice}
                 onChange={(event) => setPricePerDayAed(event.target.value)}
                 placeholder="Leave empty or enter daily rate"
-                className={`${admin.fieldModern} py-2 text-xs`}
+                className={`${admin.fieldModern} py-2 text-xs ${permissions.canUpdateProductPrice ? "" : "cursor-not-allowed opacity-75"}`}
               />
             </div>
             <div className={`${admin.checkRow} flex-wrap gap-4`}>
@@ -244,12 +277,19 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
                   type="checkbox"
                   name="published"
                   defaultChecked={product.published}
+                  disabled={!permissions.canUpdateProductDetails}
                   className={admin.checkbox}
                 />
                 Live
               </label>
               <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-admin-ink">
-                <input type="checkbox" name="isFeatured" defaultChecked={product.isFeatured} className={admin.checkbox} />
+                <input
+                  type="checkbox"
+                  name="isFeatured"
+                  defaultChecked={product.isFeatured}
+                  disabled={!permissions.canUpdateProductDetails}
+                  className={admin.checkbox}
+                />
                 Featured
               </label>
               <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-admin-ink">
@@ -257,6 +297,7 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
                   type="checkbox"
                   name="isAvailable"
                   defaultChecked={product.isAvailable}
+                  disabled={!permissions.canUpdateProductDetails}
                   className={admin.checkbox}
                 />
                 Available
@@ -279,6 +320,7 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
               id={`view-edit-gallery-${product.id}`}
               defaultUrls={product.images}
               hint="Drag & drop or click to add images."
+              readOnly={!permissions.canUpdateProductImages}
             />
           </div>
 
@@ -295,9 +337,10 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
                   id="view-edit-seo-title"
                   name="seoTitle"
                   value={seoTitleValue}
+                  disabled={!permissions.canUpdateProductDetails}
                   onChange={(event) => setSeoTitleOverride(event.target.value)}
                   maxLength={80}
-                  className={`${admin.fieldModern} py-2 text-xs`}
+                  className={`${admin.fieldModern} py-2 text-xs ${permissions.canUpdateProductDetails ? "" : "cursor-not-allowed opacity-75"}`}
                 />
               </div>
               <div>
@@ -308,10 +351,11 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
                   id="view-edit-seo-desc"
                   name="seoDescription"
                   value={seoDescriptionValue}
+                  disabled={!permissions.canUpdateProductDetails}
                   onChange={(event) => setSeoDescriptionOverride(event.target.value)}
                   maxLength={180}
                   rows={3}
-                  className={`${admin.fieldModern} py-2 text-xs`}
+                  className={`${admin.fieldModern} py-2 text-xs ${permissions.canUpdateProductDetails ? "" : "cursor-not-allowed opacity-75"}`}
                 />
               </div>
               <div>
@@ -322,9 +366,10 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
                   id="view-edit-keywords"
                   name="searchKeywords"
                   value={searchKeywordsValue}
+                  disabled={!permissions.canUpdateProductDetails}
                   onChange={(event) => setSearchKeywordsOverride(event.target.value)}
                   rows={3}
-                  className={`${admin.fieldModern} py-2 text-xs`}
+                  className={`${admin.fieldModern} py-2 text-xs ${permissions.canUpdateProductDetails ? "" : "cursor-not-allowed opacity-75"}`}
                 />
               </div>
             </div>
@@ -345,9 +390,12 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
                 initialAttributes={liveAttributes}
                 onFieldsLoaded={setTemplateFields}
                 onAttributesChange={setLiveAttributes}
+                readOnly={!permissions.canUpdateProductDetails}
               />
             ) : (
-              <p className="text-xs text-admin-ink/40">Choose a category to edit specifications.</p>
+              <p className="text-xs text-admin-ink/40">
+                Choose a category to edit specifications.
+              </p>
             )}
           </div>
 
@@ -355,17 +403,14 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
             <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-admin-ink/55">
               Description
             </p>
-            {canShowFields ? (
-              <RichText
-                key={`edit-desc-${product.id}`}
-                name="description"
-                defaultHtml={product.description ?? ""}
-                embed
-                editorMinHeight={160}
-              />
-            ) : (
-              <p className="text-xs text-admin-ink/40">Choose a category to edit description.</p>
-            )}
+            <RichText
+              key={`edit-desc-${product.id}`}
+              name="description"
+              defaultHtml={product.description ?? ""}
+              embed
+              editorMinHeight={160}
+              readOnly={!permissions.canUpdateProductDetails}
+            />
           </div>
         </div>
 
@@ -382,7 +427,7 @@ export default function AdminProductViewEditPanel({ product, onCancel, onSaved }
             </button>
             <button
               type="submit"
-              disabled={loading || blockingOpen || !canShowFields}
+              disabled={loading || blockingOpen || !canSaveAnyProductField}
               className={`${admin.primaryBtn} cursor-pointer px-5 py-2 text-xs`}
             >
               {loading ? "Saving..." : "Save changes"}

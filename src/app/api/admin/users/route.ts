@@ -4,6 +4,7 @@ import { getDb } from "@/db";
 import { users } from "@/db/schema";
 import { isStaffRole } from "@/lib/admin-roles";
 import { getSessionUser } from "@/lib/auth-user";
+import type { ProductPermissions } from "@/lib/admin-permissions";
 
 export const runtime = "nodejs";
 
@@ -17,7 +18,7 @@ export type AdminUserRow = {
   updatedAt: string;
   lastLoginAt: string | null;
   isCurrentUser: boolean;
-};
+} & ProductPermissions;
 
 function toIso(v: Date | string | null): string | null {
   if (!v) return null;
@@ -49,6 +50,10 @@ export async function GET() {
       email: users.email,
       profileImageUrl: users.profileImageUrl,
       role: users.role,
+      canUpdateProductPrice: users.canUpdateProductPrice,
+      canDeleteProduct: users.canDeleteProduct,
+      canUpdateProductImages: users.canUpdateProductImages,
+      canUpdateProductDetails: users.canUpdateProductDetails,
       createdAt: users.createdAt,
       updatedAt: users.updatedAt,
       lastLoginAt: users.lastLoginAt,
@@ -63,6 +68,10 @@ export async function GET() {
       email: u.email,
       profileImageUrl: u.profileImageUrl ?? null,
       role: publicRole(u.role),
+      canUpdateProductPrice: u.canUpdateProductPrice,
+      canDeleteProduct: u.canDeleteProduct,
+      canUpdateProductImages: u.canUpdateProductImages,
+      canUpdateProductDetails: u.canUpdateProductDetails,
       createdAt: toIso(u.createdAt) ?? new Date().toISOString(),
       updatedAt: toIso(u.updatedAt) ?? new Date().toISOString(),
       lastLoginAt: toIso(u.lastLoginAt),

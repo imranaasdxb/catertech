@@ -19,6 +19,7 @@ type Props = {
   initialFieldKeys?: string[];
   onFieldsLoaded?: (fields: TemplateFieldDef[]) => void;
   onAttributesChange?: (attributes: Record<string, ProductAttributeValue>) => void;
+  readOnly?: boolean;
 };
 
 const templateFieldsCache = new Map<string, TemplateFieldDef[]>();
@@ -73,6 +74,7 @@ export function ProductTemplateFields({
   initialFieldKeys,
   onFieldsLoaded,
   onAttributesChange,
+  readOnly = false,
 }: Props) {
   const [fields, setFields] = useState<TemplateFieldDef[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,10 +124,12 @@ export function ProductTemplateFields({
   );
 
   function removeField(key: string) {
+    if (readOnly) return;
     updateFields(fields.filter((field) => field.key !== key));
   }
 
   function addSizeField(key: string) {
+    if (readOnly) return;
     const selected = remainingSizeFields.find((field) => field.key === key);
     if (!selected) return;
     updateFields(
@@ -137,6 +141,7 @@ export function ProductTemplateFields({
     key: string,
     value: ProductAttributeValue | null
   ) {
+    if (readOnly) return;
     if (!onAttributesChange) return;
     onAttributesChange({
       ...(initialAttributes ?? {}),
@@ -163,9 +168,12 @@ export function ProductTemplateFields({
         <div>
           <p className={`${admin.formSectionTitle} mb-0`}>Category fields</p>
           <p className="mt-1 text-xs text-admin-ink/45">
-            Preset values stay editable. Remove fields you do not need or add another field.
+            {readOnly
+              ? "Saved values are visible only for this account."
+              : "Preset values stay editable. Remove fields you do not need or add another field."}
           </p>
         </div>
+        {!readOnly ? (
         <div className="flex flex-wrap items-center gap-2">
           <label
             className={`relative inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-semibold text-admin-ink shadow-sm transition hover:border-black/20 ${
@@ -190,6 +198,7 @@ export function ProductTemplateFields({
             </select>
           </label>
         </div>
+        ) : null}
       </div>
 
       {fields.length ? (
@@ -205,9 +214,10 @@ export function ProductTemplateFields({
               <button
                 type="button"
                 onClick={() => removeField(field.key)}
-                className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-admin-ink/35 transition hover:bg-black/5 hover:text-admin-ink"
+                className={`grid h-6 w-6 shrink-0 place-items-center rounded-md text-admin-ink/35 transition hover:bg-black/5 hover:text-admin-ink ${readOnly ? "hidden" : ""}`}
                 aria-label={`Remove ${field.label}`}
                 title={`Remove ${field.label}`}
+                disabled={readOnly}
               >
                 <X size={14} aria-hidden="true" />
               </button>
@@ -225,6 +235,7 @@ export function ProductTemplateFields({
                     id={id}
                     name={`attr_${field.key}`}
                     defaultValue={value}
+                    readOnly={readOnly}
                     onChange={(event) =>
                       emitAttributeChange(field.key, {
                         value: event.target.value,
@@ -233,18 +244,19 @@ export function ProductTemplateFields({
                     }
                     required={field.required}
                     placeholder={`Enter ${field.label.toLowerCase()}`}
-                    className={`${admin.fieldModern} min-w-0 flex-1`}
+                    className={`${admin.fieldModern} min-w-0 flex-1 ${readOnly ? "cursor-not-allowed opacity-75" : ""}`}
                   />
                   <select
                     name={`attr_${field.key}_unit`}
                     defaultValue={unit === "" || units.includes(unit) ? unit : units[0]}
+                    disabled={readOnly}
                     onChange={(event) =>
                       emitAttributeChange(field.key, {
                         value,
                         unit: event.target.value,
                       })
                     }
-                    className={`${admin.fieldModern} w-full sm:w-32`}
+                    className={`${admin.fieldModern} w-full sm:w-32 ${readOnly ? "cursor-not-allowed opacity-75" : ""}`}
                     aria-label={`${field.label} unit`}
                   >
                     <option value="">Choose unit</option>
@@ -268,9 +280,10 @@ export function ProductTemplateFields({
                   id={id}
                   name={`attr_${field.key}`}
                   defaultValue={value}
+                  disabled={readOnly}
                   onChange={(event) => emitAttributeChange(field.key, event.target.value)}
                   required={field.required}
-                  className={admin.fieldModern}
+                  className={`${admin.fieldModern} ${readOnly ? "cursor-not-allowed opacity-75" : ""}`}
                 >
                   <option value="">— Select —</option>
                   {(field.options ?? []).map((opt) => (
@@ -292,10 +305,11 @@ export function ProductTemplateFields({
                   id={id}
                   name={`attr_${field.key}`}
                   defaultValue={value}
+                  readOnly={readOnly}
                   onChange={(event) => emitAttributeChange(field.key, event.target.value)}
                   required={field.required}
                   rows={3}
-                  className={admin.fieldModern}
+                  className={`${admin.fieldModern} ${readOnly ? "cursor-not-allowed opacity-75" : ""}`}
                 />
               </div>
             );
@@ -309,9 +323,10 @@ export function ProductTemplateFields({
                 id={id}
                 name={`attr_${field.key}`}
                 defaultValue={value}
+                readOnly={readOnly}
                 onChange={(event) => emitAttributeChange(field.key, event.target.value)}
                 required={field.required}
-                className={admin.fieldModern}
+                className={`${admin.fieldModern} ${readOnly ? "cursor-not-allowed opacity-75" : ""}`}
               />
             </div>
           );

@@ -238,6 +238,10 @@ export const users = pgTable("users", {
   profileImageUrl: text("profile_image_url"),
   /** Neon: exactly `admin` or `superadmin` (lowercase). */
   role: text("role").notNull().default("admin"),
+  canUpdateProductPrice: boolean("can_update_product_price").notNull().default(true),
+  canDeleteProduct: boolean("can_delete_product").notNull().default(true),
+  canUpdateProductImages: boolean("can_update_product_images").notNull().default(true),
+  canUpdateProductDetails: boolean("can_update_product_details").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

@@ -40,6 +40,7 @@ export type RichTextProps = {
   className?: string;
   /** Min height of the editable area in pixels. */
   editorMinHeight?: number;
+  readOnly?: boolean;
 };
 
 /** True when pasted HTML has no meaningful text (for required body validation). */
@@ -82,6 +83,7 @@ export default function RichText({
   embed = true,
   className = "",
   editorMinHeight = 200,
+  readOnly = false,
 }: RichTextProps) {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -120,14 +122,16 @@ export default function RichText({
 
   const execCommand = useCallback(
     (command: string, value?: string) => {
+      if (readOnly) return;
       document.execCommand(command, false, value);
       focusEditor();
       syncFromEditor();
     },
-    [focusEditor, syncFromEditor]
+    [focusEditor, readOnly, syncFromEditor]
   );
 
   const handleEraseAll = () => {
+    if (readOnly) return;
     setShowEraseModal(true);
   };
 
@@ -149,6 +153,7 @@ export default function RichText({
   };
 
   const handleToolbarAction = (action: ToolbarAction) => {
+    if (readOnly) return;
     switch (action) {
       case "bold":
       case "italic":
@@ -222,6 +227,7 @@ export default function RichText({
   };
 
   const handleFontSizeChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    if (readOnly) return;
     execCommand("fontSize", e.target.value);
   };
 
@@ -257,6 +263,7 @@ export default function RichText({
 
   const uploadFileIntoEditor = useCallback(
     async (file: File) => {
+      if (readOnly) return;
       const maxSize = 10 * 1024 * 1024;
       if (file.size > maxSize) {
         alert("File size should be less than 10MB");
@@ -283,7 +290,7 @@ export default function RichText({
       }
       insertMediaHtml(file, up.url);
     },
-    [focusEditor, insertMediaHtml]
+    [focusEditor, insertMediaHtml, readOnly]
   );
 
   const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -297,6 +304,7 @@ export default function RichText({
 
   const handlePaste = async (e: ReactClipboardEvent<HTMLDivElement>) => {
     const cd = e.clipboardData;
+    if (readOnly) return;
     if (!cd) return;
 
     const files: File[] = [];
@@ -318,6 +326,7 @@ export default function RichText({
 
   const handleDrop = async (e: ReactDragEvent<HTMLDivElement>) => {
     const dt = e.dataTransfer;
+    if (readOnly) return;
     if (!dt?.files?.length) return;
 
     const files = Array.from(dt.files).filter((f) => {
@@ -338,6 +347,7 @@ export default function RichText({
 
   const handleDragOver = (e: ReactDragEvent<HTMLDivElement>) => {
     if (e.dataTransfer?.types?.includes("Files")) {
+      if (readOnly) return;
       e.preventDefault();
       e.dataTransfer.dropEffect = "copy";
     }
@@ -345,12 +355,15 @@ export default function RichText({
 
   const onKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
     if (e.key === "b" && e.ctrlKey) {
+      if (readOnly) return;
       e.preventDefault();
       handleToolbarAction("bold");
     } else if (e.key === "i" && e.ctrlKey) {
+      if (readOnly) return;
       e.preventDefault();
       handleToolbarAction("italic");
     } else if (e.key === "u" && e.ctrlKey) {
+      if (readOnly) return;
       e.preventDefault();
       handleToolbarAction("underline");
     }
@@ -368,6 +381,7 @@ export default function RichText({
     <div className={rootClass}>
       <input type="hidden" name={name} value={html} onChange={() => {}} />
 
+      {!readOnly ? (
       <div className="toolbar">
         <button
           type="button"
@@ -520,12 +534,14 @@ export default function RichText({
           onChange={handleFileUpload}
         />
       </div>
+      ) : null}
 
       <div
         ref={editorRef}
-        className="editor-area"
-        contentEditable
+        className={`editor-area ${readOnly ? "cursor-not-allowed opacity-80" : ""}`}
+        contentEditable={!readOnly}
         role="textbox"
+        aria-readonly={readOnly}
         aria-multiline
         onKeyDown={onKeyDown}
         onPaste={handlePaste}

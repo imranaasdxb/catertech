@@ -5,6 +5,7 @@ import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import AdminProductViewEditPanel from "@/components/admin/AdminProductViewEditPanel";
 import AdminProductViewPanel from "@/components/admin/AdminProductViewPanel";
 import { AdminPanelModal } from "@/components/admin/AdminPanelModal";
+import { useAdminChrome } from "@/components/admin/AdminChromeContext";
 import SubmitSearch from "@/components/ui/SubmitSearch";
 import { notifyProductTaxonomyChanged } from "@/components/admin/ProductCategorySelects";
 import { products, type ProductAttributeValue } from "@/db/schema";
@@ -13,6 +14,7 @@ import { Check, ChevronLeft, ChevronRight, DollarSign, Eye, Loader2, Pencil, Tra
 import Link from "next/link";
 import { formatUtcDate } from "@/lib/format-datetime";
 import { imageKitUrl } from "@/lib/imagekit-optimizer";
+import { productPermissionsFromProfile } from "@/lib/admin-permissions";
 import { normalizePricePerDayAed } from "@/lib/product-pricing";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -195,9 +197,11 @@ function VisibilityToggle({
 
 function InlinePriceEditor({
   row,
+  disabled,
   onSaved,
 }: {
   row: AdminProductListRow;
+  disabled?: boolean;
   onSaved: (updated: ProductRow) => void;
 }) {
   const [draft, setDraft] = useState(row.pricePerDayAed ?? "");
@@ -211,6 +215,7 @@ function InlinePriceEditor({
   }, [row.pricePerDayAed]);
 
   async function savePrice() {
+    if (disabled) return;
     const trimmed = draft.trim();
     const normalized = normalizePricePerDayAed(trimmed);
 
@@ -254,7 +259,7 @@ function InlinePriceEditor({
           inputMode="decimal"
           aria-label={`Price per day for ${row.title}`}
           value={draft}
-          disabled={saving}
+          disabled={saving || disabled}
           placeholder="Add price"
           onChange={(event) => {
             setDraft(event.target.value);
@@ -271,14 +276,16 @@ function InlinePriceEditor({
               event.currentTarget.blur();
             }
           }}
-          className="min-w-0 flex-1 bg-transparent px-1 text-xs font-semibold text-admin-ink outline-none placeholder:text-admin-ink/35 disabled:cursor-wait"
+          className={`min-w-0 flex-1 bg-transparent px-1 text-xs font-semibold text-admin-ink outline-none placeholder:text-admin-ink/35 ${
+            disabled ? "disabled:cursor-not-allowed" : "disabled:cursor-wait"
+          }`}
         />
         {saving ? (
           <Loader2 className="h-3 w-3 shrink-0 animate-spin text-admin-ink/35" aria-hidden />
         ) : null}
       </label>
       <p className={`mt-0.5 text-[10px] font-medium ${error ? "text-red-500" : "text-admin-ink/40"}`}>
-        {error || "per day"}
+        {error || (disabled ? "No permission" : "per day")}
       </p>
     </div>
   );
@@ -295,6 +302,12 @@ export default function AdminProductsTable({
   initialSearch?: string;
   emptyMessage?: string;
 }) {
+  const { staffProfile, staffProfileLoading } = useAdminChrome();
+  const permissions = productPermissionsFromProfile(staffProfile);
+  const canEditAnyProductField =
+    permissions.canUpdateProductDetails ||
+    permissions.canUpdateProductImages ||
+    permissions.canUpdateProductPrice;
   const pageCacheRef = useRef(new Map<string, ProductsPagePayload>());
   const pageRequestRef = useRef(new Map<string, Promise<ProductsPagePayload>>());
   const productCacheRef = useRef(new Map<string, ProductRow>());
@@ -750,9 +763,10 @@ export default function AdminProductsTable({
           viewProduct && !viewLoading && !viewLoadErr && !viewEditing ? (
             <button
               type="button"
+              disabled={staffProfileLoading || !canEditAnyProductField}
               className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-admin-ink/45 transition-colors hover:bg-admin-accent/12 hover:text-admin-accent"
-              aria-label="Edit product"
-              title="Edit product"
+              aria-label={canEditAnyProductField ? "Edit product" : "No product edit permission"}
+              title={canEditAnyProductField ? "Edit product" : "No product edit permission"}
               onClick={() => setViewEditing(true)}
             >
               <Pencil className="h-4 w-4" aria-hidden />
@@ -774,6 +788,7 @@ export default function AdminProductsTable({
           <AdminProductViewEditPanel
             key={`edit-${viewProduct.id}-${viewProduct.updatedAt}`}
             product={viewProduct}
+            permissions={permissions}
             onCancel={() => setViewEditing(false)}
             onSaved={(updated) => {
               setViewEditing(false);
@@ -781,7 +796,10 @@ export default function AdminProductsTable({
             }}
           />
         ) : viewProduct ? (
-          <AdminProductViewPanel product={viewProduct} onEdit={() => setViewEditing(true)} />
+          <AdminProductViewPanel
+            product={viewProduct}
+            onEdit={canEditAnyProductField ? () => setViewEditing(true) : undefined}
+          />
         ) : null}
       </AdminPanelModal>
 
@@ -874,7 +892,11 @@ export default function AdminProductsTable({
                     <Specifications attributes={r.attributes} />
                   </td>
                   <td className="px-2 py-3 sm:px-3">
-                    <InlinePriceEditor row={r} onSaved={handleInlinePriceSaved} />
+                    <InlinePriceEditor
+                      row={r}
+                      disabled={staffProfileLoading || !permissions.canUpdateProductPrice}
+                      onSaved={handleInlinePriceSaved}
+                    />
                   </td>
                   <td className="px-2 py-3 sm:px-3">
                     <div className="flex flex-wrap gap-1 sm:gap-1.5">
@@ -882,7 +904,7 @@ export default function AdminProductsTable({
                         active={r.published}
                         label="Live"
                         title={r.published ? "Unpublish (move to draft)" : "Publish live"}
-                        disabled={togglingId === r.id}
+                        disabled={togglingId === r.id || staffProfileLoading || !permissions.canUpdateProductDetails}
                         onClick={() =>
                           setToggleAction({
                             id: r.id,
@@ -896,7 +918,7 @@ export default function AdminProductsTable({
                         active={r.isFeatured}
                         label="Featured"
                         title={r.isFeatured ? "Remove from homepage" : "Feature on homepage"}
-                        disabled={togglingId === r.id}
+                        disabled={togglingId === r.id || staffProfileLoading || !permissions.canUpdateProductDetails}
                         onClick={() =>
                           setToggleAction({
                             id: r.id,
@@ -910,7 +932,7 @@ export default function AdminProductsTable({
                         active={r.isAvailable}
                         label="Available"
                         title={r.isAvailable ? "Mark unavailable" : "Mark available"}
-                        disabled={togglingId === r.id}
+                        disabled={togglingId === r.id || staffProfileLoading || !permissions.canUpdateProductDetails}
                         onClick={() =>
                           setToggleAction({
                             id: r.id,
@@ -927,9 +949,10 @@ export default function AdminProductsTable({
                       <div className="flex items-center justify-end gap-1">
                         <button
                           type="button"
-                          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-admin-ink/45 transition-colors hover:bg-admin-accent/15 hover:text-admin-accent"
-                          title="Edit"
-                          aria-label={`Edit ${r.title}`}
+                          disabled={staffProfileLoading || !canEditAnyProductField}
+                          className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-admin-ink/45 transition-colors hover:bg-admin-accent/15 hover:text-admin-accent disabled:cursor-not-allowed disabled:opacity-40"
+                          title={canEditAnyProductField ? "Edit" : "No product edit permission"}
+                          aria-label={canEditAnyProductField ? `Edit ${r.title}` : `No product edit permission for ${r.title}`}
                           onClick={() => openView(r.id, true)}
                         >
                           <Pencil className="h-3.5 w-3.5" aria-hidden />
@@ -945,10 +968,10 @@ export default function AdminProductsTable({
                         </button>
                         <button
                           type="button"
-                          disabled={deletingId === r.id}
+                          disabled={deletingId === r.id || staffProfileLoading || !permissions.canDeleteProduct}
                           className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-admin-ink/35 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
-                          title="Delete"
-                          aria-label={`Delete ${r.title}`}
+                          title={permissions.canDeleteProduct ? "Delete" : "No delete permission"}
+                          aria-label={permissions.canDeleteProduct ? `Delete ${r.title}` : `No delete permission for ${r.title}`}
                           onClick={() => setDeleteTarget(r)}
                         >
                           <Trash2 className="h-3.5 w-3.5" aria-hidden />

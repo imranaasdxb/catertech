@@ -6,6 +6,7 @@ import AdminGalleryUpload, {
 } from "@/components/admin/AdminGalleryUpload";
 import { AdminBlockingOverlay, AdminSuccessModal } from "@/components/admin/AdminFormOverlays";
 import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
+import { useAdminChrome } from "@/components/admin/AdminChromeContext";
 import {
   parseProductAttributes,
   ProductTemplateFields,
@@ -17,6 +18,7 @@ import {
 import { ADMIN_PURPLE, admin, adminCardShadow } from "@/components/admin/admin-theme";
 import { products } from "@/db/schema";
 import type { TemplateFieldDef } from "@/lib/category-template";
+import { productPermissionsFromProfile } from "@/lib/admin-permissions";
 import type { InferSelectModel } from "drizzle-orm";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -36,6 +38,12 @@ export default function ProductEditClient({
   onDeleted,
 }: Props) {
   const router = useRouter();
+  const { staffProfile, staffProfileLoading } = useAdminChrome();
+  const permissions = productPermissionsFromProfile(staffProfile);
+  const canSaveAnyProductField =
+    permissions.canUpdateProductDetails ||
+    permissions.canUpdateProductImages ||
+    permissions.canUpdateProductPrice;
   const galleryRef = useRef<AdminGalleryUploadHandle>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -56,24 +64,33 @@ export default function ProductEditClient({
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
+    if (!canSaveAnyProductField) {
+      setError("You do not have permission to update products.");
+      return;
+    }
     const fd = new FormData(e.currentTarget);
 
     setBlockingOpen(true);
-    setBlockingTitle("Uploading images…");
-    setBlockingSubtitle("Sending any new files to CaterTech storage.");
-    const commit = await galleryRef.current!.commitPendingUploads();
-    if (!commit.ok) {
-      setBlockingOpen(false);
-      setError(commit.message);
-      return;
+    let imageUrls = product.images;
+    if (permissions.canUpdateProductImages) {
+      setBlockingTitle("Uploading images…");
+      setBlockingSubtitle("Sending any new files to CaterTech storage.");
+      const commit = await galleryRef.current!.commitPendingUploads();
+      if (!commit.ok) {
+        setBlockingOpen(false);
+        setError(commit.message);
+        return;
+      }
+      imageUrls = commit.urls;
     }
 
     setBlockingTitle("Saving product…");
     setBlockingSubtitle("Updating your catalogue entry.");
-      const payload = {
+    const payload = {
+      ...(permissions.canUpdateProductDetails
+        ? {
         title: String(fd.get("title") || ""),
         description: String(fd.get("description") || "") || null,
-        pricePerDayAed: String(fd.get("pricePerDayAed") || "").trim() || null,
         categoryId: (() => {
         const raw = fd.get("categoryId");
         const s = typeof raw === "string" ? raw.trim() : "";
@@ -84,12 +101,17 @@ export default function ProductEditClient({
         const s = typeof raw === "string" ? raw.trim() : "";
         return s === "" ? null : s;
       })(),
-      images: commit.urls,
       published: publishIntent === "live",
       isFeatured: fd.get("isFeatured") === "on",
       isAvailable: fd.get("isAvailable") === "on",
       attributes: parseProductAttributes(fd, templateFields),
       productTitlePresetId: product.productTitlePresetId,
+        }
+        : {}),
+      ...(permissions.canUpdateProductPrice
+        ? { pricePerDayAed: String(fd.get("pricePerDayAed") || "").trim() || null }
+        : {}),
+      ...(permissions.canUpdateProductImages ? { images: imageUrls } : {}),
     };
 
     setLoading(true);
@@ -103,7 +125,7 @@ export default function ProductEditClient({
 
     if (!res.ok) {
       const data = (await res.json().catch(() => ({}))) as { error?: unknown };
-      setError(JSON.stringify(data.error ?? "Save failed"));
+      setError(typeof data.error === "string" ? data.error : JSON.stringify(data.error ?? "Save failed"));
       return;
     }
     notifyProductTaxonomyChanged();
@@ -168,7 +190,13 @@ export default function ProductEditClient({
         <form onSubmit={(e) => void onSubmit(e)} className={formSurface} style={formStyle}>
           <div>
             <label className={admin.labelModern}>Title *</label>
-            <input name="title" required defaultValue={product.title} className={admin.fieldModern} />
+            <input
+              name="title"
+              required
+              defaultValue={product.title}
+              disabled={!permissions.canUpdateProductDetails}
+              className={`${admin.fieldModern} ${permissions.canUpdateProductDetails ? "" : "cursor-not-allowed opacity-75"}`}
+            />
           </div>
           <div>
             <label htmlFor="product-price-per-day" className={admin.labelModern}>
@@ -180,11 +208,12 @@ export default function ProductEditClient({
               type="text"
               inputMode="decimal"
               defaultValue={product.pricePerDayAed ?? ""}
+              disabled={!permissions.canUpdateProductPrice}
               placeholder="Leave empty or enter daily rate"
-              className={admin.fieldModern}
+              className={`${admin.fieldModern} ${permissions.canUpdateProductPrice ? "" : "cursor-not-allowed opacity-75"}`}
             />
           </div>
-          <div>
+          <div className={!permissions.canUpdateProductDetails ? "pointer-events-none opacity-75" : undefined}>
             <ProductCategorySelects
               initialCategoryId={product.categoryId}
               initialSubCategoryId={product.subCategoryId}
@@ -197,13 +226,14 @@ export default function ProductEditClient({
           </div>
 
           {categoryId ? (
-            <ProductTemplateFields
-              key={categoryId}
-              categoryId={categoryId}
-              subCategoryId={subCategoryId}
-              initialAttributes={(product.attributes ?? {}) as Record<string, string | { value: string; unit?: string }>}
-              onFieldsLoaded={setTemplateFields}
-            />
+              <ProductTemplateFields
+                key={categoryId}
+                categoryId={categoryId}
+                subCategoryId={subCategoryId}
+                initialAttributes={(product.attributes ?? {}) as Record<string, string | { value: string; unit?: string }>}
+                onFieldsLoaded={setTemplateFields}
+                readOnly={!permissions.canUpdateProductDetails}
+              />
           ) : null}
 
           <div>
@@ -214,6 +244,7 @@ export default function ProductEditClient({
               defaultHtml={product.description ?? ""}
               embed
               editorMinHeight={220}
+              readOnly={!permissions.canUpdateProductDetails}
             />
           </div>
           <div>
@@ -223,11 +254,18 @@ export default function ProductEditClient({
               ref={galleryRef}
               id={`product-gallery-${product.id}`}
               defaultUrls={product.images}
+              readOnly={!permissions.canUpdateProductImages}
             />
           </div>
           <div className={`${admin.checkRow} mt-4 flex-wrap`}>
             <label className="flex cursor-pointer items-center gap-2">
-              <input type="checkbox" name="isFeatured" defaultChecked={product.isFeatured} className={admin.checkbox} />
+              <input
+                type="checkbox"
+                name="isFeatured"
+                defaultChecked={product.isFeatured}
+                disabled={!permissions.canUpdateProductDetails}
+                className={admin.checkbox}
+              />
               Featured
             </label>
             <label className="flex cursor-pointer items-center gap-2">
@@ -235,6 +273,7 @@ export default function ProductEditClient({
                 type="checkbox"
                 name="isAvailable"
                 defaultChecked={product.isAvailable}
+                disabled={!permissions.canUpdateProductDetails}
                 className={admin.checkbox}
               />
               Available
@@ -246,7 +285,7 @@ export default function ProductEditClient({
           <div className="flex flex-wrap gap-3 pt-5">
             <button
               type="submit"
-              disabled={loading || blockingOpen}
+              disabled={loading || blockingOpen || staffProfileLoading || !canSaveAnyProductField}
               onClick={() => setPublishIntent("draft")}
               className={`${admin.secondaryBtn} ${isModal ? "text-xs py-3" : ""}`}
             >
@@ -254,7 +293,7 @@ export default function ProductEditClient({
             </button>
             <button
               type="submit"
-              disabled={loading || blockingOpen}
+              disabled={loading || blockingOpen || staffProfileLoading || !canSaveAnyProductField}
               onClick={() => setPublishIntent("live")}
               className={`${admin.primaryBtn} ${isModal ? "text-xs py-3" : ""}`}
               style={{ backgroundColor: ADMIN_PURPLE }}
@@ -263,6 +302,7 @@ export default function ProductEditClient({
             </button>
             <button
               type="button"
+              disabled={staffProfileLoading || !permissions.canDeleteProduct}
               onClick={() => setDeleteConfirmOpen(true)}
               className={`${admin.dangerBtn} ${isModal ? "text-xs py-3" : ""}`}
             >

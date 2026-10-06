@@ -32,6 +32,7 @@ type Props = {
   id?: string;
   defaultUrls?: string[];
   hint?: string;
+  readOnly?: boolean;
 };
 
 function newId(): string {
@@ -51,7 +52,7 @@ function isChosenImageFile(file: File): boolean {
 }
 
 const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
-  function AdminGalleryUpload({ defaultUrls = [], id = "admin-gallery-file", hint }, ref) {
+  function AdminGalleryUpload({ defaultUrls = [], id = "admin-gallery-file", hint, readOnly = false }, ref) {
     const cleanDefaults = useMemo(
       () => defaultUrls.filter((u, i, a) => u && a.indexOf(u) === i),
       [defaultUrls]
@@ -80,15 +81,17 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
     }, []);
 
     const removeAt = useCallback((index: number) => {
+      if (readOnly) return;
       setItems((prev) => {
         const rm = prev[index];
         const next = prev.filter((_, j) => j !== index);
         if (rm?.kind === "local") URL.revokeObjectURL(rm.previewUrl);
         return next;
       });
-    }, []);
+    }, [readOnly]);
 
     const moveItem = useCallback((fromIndex: number, toIndex: number) => {
+      if (readOnly) return;
       setItems((prev) => {
         if (
           fromIndex < 0 ||
@@ -105,9 +108,10 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
         next.splice(toIndex, 0, moved);
         return next;
       });
-    }, []);
+    }, [readOnly]);
 
     const addImageFiles = useCallback((files: FileList | File[] | null) => {
+      if (readOnly) return;
       if (!files?.length) {
         if (fileRef.current) fileRef.current.value = "";
         setPickingBusy(false);
@@ -140,7 +144,7 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
 
       setPickingBusy(false);
       if (fileRef.current) fileRef.current.value = "";
-    }, []);
+    }, [readOnly]);
 
     const readClipboardImages = useCallback((clipboard: DataTransfer | null) => {
       if (!clipboard) return [] as File[];
@@ -172,6 +176,7 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
 
     useEffect(() => {
       const onPaste = (e: ClipboardEvent) => {
+        if (readOnly) return;
         if (committing || pickingBusy) return;
 
         const active = document.activeElement;
@@ -194,16 +199,17 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
 
       document.addEventListener("paste", onPaste);
       return () => document.removeEventListener("paste", onPaste);
-    }, [addImageFiles, committing, pickingBusy, readClipboardImages]);
+    }, [addImageFiles, committing, pickingBusy, readClipboardImages, readOnly]);
 
     const handleDragOver = useCallback(
       (e: DragEvent<HTMLDivElement>) => {
+        if (readOnly) return;
         if (committing || pickingBusy) return;
         e.preventDefault();
         e.stopPropagation();
         setDragOver(true);
       },
-      [committing, pickingBusy]
+      [committing, pickingBusy, readOnly]
     );
 
     const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
@@ -218,11 +224,12 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
         e.preventDefault();
         e.stopPropagation();
         setDragOver(false);
+        if (readOnly) return;
         if (committing || pickingBusy) return;
         setPickingBusy(true);
         addImageFiles(e.dataTransfer.files);
       },
-      [addImageFiles, committing, pickingBusy]
+      [addImageFiles, committing, pickingBusy, readOnly]
     );
 
     useImperativeHandle(ref, () => ({
@@ -297,13 +304,14 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
           accept="image/*"
           multiple
           className="sr-only"
-          disabled={pickingBusy || committing}
+          disabled={pickingBusy || committing || readOnly}
           onChange={(e) => {
             setPickingBusy(true);
             addImageFiles(e.target.files);
           }}
         />
 
+        {!readOnly ? (
         <div className="flex flex-wrap items-center gap-3">
           <label
             htmlFor={id}
@@ -320,8 +328,13 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
             Upload, drag and drop, or paste multiple images. Use the arrows to set image order.
           </p>
         </div>
+        ) : (
+          <p className="text-[11px] font-medium text-admin-ink/40">
+            Images are visible only. You do not have permission to edit them.
+          </p>
+        )}
 
-        {showHint ? <p className={admin.hint}>{hint}</p> : null}
+        {showHint && !readOnly ? <p className={admin.hint}>{hint}</p> : null}
 
         {lastError ? (
           <p
@@ -346,6 +359,11 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
             ))}
           </div>
         ) : items.length === 0 ? (
+          readOnly ? (
+          <div className="flex min-h-[7.5rem] w-full items-center justify-center rounded-xl border border-dashed border-black/12 bg-admin-bg/50 text-xs font-medium text-admin-ink/35">
+            No images uploaded
+          </div>
+          ) : (
           <label
             htmlFor={id}
             className={`flex min-h-[7.5rem] w-full cursor-pointer items-center justify-center rounded-xl border border-dashed transition-colors ${
@@ -364,6 +382,7 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
               </span>
             </span>
           </label>
+          )
         ) : (
           <div
             role="list"
@@ -387,8 +406,8 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
                   type="button"
                   aria-label={`Remove image ${idx + 1}`}
                   onClick={() => removeAt(idx)}
-                  className="absolute right-1.5 top-1.5 z-10 rounded-full bg-white/95 p-1 text-admin-ink/60 shadow hover:text-red-600"
-                  disabled={committing}
+                  className={`absolute right-1.5 top-1.5 z-10 rounded-full bg-white/95 p-1 text-admin-ink/60 shadow hover:text-red-600 ${readOnly ? "hidden" : ""}`}
+                  disabled={committing || readOnly}
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -406,7 +425,7 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
                     aria-label={`Move image ${idx + 1} earlier`}
                     title="Move earlier"
                     onClick={() => moveItem(idx, idx - 1)}
-                    disabled={committing || idx === 0}
+                    disabled={committing || readOnly || idx === 0}
                     className="rounded p-1 text-admin-ink/50 hover:bg-white hover:text-admin-accent disabled:pointer-events-none disabled:opacity-20"
                   >
                     <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
@@ -423,7 +442,7 @@ const AdminGalleryUpload = forwardRef<AdminGalleryUploadHandle, Props>(
                     aria-label={`Move image ${idx + 1} later`}
                     title="Move later"
                     onClick={() => moveItem(idx, idx + 1)}
-                    disabled={committing || idx === items.length - 1}
+                    disabled={committing || readOnly || idx === items.length - 1}
                     className="rounded p-1 text-admin-ink/50 hover:bg-white hover:text-admin-accent disabled:pointer-events-none disabled:opacity-20"
                   >
                     <ArrowRight className="h-3.5 w-3.5" aria-hidden />

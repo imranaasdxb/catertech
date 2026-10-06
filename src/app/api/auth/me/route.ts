@@ -4,6 +4,7 @@ import { getDb } from "@/db";
 import { users } from "@/db/schema";
 import { getSessionUser } from "@/lib/auth-user";
 import { isStaffRole } from "@/lib/admin-roles";
+import { DEFAULT_PRODUCT_PERMISSIONS } from "@/lib/admin-permissions";
 
 export const runtime = "nodejs";
 
@@ -12,6 +13,10 @@ type StaffProfile = {
   email: string;
   profileImageUrl: string | null;
   role: string;
+  canUpdateProductPrice: boolean;
+  canDeleteProduct: boolean;
+  canUpdateProductImages: boolean;
+  canUpdateProductDetails: boolean;
 };
 
 const PROFILE_CACHE_MS = 10_000;
@@ -97,6 +102,10 @@ export async function GET() {
           email: users.email,
           profileImageUrl: users.profileImageUrl,
           role: users.role,
+          canUpdateProductPrice: users.canUpdateProductPrice,
+          canDeleteProduct: users.canDeleteProduct,
+          canUpdateProductImages: users.canUpdateProductImages,
+          canUpdateProductDetails: users.canUpdateProductDetails,
         })
         .from(users)
         .where(eq(users.id, sess.userId))
@@ -110,6 +119,14 @@ export async function GET() {
         email: u.email,
         profileImageUrl: u.profileImageUrl ?? null,
         role: u.role.trim().toLowerCase(),
+        ...(u.role.trim().toLowerCase() === "superadmin"
+          ? DEFAULT_PRODUCT_PERMISSIONS
+          : {
+              canUpdateProductPrice: u.canUpdateProductPrice,
+              canDeleteProduct: u.canDeleteProduct,
+              canUpdateProductImages: u.canUpdateProductImages,
+              canUpdateProductDetails: u.canUpdateProductDetails,
+            }),
       };
     }).finally(() => {
       inFlight.delete(sess.userId);

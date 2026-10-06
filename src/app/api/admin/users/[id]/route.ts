@@ -14,6 +14,10 @@ type UpdateBody = {
   fullName?: string;
   profileImageUrl?: string | null;
   role?: string;
+  canUpdateProductPrice?: boolean;
+  canDeleteProduct?: boolean;
+  canUpdateProductImages?: boolean;
+  canUpdateProductDetails?: boolean;
 };
 
 const ALLOWED_ROLES = new Set(["admin", "superadmin", "blocked"]);
@@ -54,12 +58,41 @@ export async function PATCH(request: Request, { params }: Params) {
   if (!fullName) return bad("Full name is required.");
 
   try {
+    const [current] = await db
+      .select({
+        canUpdateProductPrice: users.canUpdateProductPrice,
+        canDeleteProduct: users.canDeleteProduct,
+        canUpdateProductImages: users.canUpdateProductImages,
+        canUpdateProductDetails: users.canUpdateProductDetails,
+      })
+      .from(users)
+      .where(eq(users.id, id))
+      .limit(1);
+
+    if (!current) return bad("User not found.", 404);
+
     const updated = await db
       .update(users)
       .set({
         fullName,
         profileImageUrl,
         role,
+        canUpdateProductPrice:
+          typeof body.canUpdateProductPrice === "boolean"
+            ? body.canUpdateProductPrice
+            : current.canUpdateProductPrice,
+        canDeleteProduct:
+          typeof body.canDeleteProduct === "boolean"
+            ? body.canDeleteProduct
+            : current.canDeleteProduct,
+        canUpdateProductImages:
+          typeof body.canUpdateProductImages === "boolean"
+            ? body.canUpdateProductImages
+            : current.canUpdateProductImages,
+        canUpdateProductDetails:
+          typeof body.canUpdateProductDetails === "boolean"
+            ? body.canUpdateProductDetails
+            : current.canUpdateProductDetails,
         updatedAt: new Date(),
       })
       .where(eq(users.id, id))

@@ -25,6 +25,12 @@ import type { AdminUserRow } from "@/app/api/admin/users/route";
 import { AdminConfirmDialog } from "@/components/admin/AdminConfirmDialog";
 import { AdminPanelModal } from "@/components/admin/AdminPanelModal";
 import { admin } from "@/components/admin/admin-theme";
+import {
+  DEFAULT_PRODUCT_PERMISSIONS,
+  PRODUCT_PERMISSION_KEYS,
+  PRODUCT_PERMISSION_LABELS,
+  type ProductPermissions,
+} from "@/lib/admin-permissions";
 import { uploadMediaPublicUrl } from "@/lib/upload-media-client";
 import { cn } from "@/lib/utils";
 
@@ -32,7 +38,7 @@ type Draft = {
   fullName: string;
   profileImageUrl: string;
   role: AdminUserRow["role"];
-};
+} & ProductPermissions;
 
 type CreateDraft = {
   fullName: string;
@@ -109,7 +115,15 @@ function draftFromUser(user: AdminUserRow): Draft {
     fullName: user.fullName,
     profileImageUrl: user.profileImageUrl ?? "",
     role: user.role,
+    canUpdateProductPrice: user.canUpdateProductPrice,
+    canDeleteProduct: user.canDeleteProduct,
+    canUpdateProductImages: user.canUpdateProductImages,
+    canUpdateProductDetails: user.canUpdateProductDetails,
   };
+}
+
+function shownPermissions(draft: Draft) {
+  return draft.role === "superadmin" ? DEFAULT_PRODUCT_PERMISSIONS : draft;
 }
 
 export default function AdminUsersClient() {
@@ -264,6 +278,10 @@ export default function AdminUsersClient() {
           fullName: nextDraft.fullName,
           profileImageUrl: nextDraft.profileImageUrl,
           role: nextDraft.role,
+          canUpdateProductPrice: nextDraft.canUpdateProductPrice,
+          canDeleteProduct: nextDraft.canDeleteProduct,
+          canUpdateProductImages: nextDraft.canUpdateProductImages,
+          canUpdateProductDetails: nextDraft.canUpdateProductDetails,
         }),
       });
       if (!res.ok) {
@@ -289,6 +307,10 @@ export default function AdminUsersClient() {
           fullName: user.fullName,
           profileImageUrl: user.profileImageUrl ?? "",
           role,
+          canUpdateProductPrice: user.canUpdateProductPrice,
+          canDeleteProduct: user.canDeleteProduct,
+          canUpdateProductImages: user.canUpdateProductImages,
+          canUpdateProductDetails: user.canUpdateProductDetails,
         }),
       });
       if (!res.ok) {
@@ -674,6 +696,7 @@ export default function AdminUsersClient() {
             const shownAvatar =
               isEditing ? avatarPreviewUrl || draft.profileImageUrl : user.profileImageUrl;
             const shownRole = isEditing ? draft.role : user.role;
+            const permissionDraft = isEditing ? shownPermissions(draft) : user;
 
             return (
               <article
@@ -754,6 +777,41 @@ export default function AdminUsersClient() {
                         <option value="superadmin">Super admin</option>
                         <option value="blocked">Blocked</option>
                       </select>
+                      <div className="rounded-2xl border border-admin-border bg-admin-bg/70 p-3">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-admin-muted">
+                          Product permissions
+                        </p>
+                        <p className="mt-1 text-xs text-admin-muted">
+                          Control what this admin can change inside Products.
+                        </p>
+                        <div className="mt-3 grid gap-2">
+                          {PRODUCT_PERMISSION_KEYS.map((permission) => (
+                            <label
+                              key={permission}
+                              className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-admin-border bg-white px-3 py-2 text-sm font-semibold text-admin-ink"
+                            >
+                              <span>{PRODUCT_PERMISSION_LABELS[permission]}</span>
+                              <input
+                                type="checkbox"
+                                checked={permissionDraft[permission]}
+                                disabled={draft.role === "superadmin"}
+                                onChange={(event) =>
+                                  setDraft({
+                                    ...draft,
+                                    [permission]: event.target.checked,
+                                  } as Draft)
+                                }
+                                className={admin.checkbox}
+                              />
+                            </label>
+                          ))}
+                        </div>
+                        {draft.role === "superadmin" ? (
+                          <p className="mt-2 text-xs font-medium text-admin-muted">
+                            Super admins always have all product permissions.
+                          </p>
+                        ) : null}
+                      </div>
                       <div className="rounded-2xl border border-admin-border bg-admin-bg/70 p-3">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div className="min-w-0">

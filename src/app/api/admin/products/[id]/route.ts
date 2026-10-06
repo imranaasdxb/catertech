@@ -2,6 +2,11 @@ import { and, eq, ne } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { isAdminSession } from "@/lib/auth-user";
+import {
+  getCurrentProductPermissions,
+  missingProductPermissions,
+} from "@/lib/admin-permission-check";
+import type { ProductPermissionKey } from "@/lib/admin-permissions";
 import { products, productTitlePresets, type ProductAttributeValue } from "@/db/schema";
 import { cleanPresetProductTitle } from "@/lib/product-catalog/canonical-catalog";
 import {
@@ -44,6 +49,14 @@ function categoryParts(value: string | null | undefined) {
     .split(/›|â€º|>/)
     .map((part) => part.trim())
     .filter(Boolean);
+}
+
+function sameStringArray(left: string[], right: string[]) {
+  return JSON.stringify(left ?? []) === JSON.stringify(right ?? []);
+}
+
+function sameRecord(left: unknown, right: unknown) {
+  return JSON.stringify(left ?? {}) === JSON.stringify(right ?? {});
 }
 
 export async function GET(
@@ -123,6 +136,53 @@ export async function PUT(
     d.attributes !== undefined
       ? (d.attributes as Record<string, ProductAttributeValue>)
       : (row.attributes as Record<string, ProductAttributeValue>);
+
+  const requiredPermissions: ProductPermissionKey[] = [];
+  if (d.pricePerDayAed !== undefined && pricePerDayAed !== row.pricePerDayAed) {
+    requiredPermissions.push("canUpdateProductPrice");
+  }
+  if (d.images !== undefined && !sameStringArray(d.images, row.images)) {
+    requiredPermissions.push("canUpdateProductImages");
+  }
+  const detailsChanged =
+    (d.title !== undefined && d.title !== row.title) ||
+    (d.description !== undefined && (d.description ?? null) !== row.description) ||
+    (d.categoryId !== undefined && d.categoryId !== (row.categoryId ?? null)) ||
+    (d.subCategoryId !== undefined && d.subCategoryId !== (row.subCategoryId ?? null)) ||
+    (d.productTitlePresetId !== undefined &&
+      d.productTitlePresetId !== (row.productTitlePresetId ?? null)) ||
+    (d.isAvailable !== undefined && d.isAvailable !== row.isAvailable) ||
+    (d.isFeatured !== undefined && d.isFeatured !== row.isFeatured) ||
+    (d.published !== undefined && d.published !== row.published) ||
+    (d.attributes !== undefined && !sameRecord(d.attributes, row.attributes)) ||
+    (d.seoTitle !== undefined && (d.seoTitle ?? null) !== (row.seoTitle ?? null)) ||
+    (d.seoDescription !== undefined &&
+      (d.seoDescription ?? null) !== (row.seoDescription ?? null)) ||
+    (d.searchKeywords !== undefined && !sameStringArray(d.searchKeywords, row.searchKeywords)) ||
+    (d.canonicalProductId !== undefined &&
+      d.canonicalProductId !== (row.canonicalProductId ?? null));
+
+  if (detailsChanged) {
+    requiredPermissions.push("canUpdateProductDetails");
+  }
+
+  if (requiredPermissions.length) {
+    const permissionResult = await getCurrentProductPermissions();
+    if (!permissionResult.ok) {
+      return NextResponse.json(
+        { error: permissionResult.reason === "database" ? "Database not configured" : "Unauthorized" },
+        { status: permissionResult.reason === "database" ? 503 : 401 }
+      );
+    }
+
+    const missing = missingProductPermissions(permissionResult.permissions, requiredPermissions);
+    if (missing.length) {
+      return NextResponse.json(
+        { error: "You do not have permission to make this product change." },
+        { status: 403 }
+      );
+    }
+  }
 
   let productTitlePresetId =
     d.productTitlePresetId !== undefined
@@ -377,6 +437,21 @@ export async function DELETE(
   const db = getDb();
   if (!db)
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+
+  const permissionResult = await getCurrentProductPermissions();
+  if (!permissionResult.ok) {
+    return NextResponse.json(
+      { error: permissionResult.reason === "database" ? "Database not configured" : "Unauthorized" },
+      { status: permissionResult.reason === "database" ? 503 : 401 }
+    );
+  }
+
+  if (!permissionResult.permissions.canDeleteProduct) {
+    return NextResponse.json(
+      { error: "You do not have permission to delete products." },
+      { status: 403 }
+    );
+  }
 
   const deleted = await db
     .delete(products)
