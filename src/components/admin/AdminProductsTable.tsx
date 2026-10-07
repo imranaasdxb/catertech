@@ -56,6 +56,7 @@ type ProductsPagePayload = {
 };
 
 type FilterKey = "all" | string;
+type VisibilityFilter = "all" | "live" | "not-live" | "featured";
 type SortOrder = "default" | "a-z";
 
 type ToggleAction = {
@@ -315,6 +316,7 @@ export default function AdminProductsTable({
   const [localRows, setLocalRows] = useState(rows);
   const [searchInput, setSearchInput] = useState(initialSearch);
   const [filter, setFilter] = useState<FilterKey>("all");
+  const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>("live");
   const [showMissingPriceOnly, setShowMissingPriceOnly] = useState(false);
   const [sortOrder, setSortOrder] = useState<SortOrder>("default");
   const [viewId, setViewId] = useState<string | null>(null);
@@ -490,6 +492,7 @@ export default function AdminProductsTable({
       sort: sortOrder,
     });
     if (filter !== "all") params.set("categoryId", filter);
+    params.set("visibility", visibilityFilter);
     if (searchInput) params.set("search", searchInput);
     if (showMissingPriceOnly) params.set("missingPrice", "true");
     const cacheKey = params.toString();
@@ -528,7 +531,7 @@ export default function AdminProductsTable({
     return () => {
       cancelled = true;
     };
-  }, [cacheProducts, filter, loadProductsPage, page, searchInput, showMissingPriceOnly, sortOrder, reloadVersion]);
+  }, [cacheProducts, filter, loadProductsPage, page, searchInput, showMissingPriceOnly, sortOrder, visibilityFilter, reloadVersion]);
 
   useEffect(() => {
     if (!loadingRows && !loadError && page > totalPages) {
@@ -654,7 +657,7 @@ export default function AdminProductsTable({
   return (
     <div className="mx-auto w-full max-w-[1560px] px-1 sm:px-2 lg:px-4">
       <div className="mb-5 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(7.5rem,9rem)] gap-2 sm:gap-3 lg:grid-cols-[minmax(18rem,2fr)_9rem_auto_5.75rem_auto] xl:flex xl:items-center xl:gap-2">
+        <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(7.5rem,9rem)] gap-2 sm:gap-3 lg:grid-cols-[minmax(18rem,2fr)_9rem_8.5rem_auto_5.75rem_auto] xl:flex xl:items-center xl:gap-2">
           <SubmitSearch
             value={searchInput}
             onSearch={handleSearchSubmit}
@@ -678,6 +681,20 @@ export default function AdminProductsTable({
                 {category.name}
               </option>
             ))}
+          </select>
+          <select
+            value={visibilityFilter}
+            onChange={(e) => {
+              setPage(1);
+              setVisibilityFilter(e.target.value as VisibilityFilter);
+            }}
+            aria-label="Filter products by visibility"
+            className="h-[42px] w-full min-w-0 shrink-0 cursor-pointer rounded-lg border border-admin-border bg-white px-2.5 text-sm text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15 lg:w-36 xl:w-36"
+          >
+            <option value="live">Live on site</option>
+            <option value="featured">Featured</option>
+            <option value="not-live">Not live</option>
+            <option value="all">All products</option>
           </select>
           <button
             type="button"

@@ -155,6 +155,7 @@ export default function AdminUsersClient() {
   const [createOtpSent, setCreateOtpSent] = useState(false);
   const [createCode, setCreateCode] = useState("");
   const [createMessage, setCreateMessage] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
@@ -253,6 +254,7 @@ export default function AdminUsersClient() {
     setCreateOtpSent(false);
     setCreateCode("");
     setCreateMessage(null);
+    setCreateError(null);
   }
 
   function openCreateModal() {
@@ -408,11 +410,12 @@ export default function AdminUsersClient() {
 
   async function sendCreateOtp() {
     if (createDraft.password !== createDraft.confirmPassword) {
-      setError("Passwords do not match.");
+      setCreateError("Passwords do not match.");
       return;
     }
     setCreateBusy(true);
     setCreateMessage(null);
+    setCreateError(null);
     setError(null);
     try {
       const res = await fetch("/api/admin/users/create/send-otp", {
@@ -427,7 +430,7 @@ export default function AdminUsersClient() {
       });
       const data = (await res.json().catch(() => null)) as { error?: string } | null;
       if (!res.ok) {
-        setError(data?.error || "Could not send user verification code.");
+        setCreateError(data?.error || "Could not send user verification code.");
         return;
       }
       setCreateOtpSent(true);
@@ -440,6 +443,7 @@ export default function AdminUsersClient() {
   async function verifyCreateOtp() {
     setCreateBusy(true);
     setCreateMessage(null);
+    setCreateError(null);
     setError(null);
     try {
       const res = await fetch("/api/admin/users/create/verify-otp", {
@@ -449,7 +453,7 @@ export default function AdminUsersClient() {
       });
       const data = (await res.json().catch(() => null)) as { error?: string } | null;
       if (!res.ok) {
-        setError(data?.error || "Could not verify user creation code.");
+        setCreateError(data?.error || "Could not verify user creation code.");
         return;
       }
       closeCreateModal();
@@ -526,6 +530,11 @@ export default function AdminUsersClient() {
     { label: "Super admins", value: counts.superadmins },
     { label: "Blocked", value: counts.blocked },
   ];
+  const editingUser = useMemo(
+    () => users.find((user) => user.id === editingId) ?? null,
+    [editingId, users]
+  );
+  const editPermissionDraft = draft ? shownPermissions(draft) : null;
 
   return (
     <div className="space-y-6 md:space-y-8">
@@ -622,7 +631,14 @@ export default function AdminUsersClient() {
             <p className="text-xs font-medium text-admin-muted">Uploading profile image...</p>
           ) : null}
           {createMessage ? (
-            <p className="text-xs font-medium text-admin-accent">{createMessage}</p>
+            <div className="rounded-2xl border border-admin-accent/25 bg-admin-accent/10 px-3 py-2 text-xs font-semibold text-admin-accent">
+              {createMessage}
+            </div>
+          ) : null}
+          {createError ? (
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-800">
+              {createError}
+            </div>
           ) : null}
           <div className="grid grid-cols-2 gap-2">
             <IconButton
@@ -640,6 +656,172 @@ export default function AdminUsersClient() {
             />
           </div>
         </form>
+      </AdminPanelModal>
+
+      <AdminPanelModal
+        open={Boolean(editingUser && draft)}
+        title={editingUser ? `Edit ${editingUser.fullName}` : "Edit user"}
+        subtitle="Update role, product permissions, avatar, and login email."
+        onClose={cancelEdit}
+        widthClass="max-w-[min(100%-1rem,42rem)]"
+      >
+        {editingUser && draft && editPermissionDraft ? (
+          <form
+            autoComplete="off"
+            onSubmit={(event) => event.preventDefault()}
+            className="max-h-[min(78vh,48rem)] space-y-4 overflow-y-auto rounded-[22px] border border-admin-border bg-white p-4 shadow-sm sm:p-5"
+          >
+            <div className="flex flex-col items-center border-b border-admin-border pb-4 text-center">
+              <ProfileAvatar
+                name={draft.fullName || editingUser.fullName}
+                imageUrl={avatarPreviewUrl || draft.profileImageUrl || undefined}
+                size="lg"
+                editable
+                onPickFile={(file) => void uploadAvatar(file)}
+              />
+              <p className="mt-3 max-w-full truncate text-sm font-semibold text-admin-ink">
+                {editingUser.email}
+              </p>
+              {avatarUploadingId === editingUser.id ? (
+                <p className="mt-1 text-xs font-medium text-admin-muted">
+                  Uploading profile image...
+                </p>
+              ) : null}
+            </div>
+
+            <input
+              value={draft.fullName}
+              onChange={(e) => setDraft({ ...draft, fullName: e.target.value })}
+              className={admin.fieldModern}
+              placeholder="Full name"
+            />
+            <select
+              value={draft.role}
+              onChange={(e) =>
+                setDraft({
+                  ...draft,
+                  role: e.target.value as AdminUserRow["role"],
+                })
+              }
+              className={admin.fieldModern}
+            >
+              <option value="admin">Admin</option>
+              <option value="superadmin">Super admin</option>
+              <option value="blocked">Blocked</option>
+            </select>
+
+            <div className="rounded-2xl border border-admin-border bg-admin-bg/70 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-admin-muted">
+                Product permissions
+              </p>
+              <p className="mt-1 text-xs text-admin-muted">
+                Control what this admin can change inside Products.
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {PRODUCT_PERMISSION_KEYS.map((permission) => (
+                  <label
+                    key={permission}
+                    className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-admin-border bg-white px-3 py-2 text-sm font-semibold text-admin-ink"
+                  >
+                    <span>{PRODUCT_PERMISSION_LABELS[permission]}</span>
+                    <input
+                      type="checkbox"
+                      checked={editPermissionDraft[permission]}
+                      disabled={draft.role === "superadmin"}
+                      onChange={(event) =>
+                        setDraft({
+                          ...draft,
+                          [permission]: event.target.checked,
+                        } as Draft)
+                      }
+                      className={admin.checkbox}
+                    />
+                  </label>
+                ))}
+              </div>
+              {draft.role === "superadmin" ? (
+                <p className="mt-2 text-xs font-medium text-admin-muted">
+                  Super admins always have all product permissions.
+                </p>
+              ) : null}
+            </div>
+
+            <div className="rounded-2xl border border-admin-border bg-admin-bg/70 p-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-admin-muted">
+                    Login email
+                  </p>
+                  <p className="mt-0.5 truncate text-sm font-medium text-admin-ink">
+                    {editingUser.email}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    emailEditId === editingUser.id ? cancelEmailEdit() : beginEmailEdit(editingUser)
+                  }
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-admin-border bg-white px-3 text-sm font-semibold text-admin-ink transition-colors hover:border-admin-accent/35 hover:bg-admin-bg"
+                >
+                  <Mail className="size-4" aria-hidden />
+                  {emailEditId === editingUser.id ? "Cancel email" : "Change email"}
+                </button>
+              </div>
+
+              {emailEditId === editingUser.id ? (
+                <div className="mt-3 space-y-2">
+                  <input
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    className={admin.fieldModern}
+                    placeholder="New verified email"
+                  />
+                  {emailOtpSent ? (
+                    <input
+                      value={emailCode}
+                      onChange={(e) => setEmailCode(e.target.value)}
+                      className={admin.fieldModern}
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="6-digit OTP"
+                    />
+                  ) : null}
+                  {emailMessage ? (
+                    <p className="text-xs font-medium text-admin-accent">
+                      {emailMessage}
+                    </p>
+                  ) : null}
+                  <div className="grid grid-cols-2 gap-2">
+                    <IconButton
+                      label={emailOtpSent ? "Resend" : "Send OTP"}
+                      icon={Send}
+                      disabled={emailBusyId === editingUser.id}
+                      onClick={() => void sendEmailOtp(editingUser)}
+                    />
+                    <IconButton
+                      label="Verify"
+                      icon={Save}
+                      disabled={emailBusyId === editingUser.id || !emailOtpSent}
+                      onClick={() => void verifyEmailOtp(editingUser)}
+                      variant="primary"
+                    />
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <IconButton
+                label="Save"
+                icon={Save}
+                disabled={savingId === editingUser.id || avatarUploadingId === editingUser.id}
+                onClick={() => void updateUser(editingUser, draft)}
+                variant="primary"
+              />
+              <IconButton label="Cancel" icon={X} onClick={cancelEdit} />
+            </div>
+          </form>
+        ) : null}
       </AdminPanelModal>
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -689,14 +871,8 @@ export default function AdminUsersClient() {
       ) : (
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((user) => {
-            const isEditing = editingId === user.id && draft;
             const busy = savingId === user.id;
-            const emailBusy = emailBusyId === user.id;
-            const shownName = isEditing ? draft.fullName || user.fullName : user.fullName;
-            const shownAvatar =
-              isEditing ? avatarPreviewUrl || draft.profileImageUrl : user.profileImageUrl;
-            const shownRole = isEditing ? draft.role : user.role;
-            const permissionDraft = isEditing ? shownPermissions(draft) : user;
+            const isEditing = editingId === user.id;
 
             return (
               <article
@@ -719,23 +895,21 @@ export default function AdminUsersClient() {
                   <span
                     className={cn(
                       "absolute right-4 top-4 inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em]",
-                      roleBadgeClass(shownRole)
+                      roleBadgeClass(user.role)
                     )}
                   >
-                    {roleLabel(shownRole)}
+                    {roleLabel(user.role)}
                   </span>
                 </div>
 
                 <div className="relative px-5 pb-5">
                   <div className="-mt-12 flex flex-col items-center text-center">
                     <ProfileAvatar
-                      name={shownName}
-                      imageUrl={shownAvatar || undefined}
-                      editable={Boolean(isEditing)}
-                      onPickFile={(file) => void uploadAvatar(file)}
+                      name={user.fullName}
+                      imageUrl={user.profileImageUrl || undefined}
                     />
                     <h2 className="mt-4 max-w-full truncate text-lg font-bold tracking-tight text-slate-900">
-                      {shownName}
+                      {user.fullName}
                     </h2>
                     <a
                       href={`mailto:${encodeURIComponent(user.email)}`}
@@ -750,172 +924,39 @@ export default function AdminUsersClient() {
                     <Meta icon={Clock} label="Last login" value={user.lastLoginAt ? formatUtcDateTime(user.lastLoginAt) : "Never"} />
                   </div>
 
-                  {isEditing ? (
-                    <div className="mt-5 space-y-3 border-t border-admin-border pt-5">
-                      <input
-                        value={draft.fullName}
-                        onChange={(e) => setDraft({ ...draft, fullName: e.target.value })}
-                        className={admin.fieldModern}
-                        placeholder="Full name"
-                      />
-                      {avatarUploadingId === user.id ? (
-                        <p className="text-xs font-medium text-admin-muted">
-                          Uploading profile image...
-                        </p>
-                      ) : null}
-                      <select
-                        value={draft.role}
-                        onChange={(e) =>
-                          setDraft({
-                            ...draft,
-                            role: e.target.value as AdminUserRow["role"],
-                          })
-                        }
-                        className={admin.fieldModern}
-                      >
-                        <option value="admin">Admin</option>
-                        <option value="superadmin">Super admin</option>
-                        <option value="blocked">Blocked</option>
-                      </select>
-                      <div className="rounded-2xl border border-admin-border bg-admin-bg/70 p-3">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-admin-muted">
-                          Product permissions
-                        </p>
-                        <p className="mt-1 text-xs text-admin-muted">
-                          Control what this admin can change inside Products.
-                        </p>
-                        <div className="mt-3 grid gap-2">
-                          {PRODUCT_PERMISSION_KEYS.map((permission) => (
-                            <label
-                              key={permission}
-                              className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-admin-border bg-white px-3 py-2 text-sm font-semibold text-admin-ink"
-                            >
-                              <span>{PRODUCT_PERMISSION_LABELS[permission]}</span>
-                              <input
-                                type="checkbox"
-                                checked={permissionDraft[permission]}
-                                disabled={draft.role === "superadmin"}
-                                onChange={(event) =>
-                                  setDraft({
-                                    ...draft,
-                                    [permission]: event.target.checked,
-                                  } as Draft)
-                                }
-                                className={admin.checkbox}
-                              />
-                            </label>
-                          ))}
-                        </div>
-                        {draft.role === "superadmin" ? (
-                          <p className="mt-2 text-xs font-medium text-admin-muted">
-                            Super admins always have all product permissions.
-                          </p>
-                        ) : null}
-                      </div>
-                      <div className="rounded-2xl border border-admin-border bg-admin-bg/70 p-3">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="min-w-0">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-admin-muted">
-                              Login email
-                            </p>
-                            <p className="mt-0.5 truncate text-sm font-medium text-admin-ink">
-                              {user.email}
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              emailEditId === user.id ? cancelEmailEdit() : beginEmailEdit(user)
-                            }
-                            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-admin-border bg-white px-3 text-sm font-semibold text-admin-ink transition-colors hover:border-admin-accent/35 hover:bg-admin-bg"
-                          >
-                            <Mail className="size-4" aria-hidden />
-                            {emailEditId === user.id ? "Cancel email" : "Change email"}
-                          </button>
-                        </div>
-
-                        {emailEditId === user.id ? (
-                          <div className="mt-3 space-y-2">
-                            <input
-                              value={newEmail}
-                              onChange={(e) => setNewEmail(e.target.value)}
-                              className={admin.fieldModern}
-                              placeholder="New verified email"
-                            />
-                            {emailOtpSent ? (
-                              <input
-                                value={emailCode}
-                                onChange={(e) => setEmailCode(e.target.value)}
-                                className={admin.fieldModern}
-                                inputMode="numeric"
-                                maxLength={6}
-                                placeholder="6-digit OTP"
-                              />
-                            ) : null}
-                            {emailMessage ? (
-                              <p className="text-xs font-medium text-admin-accent">
-                                {emailMessage}
-                              </p>
-                            ) : null}
-                            <div className="grid grid-cols-2 gap-2">
-                              <IconButton
-                                label={emailOtpSent ? "Resend" : "Send OTP"}
-                                icon={Send}
-                                disabled={emailBusy}
-                                onClick={() => void sendEmailOtp(user)}
-                              />
-                              <IconButton
-                                label="Verify"
-                                icon={Save}
-                                disabled={emailBusy || !emailOtpSent}
-                                onClick={() => void verifyEmailOtp(user)}
-                                variant="primary"
-                              />
-                            </div>
-                          </div>
-                        ) : null}
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <IconButton
-                          label="Save"
-                          icon={Save}
-                          disabled={busy || avatarUploadingId === user.id}
-                          onClick={() => void updateUser(user, draft)}
-                          variant="primary"
-                        />
-                        <IconButton label="Cancel" icon={X} onClick={cancelEdit} />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="mt-5 grid grid-cols-2 gap-2 border-t border-slate-100 pt-5">
-                      <IconButton label="Edit" icon={Pencil} onClick={() => beginEdit(user)} />
-                      {user.role === "blocked" ? (
-                        <IconButton
-                          label="Unblock"
-                          icon={UserCheck}
-                          disabled={busy}
-                          onClick={() => setConfirmAction({ type: "unblock", user })}
-                          variant="primary"
-                        />
-                      ) : (
-                        <IconButton
-                          label="Block"
-                          icon={Ban}
-                          disabled={busy || user.isCurrentUser}
-                          onClick={() => setConfirmAction({ type: "block", user })}
-                          variant="warning"
-                        />
-                      )}
+                  <div className="mt-5 grid grid-cols-2 gap-2 border-t border-slate-100 pt-5">
+                    <IconButton
+                      label={isEditing ? "Editing" : "Edit"}
+                      icon={Pencil}
+                      disabled={Boolean(isEditing)}
+                      onClick={() => beginEdit(user)}
+                    />
+                    {user.role === "blocked" ? (
                       <IconButton
-                        label="Delete"
-                        icon={Trash2}
-                        disabled={busy || user.isCurrentUser}
-                        onClick={() => setConfirmAction({ type: "delete", user })}
-                        variant="danger"
-                        className="col-span-2"
+                        label="Unblock"
+                        icon={UserCheck}
+                        disabled={busy}
+                        onClick={() => setConfirmAction({ type: "unblock", user })}
+                        variant="primary"
                       />
-                    </div>
-                  )}
+                    ) : (
+                      <IconButton
+                        label="Block"
+                        icon={Ban}
+                        disabled={busy || user.isCurrentUser}
+                        onClick={() => setConfirmAction({ type: "block", user })}
+                        variant="warning"
+                      />
+                    )}
+                    <IconButton
+                      label="Delete"
+                      icon={Trash2}
+                      disabled={busy || user.isCurrentUser}
+                      onClick={() => setConfirmAction({ type: "delete", user })}
+                      variant="danger"
+                      className="col-span-2"
+                    />
+                  </div>
                 </div>
               </article>
             );

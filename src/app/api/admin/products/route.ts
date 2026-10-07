@@ -45,6 +45,7 @@ const listQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).default(10),
   categoryId: z.string().uuid().optional(),
   search: searchQuerySchema,
+  visibility: z.enum(["all", "live", "not-live", "featured"]).default("live"),
   missingPrice: z
     .preprocess((value) => value === "true" || value === "1", z.boolean())
     .default(false),
@@ -74,6 +75,7 @@ export async function GET(request: Request) {
     pageSize: url.searchParams.get("pageSize") || undefined,
     categoryId: url.searchParams.get("categoryId") || undefined,
     search: url.searchParams.get("search") || undefined,
+    visibility: url.searchParams.get("visibility") || undefined,
     missingPrice: url.searchParams.get("missingPrice") || undefined,
     sort: url.searchParams.get("sort") || undefined,
   });
@@ -82,9 +84,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { page, pageSize, categoryId, search, missingPrice, sort } = parsed.data;
+  const { page, pageSize, categoryId, search, visibility, missingPrice, sort } = parsed.data;
   const where = and(
     categoryId ? eq(products.categoryId, categoryId) : undefined,
+    visibility === "live" ? eq(products.published, true) : undefined,
+    visibility === "not-live" ? eq(products.published, false) : undefined,
+    visibility === "featured" ? eq(products.isFeatured, true) : undefined,
     missingPrice ? or(isNull(products.pricePerDayAed), eq(products.pricePerDayAed, "")) : undefined,
     search ? ilike(productSearchText(products), escapeSearchPattern(search)) : undefined
   );
