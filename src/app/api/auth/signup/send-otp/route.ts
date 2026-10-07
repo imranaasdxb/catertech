@@ -16,7 +16,7 @@ import {
   mediaStorageConfigMessage,
   putPublicMediaObject,
 } from "@/lib/media-storage";
-import { sendSignupOtpEmail } from "@/lib/smtp-mail";
+import { sendSignupOtpEmail } from "@/lib/mail";
 import { sanitizeEmail, sanitizeText } from "@/lib/security";
 
 export const runtime = "nodejs";
@@ -164,7 +164,7 @@ export async function POST(request: Request) {
     otpTtlMinutes: OTP_TTL_MIN,
     message:
       process.env.NODE_ENV !== "production"
-        ? "(Dev) OTP was sent via SMTP — check Spam if using Gmail."
+        ? "(Dev) OTP email was sent — check Spam if needed."
         : undefined,
   });
 }

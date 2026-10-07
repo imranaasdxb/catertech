@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { randomUUID } from "crypto";
 import { getDb } from "@/db";
 import { quotations } from "@/db/schema";
-import { sendQuoteRequestEmail } from "@/lib/smtp-mail";
+import { sendQuoteRequestEmail } from "@/lib/mail";
 import { quoteSchema } from "@/lib/validations/forms";
 
 export const dynamic = "force-dynamic";

@@ -293,6 +293,7 @@ function RelatedTile({ p }: { p: ShopProductCard }) {
   return (
     <Link
       href={`/shop/${p.id}`}
+      prefetch={true}
       scroll
       className="group shrink-0 w-[118px] sm:w-[132px] snap-start bg-white rounded-lg border border-border hover:border-sand/50 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col"
     >
@@ -749,6 +750,9 @@ export default function ProductEquipmentDetail({
                       per day
                     </p>
                   </div>
+                  <p className="mt-2 text-[12px] font-semibold leading-relaxed text-muted">
+                    You can negotiate this rate with our sales team.
+                  </p>
                 </div>
               ) : (
                 <div className="flex items-center gap-2.5">

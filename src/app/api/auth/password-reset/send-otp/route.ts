@@ -10,7 +10,7 @@ import {
   OTP_TTL_MIN,
   PASSWORD_RESET_OTP_PURPOSE,
 } from "@/lib/auth-otp";
-import { sendPasswordResetOtpEmail } from "@/lib/smtp-mail";
+import { sendPasswordResetOtpEmail } from "@/lib/mail";
 import {
   checkRateLimit,
   getClientIp,

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getDb } from "@/db";
 import { tradeEnquiries } from "@/db/schema";
-import { sendTradeEnquiryNotifyEmail } from "@/lib/smtp-mail";
+import { sendTradeEnquiryNotifyEmail } from "@/lib/mail";
 import { sanitizeMultilineText, sanitizePhone, sanitizeText } from "@/lib/security";
 
 const chatbotLeadSchema = z.object({

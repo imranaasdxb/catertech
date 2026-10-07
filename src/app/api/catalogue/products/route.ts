@@ -3,6 +3,8 @@ import { getCatalogueProductData } from "@/lib/catalogue-presets";
 import { z } from "zod";
 import { searchQuerySchema } from "@/lib/search-query-schema";
 
+const CATALOGUE_CACHE_CONTROL = "public, s-maxage=300, stale-while-revalidate=1800";
+
 const querySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().min(1).max(60).default(12),
@@ -41,8 +43,15 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: data.catalogError }, { status: 503 });
   }
 
-  return NextResponse.json({
-    products: data.products,
-    pagination: data.pagination,
-  });
+  return NextResponse.json(
+    {
+      products: data.products,
+      pagination: data.pagination,
+    },
+    {
+      headers: {
+        "Cache-Control": CATALOGUE_CACHE_CONTROL,
+      },
+    }
+  );
 }

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { tradeEnquiries } from "@/db/schema";
 import { enquirySchema } from "@/lib/validations/forms";
-import { sendTradeEnquiryNotifyEmail } from "@/lib/smtp-mail";
+import { sendTradeEnquiryNotifyEmail } from "@/lib/mail";
 
 export async function POST(request: Request) {
   const db = getDb();

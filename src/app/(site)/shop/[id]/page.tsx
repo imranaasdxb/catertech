@@ -1,4 +1,5 @@
 import { eq, and } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 
 import type { Metadata } from "next";
 
@@ -11,6 +12,8 @@ import { getDb } from "@/db";
 import { productCategories, products } from "@/db/schema";
 
 import {
+
+  PUBLIC_CATALOGUE_CACHE_TAG,
 
   getProductTitleVariants,
 
@@ -39,7 +42,9 @@ type Props = {
 
 
 
-async function getStorefrontProduct(slug: string) {
+const PUBLIC_PRODUCT_REVALIDATE_SECONDS = 300;
+
+async function getStorefrontProductUncached(slug: string) {
 
   const db = getDb();
 
@@ -86,6 +91,15 @@ async function getStorefrontProduct(slug: string) {
   return { product, categorySlug };
 
 }
+
+const getStorefrontProduct = unstable_cache(
+  getStorefrontProductUncached,
+  ["storefront-product-detail"],
+  {
+    revalidate: PUBLIC_PRODUCT_REVALIDATE_SECONDS,
+    tags: [PUBLIC_CATALOGUE_CACHE_TAG],
+  }
+);
 
 
 

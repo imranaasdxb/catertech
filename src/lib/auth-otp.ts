@@ -1,6 +1,6 @@
 import { createHash, randomInt } from "crypto";
 
-/** Server-only pepper (+ email + code → hash). Required in prod; dev defaults to weak placeholder so SMTP can be tested locally. */
+/** Server-only pepper (+ email + code → hash). Required in prod; dev defaults to a weak placeholder. */
 function otpPepper(): string {
   return process.env.AUTH_OTP_PEPPER || "dev-only-change-me";
 }

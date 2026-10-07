@@ -1,4 +1,5 @@
 import { and, eq, ne } from "drizzle-orm";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { isAdminSession } from "@/lib/auth-user";
@@ -7,6 +8,7 @@ import {
   missingProductPermissions,
 } from "@/lib/admin-permission-check";
 import type { ProductPermissionKey } from "@/lib/admin-permissions";
+import { PUBLIC_CATALOGUE_CACHE_TAG } from "@/lib/catalogue-presets";
 import { products, productTitlePresets, type ProductAttributeValue } from "@/db/schema";
 import { cleanPresetProductTitle } from "@/lib/product-catalog/canonical-catalog";
 import {
@@ -18,6 +20,15 @@ import { normalizePricePerDayAed } from "@/lib/product-pricing";
 import { resolveProductPresetMatch } from "@/lib/product-preset-match";
 import { slugify } from "@/lib/slug";
 import { z } from "zod";
+
+function revalidatePublicCatalogue(productSlug?: string | null, previousProductSlug?: string | null) {
+  revalidateTag(PUBLIC_CATALOGUE_CACHE_TAG);
+  revalidatePath("/shop");
+  if (productSlug) revalidatePath(`/shop/${productSlug}`);
+  if (previousProductSlug && previousProductSlug !== productSlug) {
+    revalidatePath(`/shop/${previousProductSlug}`);
+  }
+}
 
 const updateSchema = z.object({
   title: z.string().min(1).optional(),
@@ -422,6 +433,8 @@ export async function PUT(
     .where(eq(products.id, id))
     .returning();
 
+  revalidatePublicCatalogue(updated.slug, row.slug);
+
   return NextResponse.json(updated);
 }
 
@@ -456,9 +469,12 @@ export async function DELETE(
   const deleted = await db
     .delete(products)
     .where(eq(products.id, id))
-    .returning({ id: products.id });
+    .returning({ id: products.id, slug: products.slug });
 
   if (!deleted.length)
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  revalidatePublicCatalogue(deleted[0]?.slug);
+
   return NextResponse.json({ ok: true });
 }

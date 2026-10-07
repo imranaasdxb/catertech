@@ -2,9 +2,11 @@ import { and, asc, count, desc, eq, ilike, isNull, like, or } from "drizzle-orm"
 import { productSearchText } from "@/db/product-search";
 import { searchQuerySchema } from "@/lib/search-query-schema";
 import { escapeSearchPattern } from "@/lib/search";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { isAdminSession } from "@/lib/auth-user";
+import { PUBLIC_CATALOGUE_CACHE_TAG } from "@/lib/catalogue-presets";
 import {
   products,
   productTitlePresets,
@@ -21,6 +23,12 @@ import { normalizePricePerDayAed } from "@/lib/product-pricing";
 import { resolveProductPresetMatch } from "@/lib/product-preset-match";
 import { slugify } from "@/lib/slug";
 import { z } from "zod";
+
+function revalidatePublicCatalogue(productSlug?: string | null) {
+  revalidateTag(PUBLIC_CATALOGUE_CACHE_TAG);
+  revalidatePath("/shop");
+  if (productSlug) revalidatePath(`/shop/${productSlug}`);
+}
 
 const createSchema = z.object({
   title: z.string().min(1),
@@ -349,6 +357,8 @@ export async function POST(request: Request) {
   if (catId) {
     presetProgressIncremented = true;
   }
+
+  revalidatePublicCatalogue(row.slug);
 
   return NextResponse.json({ ...row, presetProgressIncremented }, { status: 201 });
 }

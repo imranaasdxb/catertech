@@ -1,6 +1,3 @@
-import nodemailer from "nodemailer";
-import logo from "@/assets/brand/logo.png";
-
 type MailResult = { ok: true } | { ok: false; reason: string };
 
 type MailMessage = {
@@ -29,17 +26,20 @@ function parseRecipients(to: string) {
 function getSiteUrl() {
   const explicit = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || "";
   if (explicit.trim()) return explicit.trim().replace(/\/$/, "");
+  const vercelProductionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL || "";
+  if (vercelProductionUrl.trim()) {
+    return `https://${vercelProductionUrl.trim().replace(/^https?:\/\//, "").replace(/\/$/, "")}`;
+  }
   const vercelUrl = process.env.VERCEL_URL || "";
   if (vercelUrl.trim()) return `https://${vercelUrl.trim().replace(/\/$/, "")}`;
-  return "";
+  return "https://catertech-ae.vercel.app";
 }
 
 function getMailLogoUrl() {
   const explicit = process.env.MAIL_LOGO_URL || "";
   if (explicit.trim()) return explicit.trim();
   const siteUrl = getSiteUrl();
-  if (!siteUrl) return "";
-  return `${siteUrl}${logo.src}`;
+  return `${siteUrl}/brand/logo.png`;
 }
 
 const VAT_RATE = 0.05;
@@ -87,30 +87,6 @@ function formatRequestDate() {
   });
 }
 
-function smtpConfigured(): boolean {
-  return Boolean(
-    process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS
-  );
-}
-
-export function getSmtpTransport() {
-  if (!smtpConfigured()) return null;
-  const port = Number(process.env.SMTP_PORT || "587");
-  const secure = process.env.SMTP_SECURE === "true" || port === 465;
-  /** Gmail app passwords are shown with spaces; SMTP expects 16 chars without spaces. */
-  const pass = (process.env.SMTP_PASS || "").trim().replace(/\s+/g, "");
-  const user = (process.env.SMTP_USER || "").trim();
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port,
-    secure,
-    auth: {
-      user,
-      pass,
-    },
-  });
-}
-
 async function sendViaResend(message: MailMessage): Promise<MailResult | null> {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   const fromRaw = (process.env.MAIL_FROM || process.env.EMAIL_FROM || "").trim();
@@ -149,65 +125,15 @@ async function sendViaResend(message: MailMessage): Promise<MailResult | null> {
   }
 }
 
-async function sendViaSmtp(message: MailMessage): Promise<MailResult | null> {
-  const transport = getSmtpTransport();
-  if (!transport) return null;
-
-  const user = (process.env.SMTP_USER || "").trim();
-  const fromRaw = (process.env.SMTP_FROM || user || "").trim();
-
-  try {
-    await transport.sendMail({
-      from: formatMailAddress(getAppName(), fromRaw),
-      to: message.to,
-      ...(message.replyTo ? { replyTo: message.replyTo } : {}),
-      subject: message.subject,
-      text: message.text,
-      html: message.html,
-    });
-    return { ok: true };
-  } catch (err: unknown) {
-    const code =
-      err && typeof err === "object" && "code" in err
-        ? String((err as { code?: string }).code)
-        : "";
-    const msg =
-      err && typeof err === "object" && "message" in err
-        ? String((err as { message?: string }).message)
-        : String(err);
-
-    if (code === "EAUTH" || msg.includes("535") || msg.includes("BadCredentials")) {
-      const u = (process.env.SMTP_USER || "").trim().toLowerCase();
-      const workspaceHint =
-        u && !u.endsWith("@gmail.com")
-          ? " If this is a custom domain mailbox, make sure the SMTP password belongs to the same mailbox as SMTP_USER and SMTP AUTH is enabled by the mail admin."
-          : "";
-      return {
-        ok: false,
-        reason:
-          "SMTP rejected login — check SMTP_USER, SMTP_PASS, SMTP_FROM, and provider SMTP settings." +
-          workspaceHint,
-      };
-    }
-
-    return { ok: false, reason: `SMTP failed: ${msg}` };
-  }
-}
-
 async function sendMailMessage(message: MailMessage): Promise<MailResult> {
   const resend = await sendViaResend(message);
   if (resend?.ok) return resend;
 
-  const smtp = await sendViaSmtp(message);
-  if (smtp?.ok) return smtp;
-
-  if (smtp) return smtp;
   if (resend) return resend;
 
   return {
     ok: false,
-    reason:
-      "Mail not configured — set RESEND_API_KEY and MAIL_FROM, or set SMTP_HOST, SMTP_USER, SMTP_PASS (optional SMTP_PORT, SMTP_SECURE, SMTP_FROM).",
+    reason: "Mail not configured — set RESEND_API_KEY and MAIL_FROM.",
   };
 }
 

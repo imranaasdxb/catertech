@@ -10,7 +10,7 @@ import {
   OTP_TTL_MIN,
 } from "@/lib/auth-otp";
 import { getSessionUser } from "@/lib/auth-user";
-import { sendAdminCreatedUserOtpEmail } from "@/lib/smtp-mail";
+import { sendAdminCreatedUserOtpEmail } from "@/lib/mail";
 
 export const runtime = "nodejs";
 

@@ -91,6 +91,7 @@ function CategoryCard({
   return (
     <Link
       href={href}
+      prefetch={true}
       aria-busy={isOpening}
       onFocus={prefetchCategory}
       onMouseEnter={prefetchCategory}

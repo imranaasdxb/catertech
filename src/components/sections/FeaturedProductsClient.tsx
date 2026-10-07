@@ -139,11 +139,70 @@ const SHOP_LOAD_MORE_ROWS = 2;
 const SHOP_INITIAL_VISIBLE = CARDS_PER_ROW * SHOP_INITIAL_ROWS;
 const SHOP_LOAD_MORE_STEP = CARDS_PER_ROW * SHOP_LOAD_MORE_ROWS;
 const SHOP_PAGE_CACHE_MS = 5 * 60 * 1000;
+const SHOP_BROWSE_STATE_CACHE_MS = 30 * 60 * 1000;
+const SHOP_BROWSE_STATE_PREFIX = "catertech:shop-browse-state:v1:";
+const SHOP_BROWSE_STATE_LATEST_KEY = `${SHOP_BROWSE_STATE_PREFIX}latest-shop`;
 const SHOP_PRODUCT_PAGE_CACHE = new Map<string, {
   products: ProductRow[];
   pagination: ProductPagination;
   expiresAt: number;
 }>();
+
+type ShopBrowseState = {
+  activeTab: string;
+  search: string;
+  highlight: HighlightFilter;
+  sortOrder: SortOrder;
+  selectedEquipment: string[];
+  visibleCount: number;
+  pagedProducts: ProductRow[];
+  pagedMeta: ProductPagination | null;
+  scrollY: number;
+  focusedProductSlug: string | null;
+  expiresAt: number;
+};
+
+function readShopBrowseState(key: string): ShopBrowseState | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.sessionStorage.getItem(key);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as Partial<ShopBrowseState>;
+    if (!parsed.expiresAt || parsed.expiresAt <= Date.now()) {
+      window.sessionStorage.removeItem(key);
+      return null;
+    }
+
+    if (!Array.isArray(parsed.pagedProducts) || !Array.isArray(parsed.selectedEquipment)) {
+      return null;
+    }
+
+    return {
+      activeTab: typeof parsed.activeTab === "string" ? parsed.activeTab : ALL_TAB,
+      search: typeof parsed.search === "string" ? parsed.search : "",
+      highlight:
+        parsed.highlight === "Popular" || parsed.highlight === "New" ? parsed.highlight : "all",
+      sortOrder: parsed.sortOrder === "a-z" ? "a-z" : "default",
+      selectedEquipment: parsed.selectedEquipment.filter(
+        (item): item is string => typeof item === "string",
+      ),
+      visibleCount:
+        typeof parsed.visibleCount === "number" && parsed.visibleCount > 0
+          ? parsed.visibleCount
+          : SHOP_INITIAL_VISIBLE,
+      pagedProducts: parsed.pagedProducts,
+      pagedMeta: parsed.pagedMeta ?? null,
+      scrollY: typeof parsed.scrollY === "number" ? parsed.scrollY : 0,
+      focusedProductSlug:
+        typeof parsed.focusedProductSlug === "string" ? parsed.focusedProductSlug : null,
+      expiresAt: parsed.expiresAt,
+    };
+  } catch {
+    return null;
+  }
+}
 
 function ProductCardSkeleton({ shopCompact = false }: { shopCompact?: boolean }) {
   return (
@@ -370,32 +429,117 @@ export default function FeaturedProductsClient({
   catalogError?: string;
   compactTop?: boolean;
 }) {
-  const [activeTab, setActiveTab] = useState(ALL_TAB);
+  const searchParams = useSearchParams();
+  const categoryParam = searchParams.get("category");
+  const browseStateKey = `${SHOP_BROWSE_STATE_PREFIX}${
+    compactTop ? `shop:${categoryParam ?? ""}` : "featured"
+  }`;
+  const initialCategoryId = useMemo(() => {
+    if (!categoryParam || categories.length === 0) return ALL_TAB;
+
+    const normalized = categoryParam.toLowerCase();
+    const match = categories.find(
+      (category) =>
+        category.slug.toLowerCase() === normalized || slugify(category.name) === normalized,
+    );
+
+    return match?.id ?? ALL_TAB;
+  }, [categories, categoryParam]);
+  const [restoredBrowseState, setRestoredBrowseState] = useState<ShopBrowseState | null>(null);
+  const [restoreChecked, setRestoreChecked] = useState(false);
+  const [restoreApplied, setRestoreApplied] = useState(false);
+  const [restorePositionDone, setRestorePositionDone] = useState(false);
+  const shouldRestoreBrowseState = Boolean(restoredBrowseState);
+  const [activeTab, setActiveTab] = useState(initialCategoryId);
   const [search, setSearch] = useState("");
   const [highlight, setHighlight] = useState<HighlightFilter>("all");
   const [sortOrder, setSortOrder] = useState<SortOrder>("default");
-  const [selectedEquipment, setSelectedEquipment] = useState<Set<string>>(() => new Set());
+  const [selectedEquipment, setSelectedEquipment] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [equipmentExpanded, setEquipmentExpanded] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(SHOP_INITIAL_VISIBLE);
   const [loadingMore, setLoadingMore] = useState(false);
   const [pageLoading, setPageLoading] = useState(false);
   const [pagedProducts, setPagedProducts] = useState(products);
-  const [pagedMeta, setPagedMeta] = useState<ProductPagination | null>(pagination ?? null);
+  const [pagedMeta, setPagedMeta] = useState<ProductPagination | null>(
+    pagination ?? null,
+  );
   const [requestError, setRequestError] = useState("");
   const [reloadVersion, setReloadVersion] = useState(0);
   const requestRef = useRef<AbortController | null>(null);
   const pageCache = useRef(SHOP_PRODUCT_PAGE_CACHE);
   const initialPageSeeded = useRef(false);
+  const restoredFetchSkipped = useRef(false);
   const productGridRef = useRef<HTMLDivElement>(null);
   const skipFilterScrollRef = useRef(true);
+  const pendingProductGridScrollRef = useRef(false);
   const isShopCatalogue = compactTop;
   const usesRemoteProducts = isShopCatalogue || Boolean(search);
-  const searchParams = useSearchParams();
-  const categoryParam = searchParams.get("category");
 
   useEffect(() => {
-    if (!categoryParam || categories.length === 0) return;
+    if (!isShopCatalogue || typeof window === "undefined" || !("scrollRestoration" in window.history)) {
+      return;
+    }
+
+    const previousScrollRestoration = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+
+    return () => {
+      window.history.scrollRestoration = previousScrollRestoration;
+    };
+  }, [isShopCatalogue]);
+
+  useEffect(() => {
+    const savedState =
+      readShopBrowseState(browseStateKey) ??
+      (compactTop ? readShopBrowseState(SHOP_BROWSE_STATE_LATEST_KEY) : null);
+
+    setRestoreChecked(true);
+    setRestoreApplied(false);
+    setRestorePositionDone(!savedState?.focusedProductSlug);
+    setRestoredBrowseState(savedState);
+  }, [browseStateKey, compactTop]);
+
+  useEffect(() => {
+    if (!restoreChecked) return;
+    if (!restoredBrowseState) {
+      setRestoreApplied(true);
+      setRestorePositionDone(true);
+      return;
+    }
+
+    requestRef.current?.abort();
+    requestRef.current = null;
+    restoredFetchSkipped.current = true;
+    setActiveTab(restoredBrowseState.activeTab);
+    setSearch(restoredBrowseState.search);
+    setHighlight(restoredBrowseState.highlight);
+    setSortOrder(restoredBrowseState.sortOrder);
+    setSelectedEquipment(new Set(restoredBrowseState.selectedEquipment));
+    setVisibleCount(restoredBrowseState.visibleCount);
+    setPagedProducts(restoredBrowseState.pagedProducts);
+    setPagedMeta(restoredBrowseState.pagedMeta);
+    setLoadingMore(false);
+    setPageLoading(false);
+    setRequestError("");
+    setRestorePositionDone(!restoredBrowseState.focusedProductSlug);
+    setRestoreApplied(true);
+  }, [restoreChecked, restoredBrowseState]);
+
+  useEffect(() => {
+    if (shouldRestoreBrowseState) return;
+
+    if (!categoryParam) {
+      setActiveTab(ALL_TAB);
+      setSelectedEquipment(new Set());
+      setEquipmentExpanded(false);
+      setVisibleCount(SHOP_INITIAL_VISIBLE);
+      setLoadingMore(false);
+      return;
+    }
+    if (categories.length === 0) return;
 
     const normalized = categoryParam.toLowerCase();
     const match = categories.find(
@@ -410,7 +554,7 @@ export default function FeaturedProductsClient({
       setVisibleCount(SHOP_INITIAL_VISIBLE);
       setLoadingMore(false);
     }
-  }, [categories, categoryParam]);
+  }, [categories, categoryParam, shouldRestoreBrowseState]);
 
   const activeCategory = useMemo(
     () => categories.find((category) => category.id === activeTab),
@@ -513,7 +657,7 @@ export default function FeaturedProductsClient({
     ? Math.min(SHOP_LOAD_MORE_STEP, Math.max(0, resultCount - displayed.length))
     : 0;
 
-  function scrollToProductGridStart() {
+  function scrollToProductGridStart(behavior: ScrollBehavior = "smooth") {
     if (!isShopCatalogue || !productGridRef.current) return;
 
     const node = productGridRef.current;
@@ -522,7 +666,7 @@ export default function FeaturedProductsClient({
 
     window.scrollTo({
       top: Math.max(0, top),
-      behavior: "smooth",
+      behavior,
     });
   }
 
@@ -530,6 +674,58 @@ export default function FeaturedProductsClient({
     setVisibleCount(isShopCatalogue ? SHOP_INITIAL_VISIBLE : PAGE_SIZE);
     setLoadingMore(false);
   }
+
+  const persistBrowseState = useCallback((focusedProductSlug: string | null = null) => {
+    if (typeof window === "undefined") return;
+
+    const state: ShopBrowseState = {
+      activeTab,
+      search,
+      highlight,
+      sortOrder,
+      selectedEquipment: [...selectedEquipment],
+      visibleCount,
+      pagedProducts,
+      pagedMeta,
+      scrollY: window.scrollY,
+      focusedProductSlug,
+      expiresAt: Date.now() + SHOP_BROWSE_STATE_CACHE_MS,
+    };
+
+    try {
+      window.sessionStorage.setItem(browseStateKey, JSON.stringify(state));
+      if (isShopCatalogue) {
+        window.sessionStorage.setItem(SHOP_BROWSE_STATE_LATEST_KEY, JSON.stringify(state));
+      }
+    } catch {
+      // Back navigation still works without session storage.
+    }
+  }, [
+    activeTab,
+    browseStateKey,
+    highlight,
+    isShopCatalogue,
+    pagedMeta,
+    pagedProducts,
+    search,
+    selectedEquipment,
+    sortOrder,
+    visibleCount,
+  ]);
+
+  const rememberBrowsePositionBeforeProductOpen = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      const target = event.target as HTMLElement | null;
+      const link = target?.closest<HTMLAnchorElement>("a[href]");
+      const href = link?.getAttribute("href") ?? "";
+      const match = href.match(/^\/shop\/([^/?#]+)/);
+
+      if (match?.[1]) {
+        persistBrowseState(decodeURIComponent(match[1]));
+      }
+    },
+    [persistBrowseState],
+  );
 
   const fetchShopProductPage = useCallback(async (page: number, append: boolean) => {
     const params = new URLSearchParams({
@@ -608,16 +804,86 @@ export default function FeaturedProductsClient({
   }, [activeTab, highlight, search, selectedEquipment, sortOrder]);
 
   useEffect(() => {
+    if (isShopCatalogue && !restoreApplied) return;
+    if (isShopCatalogue && restoredBrowseState?.focusedProductSlug && !restorePositionDone) return;
+    persistBrowseState();
+  }, [isShopCatalogue, persistBrowseState, restoredBrowseState, restoreApplied, restorePositionDone]);
+
+  useEffect(() => {
+    if (!shouldRestoreBrowseState || !restoreApplied || restorePositionDone) return;
+
+    const restorePosition = () => {
+      const slug = restoredBrowseState?.focusedProductSlug;
+      const card = slug && productGridRef.current
+        ? productGridRef.current.querySelector<HTMLElement>(`[data-product-slug="${CSS.escape(slug)}"]`)
+        : null;
+      if (card) {
+        const scrollMarginTop =
+          Number.parseFloat(getComputedStyle(productGridRef.current!).scrollMarginTop) || 0;
+        const top = card.getBoundingClientRect().top + window.scrollY - scrollMarginTop - 12;
+        window.scrollTo({ top: Math.max(0, top), left: 0, behavior: "auto" });
+        setRestorePositionDone(true);
+        return;
+      }
+
+      if (!slug && restoredBrowseState?.scrollY) {
+        window.scrollTo({ top: restoredBrowseState.scrollY, left: 0, behavior: "auto" });
+      }
+    };
+
+    let secondFrame = 0;
+    let attempts = 0;
+    let retryTimer = 0;
+    const retryRestorePosition = () => {
+      restorePosition();
+      attempts += 1;
+      if (attempts < 24) {
+        retryTimer = window.setTimeout(retryRestorePosition, 100);
+      } else {
+        if (restoredBrowseState?.focusedProductSlug) {
+          scrollToProductGridStart("auto");
+        }
+        setRestorePositionDone(true);
+      }
+    };
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => {
+        retryRestorePosition();
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      if (secondFrame) window.cancelAnimationFrame(secondFrame);
+      if (retryTimer) window.clearTimeout(retryTimer);
+    };
+  }, [
+    displayed.length,
+    restoreApplied,
+    restoredBrowseState,
+    restorePositionDone,
+    shouldRestoreBrowseState,
+  ]);
+
+  useEffect(() => {
     if (!initialPageSeeded.current) {
       initialPageSeeded.current = true;
       if (pagination && !catalogError) {
-        const initialKey = new URLSearchParams({
+        const initialParams = new URLSearchParams({
           page: "1", pageSize: String(SHOP_INITIAL_VISIBLE), highlight: "all", sortOrder: "default",
-        }).toString();
-        pageCache.current.set(initialKey, { products, pagination, expiresAt: Date.now() + SHOP_PAGE_CACHE_MS });
+        });
+        if (activeTab !== ALL_TAB) initialParams.set("categoryId", activeTab);
+        pageCache.current.set(initialParams.toString(), { products, pagination, expiresAt: Date.now() + SHOP_PAGE_CACHE_MS });
       }
     }
     if (!usesRemoteProducts) {
+      restoredFetchSkipped.current = false;
+      setPageLoading(false);
+      setRequestError("");
+      return;
+    }
+    if (restoredFetchSkipped.current) {
+      restoredFetchSkipped.current = false;
       setPageLoading(false);
       setRequestError("");
       return;
@@ -632,6 +898,17 @@ export default function FeaturedProductsClient({
 
   useEffect(() => {
     if (!isShopCatalogue) return;
+    if (pendingProductGridScrollRef.current && !pageLoading) {
+      pendingProductGridScrollRef.current = false;
+      const frame = window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          scrollToProductGridStart("auto");
+        });
+      });
+
+      return () => window.cancelAnimationFrame(frame);
+    }
+
     if (skipFilterScrollRef.current) {
       skipFilterScrollRef.current = false;
       return;
@@ -644,7 +921,7 @@ export default function FeaturedProductsClient({
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [activeTab, highlight, equipmentFilterKey, sortOrder, isShopCatalogue]);
+  }, [activeTab, equipmentFilterKey, highlight, isShopCatalogue, pageLoading, sortOrder]);
 
   function loadMore() {
     if (!canLoadMore || loadingMore || pageLoading) return;
@@ -670,6 +947,10 @@ export default function FeaturedProductsClient({
   }
 
   function selectTab(tabId: string) {
+    if (isShopCatalogue && tabId !== activeTab) {
+      pendingProductGridScrollRef.current = true;
+      setPageLoading(true);
+    }
     setActiveTab(tabId);
     setSelectedEquipment(new Set());
     setEquipmentExpanded(false);
@@ -975,6 +1256,7 @@ export default function FeaturedProductsClient({
   return (
     <section
       id={FEATURED_PRODUCTS_SECTION_ID}
+      onClickCapture={rememberBrowsePositionBeforeProductOpen}
       className={`bg-offwhite pb-24 ${compactTop ? "pt-0" : "pt-24"}`}
     >
       <Container>
@@ -1196,12 +1478,18 @@ export default function FeaturedProductsClient({
                   className="grid min-w-0 grid-cols-2 gap-2.5 sm:gap-3.5 md:gap-4 lg:grid-cols-4 lg:gap-6"
                 >
                   {visibleProducts.map((product) => (
-                    <StorefrontProductCard
+                    <div
                       key={product.id}
-                      product={product}
-                      lazyImage
-                      shopCompact
-                    />
+                      data-product-slug={product.slug}
+                      onPointerDown={() => persistBrowseState(product.slug)}
+                      onClick={() => persistBrowseState(product.slug)}
+                    >
+                      <StorefrontProductCard
+                        product={product}
+                        lazyImage
+                        shopCompact
+                      />
+                    </div>
                   ))}
                   {loadingMore
                     ? Array.from({ length: loadingSkeletonCount }, (_, index) => (
@@ -1221,7 +1509,14 @@ export default function FeaturedProductsClient({
                       className="grid min-w-0 grid-cols-2 gap-2.5 sm:gap-3.5 md:gap-4 lg:grid-cols-4 lg:gap-6"
                     >
                       {rowProducts.map((product) => (
-                        <StorefrontProductCard key={product.id} product={product} />
+                        <div
+                          key={product.id}
+                          data-product-slug={product.slug}
+                          onPointerDown={() => persistBrowseState(product.slug)}
+                          onClick={() => persistBrowseState(product.slug)}
+                        >
+                          <StorefrontProductCard product={product} />
+                        </div>
                       ))}
                     </div>
                   );

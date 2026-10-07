@@ -9,13 +9,19 @@ import Image from "next/image";
 
 export const revalidate = 60;
 
-export default async function ShopPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  await searchParams;
-  const catalogueData = await getCatalogueProductData({ page: 1, pageSize: 12 });
+type ShopPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function ShopPage({ searchParams }: ShopPageProps) {
+  const params = await searchParams;
+  const categoryParam =
+    typeof params?.category === "string" ? params.category.toLowerCase() : "";
+  const catalogueData = await getCatalogueProductData({
+    page: 1,
+    pageSize: 12,
+    categorySlug: categoryParam || undefined,
+  });
 
   return (
     <>

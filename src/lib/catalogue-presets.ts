@@ -1,4 +1,5 @@
 import { and, asc, count, desc, eq, gte, ilike, inArray, ne, or, sql } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 import { getDb } from "@/db";
 import { productSearchText } from "@/db/product-search";
 import { escapeSearchPattern } from "@/lib/search";
@@ -50,6 +51,7 @@ export type CatalogueProductQueryOptions = {
   page?: number;
   pageSize?: number;
   categoryId?: string;
+  categorySlug?: string;
   subcategoryNames?: string[];
   search?: string;
   highlight?: "all" | "Popular" | "New";
@@ -57,6 +59,8 @@ export type CatalogueProductQueryOptions = {
 };
 
 const RETRY_DELAYS_MS = [150, 400];
+const PUBLIC_CATALOGUE_REVALIDATE_SECONDS = 300;
+export const PUBLIC_CATALOGUE_CACHE_TAG = "public-catalogue";
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -294,7 +298,7 @@ function productMatchesVariantGroup(
   return extractProductVariantGroupKey(row.title).toLowerCase() === groupKey;
 }
 
-export async function getProductTitleVariants({
+async function getProductTitleVariantsUncached({
   productId,
   productTitlePresetId,
   canonicalProductId,
@@ -405,7 +409,16 @@ export async function getProductTitleVariants({
   }
 }
 
-export async function getSimilarCatalogueProducts({
+export const getProductTitleVariants = unstable_cache(
+  getProductTitleVariantsUncached,
+  ["storefront-product-title-variants"],
+  {
+    revalidate: PUBLIC_CATALOGUE_REVALIDATE_SECONDS,
+    tags: [PUBLIC_CATALOGUE_CACHE_TAG],
+  }
+);
+
+async function getSimilarCatalogueProductsUncached({
   categoryId,
   excludeProductId,
   title,
@@ -488,6 +501,15 @@ export async function getSimilarCatalogueProducts({
   }
 }
 
+export const getSimilarCatalogueProducts = unstable_cache(
+  getSimilarCatalogueProductsUncached,
+  ["storefront-similar-products"],
+  {
+    revalidate: PUBLIC_CATALOGUE_REVALIDATE_SECONDS,
+    tags: [PUBLIC_CATALOGUE_CACHE_TAG],
+  }
+);
+
 function plainText(value: string | null) {
   return (value ?? "")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
@@ -501,11 +523,12 @@ function plainText(value: string | null) {
     .trim();
 }
 
-export async function getCatalogueProductData({
+async function getCatalogueProductDataUncached({
   featuredOnly = false,
   page = 1,
   pageSize,
   categoryId,
+  categorySlug,
   subcategoryNames = [],
   search = "",
   highlight = "all",
@@ -543,6 +566,12 @@ export async function getCatalogueProductData({
     const safePage = Math.max(1, page);
     const safePageSize =
       pageSize === undefined ? undefined : Math.min(60, Math.max(1, pageSize));
+    const categorySlugNeedle = categorySlug?.trim().toLowerCase() ?? "";
+    const resolvedCategoryId =
+      categoryId ||
+      (categorySlugNeedle
+        ? categories.find((category) => category.slug.toLowerCase() === categorySlugNeedle)?.id
+        : undefined);
     const trimmedSearch = search.trim();
     const searchLike = escapeSearchPattern(trimmedSearch);
     const needle = trimmedSearch.toLowerCase();
@@ -556,7 +585,7 @@ export async function getCatalogueProductData({
     const productWhere = and(
       eq(products.published, true),
       featuredOnly ? eq(products.isFeatured, true) : undefined,
-      categoryId ? eq(products.categoryId, categoryId) : undefined,
+      resolvedCategoryId ? eq(products.categoryId, resolvedCategoryId) : undefined,
       subcategoryNames.length ? inArray(productSubcategories.name, subcategoryNames) : undefined,
       highlight === "Popular" ? eq(products.isFeatured, true) : undefined,
       highlight === "New" ? gte(products.createdAt, newSince) : undefined,
@@ -680,3 +709,12 @@ export async function getCatalogueProductData({
     };
   }
 }
+
+export const getCatalogueProductData = unstable_cache(
+  getCatalogueProductDataUncached,
+  ["storefront-catalogue-products"],
+  {
+    revalidate: PUBLIC_CATALOGUE_REVALIDATE_SECONDS,
+    tags: [PUBLIC_CATALOGUE_CACHE_TAG],
+  }
+);
