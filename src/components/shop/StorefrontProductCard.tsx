@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import type { ProductAttributeValue } from "@/lib/category-template";
 import { imageKitUrl } from "@/lib/imagekit-optimizer";
 import { formatPricePerDayAed } from "@/lib/product-pricing";
@@ -17,6 +18,7 @@ export type StorefrontProductCardData = {
   subCategoryName: string | null;
   description: string;
   pricePerDayAed?: string | null;
+  showPrice?: boolean;
   attributes: Record<string, ProductAttributeValue>;
   image: string | null;
   images?: string[];
@@ -77,7 +79,8 @@ export default function StorefrontProductCard({
   const router = useRouter();
   const productHref = `/shop/${product.slug}`;
   const sizeSummary = getProductSizeSummary(product.attributes);
-  const priceLabel = formatPricePerDayAed(product.pricePerDayAed);
+  const shouldShowPrice = product.showPrice !== false;
+  const priceLabel = shouldShowPrice ? formatPricePerDayAed(product.pricePerDayAed) : "Quote";
   const hasDailyPrice = priceLabel !== "Quote";
   const priceValue = hasDailyPrice ? priceLabel.replace(/^AED\s+/, "").replace(/\s+\/ day$/, "") : "";
   const galleryImages = useMemo(() => {
@@ -227,7 +230,7 @@ export default function StorefrontProductCard({
 
         <div className="mt-auto flex min-w-0 flex-row items-center justify-between gap-1.5 pt-2 sm:gap-2 [@media(max-width:366px)_and_(max-height:568px)]:flex-col [@media(max-width:366px)_and_(max-height:568px)]:items-start [@media(max-width:366px)_and_(max-height:568px)]:gap-1 [@media(min-width:900px)_and_(max-width:1100px)_and_(max-height:820px)]:flex-col [@media(min-width:900px)_and_(max-width:1100px)_and_(max-height:820px)]:items-start [@media(min-width:900px)_and_(max-width:1100px)_and_(max-height:820px)]:gap-1.5">
           <div className="min-w-0 flex-1 text-left">
-            {hasDailyPrice ? (
+            {shouldShowPrice && hasDailyPrice ? (
               <p
                 className={`flex min-w-0 items-baseline gap-1 whitespace-nowrap font-sans font-bold leading-none text-[#1a1a1a] ${
                   shopCompact ? "text-[10px] min-[390px]:text-[11px] md:text-[11px] xl:text-lg [@media(min-width:900px)_and_(max-width:1100px)_and_(max-height:820px)]:text-[10px]" : "text-[11px] sm:text-sm xl:text-lg"
@@ -243,13 +246,27 @@ export default function StorefrontProductCard({
                   /day
                 </span>
               </p>
-            ) : (
+            ) : shouldShowPrice ? (
               <p
                 className={`font-sans font-semibold leading-none text-[#888888] ${
                   shopCompact ? "text-xs lg:text-sm" : "text-sm"
                 }`}
               >
                 Quote
+              </p>
+            ) : (
+              <p
+                className={`flex w-full min-w-0 items-center gap-1 font-sans font-semibold leading-none text-[#888888] ${
+                  shopCompact ? "text-[9px] min-[390px]:text-[10px] lg:text-xs" : "text-[10px] sm:text-xs"
+                }`}
+              >
+                <span className="shrink-0 whitespace-nowrap">Get price</span>
+                <span
+                  className="relative h-[15px] min-w-[15px] flex-1 overflow-hidden text-[#c21722]"
+                  aria-hidden
+                >
+                  <ArrowRight className="quote-price-pointer absolute top-0 size-[15px]" strokeWidth={2.5} />
+                </span>
               </p>
             )}
           </div>

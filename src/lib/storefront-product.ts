@@ -3,6 +3,7 @@ import type { StorefrontProductCardData } from "@/components/shop/StorefrontProd
 import type { CatalogueProductRow } from "@/lib/catalogue-presets";
 import type { ProductAttributeValue } from "@/lib/category-template";
 import { formatPricePerDayAed } from "@/lib/product-pricing";
+import { getProductShowPrice } from "@/lib/product-price-visibility";
 
 type DbProductRow = {
   id: string;
@@ -10,6 +11,7 @@ type DbProductRow = {
   title: string;
   description: string | null;
   pricePerDayAed: string | null;
+  showPrice?: boolean;
   category: string | null;
   categoryId: string | null;
   subCategoryId: string | null;
@@ -147,6 +149,7 @@ export function toStorefrontProductCard(row: CatalogueProductRow): StorefrontPro
     subCategoryName: row.subCategoryName,
     description: row.description,
     pricePerDayAed: row.pricePerDayAed,
+    showPrice: row.showPrice,
     attributes: row.attributes,
     image: row.image,
     images: row.images ?? (row.image ? [row.image] : []),
@@ -155,6 +158,7 @@ export function toStorefrontProductCard(row: CatalogueProductRow): StorefrontPro
 }
 
 export function toProductDetail(product: DbProductRow): ShopProductDetail {
+  const showPrice = product.showPrice ?? getProductShowPrice(product.attributes);
   const description = plainText(product.description);
   const shortDescription =
     description || "Product details available on request.";
@@ -175,7 +179,8 @@ export function toProductDetail(product: DbProductRow): ShopProductDetail {
     familyId: product.subCategoryId || product.categoryId || product.slug,
     cardSubtitle: shortDescription,
     equipmentFilters: [],
-    price: formatPricePerDayAed(product.pricePerDayAed),
+    price: showPrice ? formatPricePerDayAed(product.pricePerDayAed) : "Quote",
+    showPrice,
     tag: product.isFeatured ? "Popular" : null,
     image: product.images[0] || "",
     shortDescription,
@@ -217,6 +222,7 @@ export function mapTitleVariants(rows: CatalogueProductRow[]): ProductTitleVaria
       title: row.title,
       description: row.description,
       pricePerDayAed: row.pricePerDayAed,
+      showPrice: row.showPrice,
       category: row.categoryName,
       categoryId: row.categoryId,
       subCategoryId: row.subCategoryId,

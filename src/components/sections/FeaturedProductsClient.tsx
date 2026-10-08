@@ -38,6 +38,7 @@ export type ProductRow = {
   slug: string;
   description: string;
   pricePerDayAed: string | null;
+  showPrice: boolean;
   image: string | null;
   images?: string[];
   tag: "Popular" | "New" | null;
@@ -64,6 +65,7 @@ type ProductCard = {
   subCategoryName: string | null;
   description: string;
   pricePerDayAed: string | null;
+  showPrice: boolean;
   attributes: Record<string, ProductAttributeValue>;
   image: string | null;
   images?: string[];
@@ -138,7 +140,7 @@ const SHOP_INITIAL_ROWS = 3;
 const SHOP_LOAD_MORE_ROWS = 2;
 const SHOP_INITIAL_VISIBLE = CARDS_PER_ROW * SHOP_INITIAL_ROWS;
 const SHOP_LOAD_MORE_STEP = CARDS_PER_ROW * SHOP_LOAD_MORE_ROWS;
-const SHOP_PAGE_CACHE_MS = 5 * 60 * 1000;
+const SHOP_PAGE_CACHE_MS = 0;
 const SHOP_BROWSE_STATE_CACHE_MS = 30 * 60 * 1000;
 const SHOP_BROWSE_STATE_PREFIX = "catertech:shop-browse-state:v1:";
 const SHOP_BROWSE_STATE_LATEST_KEY = `${SHOP_BROWSE_STATE_PREFIX}latest-shop`;
@@ -512,7 +514,7 @@ export default function FeaturedProductsClient({
 
     requestRef.current?.abort();
     requestRef.current = null;
-    restoredFetchSkipped.current = true;
+    restoredFetchSkipped.current = false;
     setActiveTab(restoredBrowseState.activeTab);
     setSearch(restoredBrowseState.search);
     setHighlight(restoredBrowseState.highlight);
@@ -599,6 +601,7 @@ export default function FeaturedProductsClient({
           subCategoryName: product.subCategoryName,
           description: product.description,
           pricePerDayAed: product.pricePerDayAed,
+          showPrice: product.showPrice,
           attributes: product.attributes,
           image: product.image,
           images: product.images,

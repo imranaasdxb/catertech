@@ -10,12 +10,13 @@ import SubmitSearch from "@/components/ui/SubmitSearch";
 import { notifyProductTaxonomyChanged } from "@/components/admin/ProductCategorySelects";
 import { products, type ProductAttributeValue } from "@/db/schema";
 import type { InferSelectModel } from "drizzle-orm";
-import { Check, ChevronLeft, ChevronRight, DollarSign, Eye, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, DollarSign, Eye, EyeOff, Loader2, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { formatUtcDate } from "@/lib/format-datetime";
 import { imageKitUrl } from "@/lib/imagekit-optimizer";
 import { productPermissionsFromProfile } from "@/lib/admin-permissions";
 import { normalizePricePerDayAed } from "@/lib/product-pricing";
+import { getProductShowPrice, publicProductAttributes } from "@/lib/product-price-visibility";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type ProductRow = InferSelectModel<typeof products>;
@@ -25,6 +26,7 @@ export type AdminProductListRow = {
   title: string;
   slug: string;
   pricePerDayAed: string | null;
+  showPrice: boolean;
   category: string | null;
   categoryId: string | null;
   galleryCount: number;
@@ -62,7 +64,7 @@ type SortOrder = "default" | "a-z";
 type ToggleAction = {
   id: string;
   title: string;
-  field: "published" | "isFeatured" | "isAvailable";
+  field: "published" | "isFeatured" | "isAvailable" | "showPrice";
   nextValue: boolean;
 };
 
@@ -94,18 +96,23 @@ function isMissingPrice(row: AdminProductListRow) {
 }
 
 function productToListRow(product: ProductRow): AdminProductListRow {
+  const productWithVisibility = product as ProductRow & { showPrice?: boolean };
+  const attributes = publicProductAttributes(
+    (product.attributes ?? {}) as Record<string, ProductAttributeValue>
+  );
   return {
     id: product.id,
     title: product.title,
     slug: product.slug,
     pricePerDayAed: product.pricePerDayAed ?? null,
+    showPrice: productWithVisibility.showPrice ?? getProductShowPrice(product.attributes),
     category: product.category ?? null,
     categoryId: product.categoryId ?? null,
     galleryCount: product.images?.filter(Boolean).length ?? 0,
     published: product.published,
     isFeatured: product.isFeatured,
     isAvailable: product.isAvailable,
-    attributes: (product.attributes ?? {}) as Record<string, ProductAttributeValue>,
+    attributes,
     updatedAt: product.updatedAt,
     thumbUrl: product.images?.[0] ?? null,
     detail: product,
@@ -323,6 +330,7 @@ export default function AdminProductsTable({
   const [deleteTarget, setDeleteTarget] = useState<AdminProductListRow | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [toggleAction, setToggleAction] = useState<ToggleAction | null>(null);
+  const [priceVisibilityAction, setPriceVisibilityAction] = useState<boolean | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [loadingRows, setLoadingRows] = useState(true);
@@ -476,6 +484,8 @@ export default function AdminProductsTable({
     () => (showMissingPriceOnly ? pagination.total : localRows.filter(isMissingPrice).length),
     [localRows, pagination.total, showMissingPriceOnly]
   );
+  const pagePricesHidden = localRows.length > 0 && localRows.every((row) => !row.showPrice);
+  const bulkPriceNextValue = pagePricesHidden;
 
   const totalPages = pagination.totalPages;
   const currentPage = Math.min(page, totalPages);
@@ -622,6 +632,16 @@ export default function AdminProductsTable({
         highlight: title,
       };
     }
+    if (field === "showPrice") {
+      return {
+        title: nextValue ? "Show price publicly?" : "Hide public price?",
+        message: nextValue
+          ? "This product price will appear on the public product card and product details page."
+          : "This product price, AED symbol, per-day text, and negotiation note will be hidden publicly.",
+        confirmLabel: nextValue ? "Show price" : "Hide price",
+        highlight: title,
+      };
+    }
     return {
       title: nextValue ? "Mark as available?" : "Mark as unavailable?",
       message: nextValue
@@ -641,8 +661,30 @@ export default function AdminProductsTable({
         body: JSON.stringify({ [action.field]: action.nextValue }),
       });
       if (!res.ok) throw new Error();
-      patchCachedProductRow(action.id, { [action.field]: action.nextValue } as TogglePatch);
+      const updated = (await res.json()) as ProductRow;
+      syncUpdatedProduct(updated);
       setToggleAction(null);
+    } finally {
+      setTogglingId(null);
+    }
+  }
+
+  async function applyBulkPriceVisibility(showPrice: boolean) {
+    setTogglingId("__price_visibility__");
+    try {
+      const res = await fetch("/api/admin/products", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ showPrice }),
+      });
+      if (!res.ok) throw new Error();
+      pageCacheRef.current.clear();
+      pageRequestRef.current.clear();
+      productCacheRef.current.clear();
+      productRequestRef.current.clear();
+      setLocalRows((prev) => prev.map((row) => ({ ...row, showPrice })));
+      setReloadVersion((version) => version + 1);
+      setPriceVisibilityAction(null);
     } finally {
       setTogglingId(null);
     }
@@ -656,15 +698,15 @@ export default function AdminProductsTable({
 
   return (
     <div className="mx-auto w-full max-w-[1560px] px-1 sm:px-2 lg:px-4">
-      <div className="mb-5 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(7.5rem,9rem)] gap-2 sm:gap-3 lg:grid-cols-[minmax(18rem,2fr)_9rem_8.5rem_auto_5.75rem_auto] xl:flex xl:items-center xl:gap-2">
+      <div className="mb-5">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(7.5rem,9rem)] items-center gap-2 sm:gap-3 lg:grid-cols-6 2xl:flex 2xl:gap-2">
           <SubmitSearch
             value={searchInput}
             onSearch={handleSearchSubmit}
             loading={loadingRows}
             label="Search products"
             placeholder="Search products…"
-            className="xl:min-w-[22rem] xl:max-w-md xl:flex-1"
+            className="lg:col-span-3 2xl:min-w-[22rem] 2xl:max-w-md 2xl:flex-1"
           />
           <select
             value={filter}
@@ -673,7 +715,7 @@ export default function AdminProductsTable({
               setFilter(e.target.value as FilterKey);
             }}
             aria-label="Filter products by category"
-            className="h-[42px] w-full min-w-0 shrink-0 cursor-pointer rounded-lg border border-admin-border bg-white px-2.5 text-sm text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15 lg:w-36 xl:w-36"
+            className="h-[42px] w-full min-w-0 shrink-0 cursor-pointer rounded-lg border border-admin-border bg-white px-2.5 text-sm text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15 2xl:w-36"
           >
             <option value="all">All categories</option>
             {categories.map((category) => (
@@ -689,7 +731,7 @@ export default function AdminProductsTable({
               setVisibilityFilter(e.target.value as VisibilityFilter);
             }}
             aria-label="Filter products by visibility"
-            className="h-[42px] w-full min-w-0 shrink-0 cursor-pointer rounded-lg border border-admin-border bg-white px-2.5 text-sm text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15 lg:w-36 xl:w-36"
+            className="h-[42px] w-full min-w-0 shrink-0 cursor-pointer rounded-lg border border-admin-border bg-white px-2.5 text-sm text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15 2xl:w-36"
           >
             <option value="live">Live on site</option>
             <option value="featured">Featured</option>
@@ -704,7 +746,7 @@ export default function AdminProductsTable({
               setPage(1);
               setShowMissingPriceOnly((current) => !current);
             }}
-            className={`inline-flex h-[42px] w-full shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-3 text-sm font-semibold transition-colors lg:w-auto ${
+            className={`inline-flex h-[42px] w-full shrink-0 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border px-3 text-sm font-semibold transition-colors 2xl:w-auto ${
               showMissingPriceOnly
                 ? "border-admin-accent/45 bg-admin-accent/10 text-admin-accent"
                 : "border-admin-border bg-white text-admin-ink/65 hover:border-admin-accent/35 hover:bg-admin-bg"
@@ -716,6 +758,25 @@ export default function AdminProductsTable({
               {missingPriceCount}
             </span>
           </button>
+          <button
+            type="button"
+            aria-pressed={pagePricesHidden}
+            title={pagePricesHidden ? "Show prices on the public site" : "Hide prices from the public site"}
+            disabled={togglingId === "__price_visibility__" || staffProfileLoading || !permissions.canUpdateProductPrice}
+            onClick={() => setPriceVisibilityAction(bulkPriceNextValue)}
+            className={`inline-flex h-[42px] w-full shrink-0 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border px-3 text-sm font-semibold transition-colors 2xl:w-auto ${
+              pagePricesHidden
+                ? "border-admin-accent/45 bg-admin-accent/10 text-admin-accent"
+                : "border-admin-border bg-white text-admin-ink/65 hover:border-admin-accent/35 hover:bg-admin-bg"
+            } disabled:cursor-not-allowed disabled:opacity-40`}
+          >
+            {pagePricesHidden ? (
+              <Eye className="h-4 w-4" aria-hidden />
+            ) : (
+              <EyeOff className="h-4 w-4" aria-hidden />
+            )}
+            {pagePricesHidden ? "Show prices" : "Hide prices"}
+          </button>
           <select
             value={sortOrder}
             onChange={(e) => {
@@ -723,27 +784,19 @@ export default function AdminProductsTable({
               setSortOrder(e.target.value as SortOrder);
             }}
             aria-label="Sort products alphabetically"
-            className="h-[42px] w-full shrink-0 cursor-pointer rounded-lg border border-admin-border bg-white px-2.5 text-sm font-semibold text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15 lg:w-[5.75rem]"
+            className="h-[42px] w-full min-w-0 shrink-0 cursor-pointer rounded-lg border border-admin-border bg-white px-2.5 text-sm font-semibold text-admin-ink outline-none focus:border-admin-accent/50 focus:ring-2 focus:ring-admin-accent/15 2xl:w-[5.75rem]"
           >
             <option value="default">Default</option>
             <option value="a-z">A–Z</option>
           </select>
-          <p className="hidden shrink-0 text-sm text-gray-500 lg:block">
+          <p className="hidden max-w-40 shrink-0 truncate text-sm text-gray-500 2xl:block">
             <span className="font-semibold text-gray-800">{pagination.total}</span>
             {pagination.total === 1 ? " product" : " products"}
             {activeCategoryName ? ` in ${activeCategoryName}` : ""}
           </p>
-        </div>
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0 sm:items-center sm:justify-end">
-          <Link
-            href="/admin/products/categories"
-            className={`${admin.secondaryBtn} cursor-pointer justify-center border border-gray-200 bg-white px-3 py-2.5 text-center text-sm font-medium sm:px-4`}
-          >
-            Category master
-          </Link>
           <Link
             href="/admin/products/new"
-            className={`${admin.primaryBtn} cursor-pointer justify-center px-3 py-2.5 text-center text-sm font-medium sm:px-4`}
+            className={`${admin.primaryBtn} col-start-2 h-[42px] cursor-pointer justify-center whitespace-nowrap px-3 py-2.5 text-center text-sm font-medium lg:col-span-2 lg:col-start-5 2xl:col-span-1 2xl:ml-auto`}
             style={{ backgroundColor: ADMIN_PURPLE }}
           >
             + New product
@@ -762,6 +815,23 @@ export default function AdminProductsTable({
         onConfirm={async () => {
           if (!toggleAction) return;
           await applyToggle(toggleAction);
+        }}
+      />
+
+      <AdminConfirmDialog
+        open={priceVisibilityAction !== null}
+        title={priceVisibilityAction ? "Show all public prices?" : "Hide all public prices?"}
+        message={
+          priceVisibilityAction
+            ? "All products will show their saved prices on public cards and product detail pages."
+            : "All product prices, AED symbols, per-day text, and negotiation notes will be hidden from the public website."
+        }
+        confirmLabel={priceVisibilityAction ? "Show all prices" : "Hide all prices"}
+        confirmVariant="primary"
+        onCancel={() => setPriceVisibilityAction(null)}
+        onConfirm={async () => {
+          if (priceVisibilityAction === null) return;
+          await applyBulkPriceVisibility(priceVisibilityAction);
         }}
       />
 
@@ -956,6 +1026,20 @@ export default function AdminProductsTable({
                             title: r.title,
                             field: "isAvailable",
                             nextValue: !r.isAvailable,
+                          })
+                        }
+                      />
+                      <VisibilityToggle
+                        active={r.showPrice}
+                        label="Show price"
+                        title={r.showPrice ? "Hide price from public site" : "Show price on public site"}
+                        disabled={togglingId === r.id || staffProfileLoading || !permissions.canUpdateProductPrice}
+                        onClick={() =>
+                          setToggleAction({
+                            id: r.id,
+                            title: r.title,
+                            field: "showPrice",
+                            nextValue: !r.showPrice,
                           })
                         }
                       />

@@ -6,6 +6,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { getDb } from "@/db";
 import { isAdminSession } from "@/lib/auth-user";
+import { getCurrentProductPermissions } from "@/lib/admin-permission-check";
 import { PUBLIC_CATALOGUE_CACHE_TAG } from "@/lib/catalogue-presets";
 import {
   products,
@@ -20,12 +21,14 @@ import {
 import { generateProductSeo } from "@/lib/product-seo";
 import { buildProductIdPrefix, reserveProductId } from "@/lib/product-id";
 import { normalizePricePerDayAed } from "@/lib/product-pricing";
+import { getProductShowPrice, publicProductAttributes, setProductShowPrice } from "@/lib/product-price-visibility";
 import { resolveProductPresetMatch } from "@/lib/product-preset-match";
 import { slugify } from "@/lib/slug";
 import { z } from "zod";
 
 function revalidatePublicCatalogue(productSlug?: string | null) {
-  revalidateTag(PUBLIC_CATALOGUE_CACHE_TAG, "max");
+  revalidateTag(PUBLIC_CATALOGUE_CACHE_TAG, { expire: 0 });
+  revalidatePath("/");
   revalidatePath("/shop");
   if (productSlug) revalidatePath(`/shop/${productSlug}`);
 }
@@ -37,6 +40,7 @@ const createSchema = z.object({
   categoryId: z.union([z.string().uuid(), z.null()]).optional(),
   subCategoryId: z.union([z.string().uuid(), z.null()]).optional(),
   images: z.array(z.string()).optional(),
+  showPrice: z.boolean().optional(),
   isAvailable: z.boolean().optional(),
   isFeatured: z.boolean().optional(),
   published: z.boolean().optional(),
@@ -46,6 +50,10 @@ const createSchema = z.object({
   searchKeywords: z.array(z.string().trim().min(1).max(80)).optional(),
   canonicalProductId: z.union([z.string().uuid(), z.null()]).optional(),
   productTitlePresetId: z.union([z.string().uuid(), z.null()]).optional(),
+});
+
+const priceVisibilitySchema = z.object({
+  showPrice: z.boolean(),
 });
 
 const listQuerySchema = z.object({
@@ -114,22 +122,27 @@ export async function GET(request: Request) {
   const [rows, [{ total }]] = await Promise.all([rowsQuery, totalQuery]);
 
   return NextResponse.json({
-    products: rows.map((r) => ({
+    products: rows.map((r) => {
+      const showPrice = getProductShowPrice(r.attributes);
+      const attributes = publicProductAttributes(r.attributes);
+      return {
       id: r.id,
       title: r.title,
       slug: r.slug,
       pricePerDayAed: r.pricePerDayAed,
+      showPrice,
       category: r.category ?? null,
       categoryId: r.categoryId ?? null,
       galleryCount: r.images?.filter(Boolean).length ?? 0,
       published: r.published,
       isFeatured: r.isFeatured,
       isAvailable: r.isAvailable,
-      attributes: r.attributes,
+      attributes,
       updatedAt: r.updatedAt,
       thumbUrl: r.images?.[0] ?? null,
-      detail: r,
-    })),
+      detail: { ...r, attributes, showPrice },
+    };
+    }),
     pagination: {
       page,
       pageSize,
@@ -165,7 +178,10 @@ export async function POST(request: Request) {
   const catId = d.categoryId === undefined ? null : d.categoryId;
   let subId = d.subCategoryId === undefined ? null : d.subCategoryId;
   if (!catId) subId = null;
-  const attributes = (d.attributes ?? {}) as Record<string, ProductAttributeValue>;
+  const attributes = setProductShowPrice(
+    (d.attributes ?? {}) as Record<string, ProductAttributeValue>,
+    d.showPrice ?? true
+  );
 
   let productTitlePresetId = d.productTitlePresetId ?? null;
   if (!productTitlePresetId && catId) {
@@ -361,4 +377,68 @@ export async function POST(request: Request) {
   revalidatePublicCatalogue(row.slug);
 
   return NextResponse.json({ ...row, presetProgressIncremented }, { status: 201 });
+}
+
+export async function PATCH(request: Request) {
+  if (!(await isAdminSession())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const db = getDb();
+  if (!db)
+    return NextResponse.json({ error: "Database not configured" }, { status: 503 });
+
+  const permissionResult = await getCurrentProductPermissions();
+  if (!permissionResult.ok) {
+    return NextResponse.json(
+      { error: permissionResult.reason === "database" ? "Database not configured" : "Unauthorized" },
+      { status: permissionResult.reason === "database" ? 503 : 401 }
+    );
+  }
+
+  if (!permissionResult.permissions.canUpdateProductPrice) {
+    return NextResponse.json(
+      { error: "You do not have permission to update product price visibility." },
+      { status: 403 }
+    );
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const parsed = priceVisibilitySchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
+
+  const rows = await db
+    .select({ id: products.id, attributes: products.attributes })
+    .from(products);
+
+  await Promise.all(
+    rows.map((row) =>
+      db
+        .update(products)
+        .set({
+          attributes: setProductShowPrice(
+            row.attributes as Record<string, ProductAttributeValue>,
+            parsed.data.showPrice
+          ),
+          updatedAt: new Date(),
+        })
+        .where(eq(products.id, row.id))
+    )
+  );
+
+  revalidatePublicCatalogue();
+
+  return NextResponse.json({
+    ok: true,
+    showPrice: parsed.data.showPrice,
+    updatedCount: rows.length,
+  });
 }

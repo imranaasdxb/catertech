@@ -17,12 +17,14 @@ import {
 } from "@/lib/product-taxonomy";
 import { generateProductSeo } from "@/lib/product-seo";
 import { normalizePricePerDayAed } from "@/lib/product-pricing";
+import { getProductShowPrice, publicProductAttributes, setProductShowPrice } from "@/lib/product-price-visibility";
 import { resolveProductPresetMatch } from "@/lib/product-preset-match";
 import { slugify } from "@/lib/slug";
 import { z } from "zod";
 
 function revalidatePublicCatalogue(productSlug?: string | null, previousProductSlug?: string | null) {
-  revalidateTag(PUBLIC_CATALOGUE_CACHE_TAG, "max");
+  revalidateTag(PUBLIC_CATALOGUE_CACHE_TAG, { expire: 0 });
+  revalidatePath("/");
   revalidatePath("/shop");
   if (productSlug) revalidatePath(`/shop/${productSlug}`);
   if (previousProductSlug && previousProductSlug !== productSlug) {
@@ -38,6 +40,7 @@ const updateSchema = z.object({
   subCategoryId: z.union([z.string().uuid(), z.null()]).optional(),
   productTitlePresetId: z.union([z.string().uuid(), z.null()]).optional(),
   images: z.array(z.string()).optional(),
+  showPrice: z.boolean().optional(),
   isAvailable: z.boolean().optional(),
   isFeatured: z.boolean().optional(),
   published: z.boolean().optional(),
@@ -90,7 +93,11 @@ export async function GET(
     .limit(1);
 
   if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(row);
+  return NextResponse.json({
+    ...row,
+    attributes: publicProductAttributes(row.attributes),
+    showPrice: getProductShowPrice(row.attributes),
+  });
 }
 
 export async function PUT(
@@ -147,9 +154,16 @@ export async function PUT(
     d.attributes !== undefined
       ? (d.attributes as Record<string, ProductAttributeValue>)
       : (row.attributes as Record<string, ProductAttributeValue>);
+  const nextAttributesForSave = setProductShowPrice(
+    nextAttributes,
+    d.showPrice ?? getProductShowPrice(row.attributes)
+  );
 
   const requiredPermissions: ProductPermissionKey[] = [];
   if (d.pricePerDayAed !== undefined && pricePerDayAed !== row.pricePerDayAed) {
+    requiredPermissions.push("canUpdateProductPrice");
+  }
+  if (d.showPrice !== undefined && d.showPrice !== getProductShowPrice(row.attributes)) {
     requiredPermissions.push("canUpdateProductPrice");
   }
   if (d.images !== undefined && !sameStringArray(d.images, row.images)) {
@@ -226,7 +240,7 @@ export async function PUT(
         {
           title,
           productTitlePresetId: null,
-          attributes: nextAttributes,
+          attributes: nextAttributesForSave,
           subCategoryId: nextSub,
         },
         categoryPresets.map((preset) => ({
@@ -285,7 +299,7 @@ export async function PUT(
           title: cleanPresetProductTitle(title),
           sourceLabel: title,
           pricePerDayAed,
-          attributes: nextAttributes,
+          attributes: nextAttributesForSave,
         })
         .returning({ id: productTitlePresets.id });
 
@@ -300,7 +314,7 @@ export async function PUT(
         title: cleanPresetProductTitle(title),
         sourceLabel: title,
         pricePerDayAed,
-        attributes: nextAttributes,
+        attributes: nextAttributesForSave,
         updatedAt: new Date(),
       })
       .where(eq(productTitlePresets.id, productTitlePresetId));
@@ -329,7 +343,7 @@ export async function PUT(
         title: cleanPresetProductTitle(title),
         sourceLabel: title,
         pricePerDayAed,
-        attributes: nextAttributes,
+        attributes: nextAttributesForSave,
         updatedAt: new Date(),
       })
       .where(eq(productTitlePresets.id, productTitlePresetId));
@@ -405,7 +419,7 @@ export async function PUT(
       isAvailable: d.isAvailable ?? row.isAvailable,
       isFeatured: d.isFeatured ?? row.isFeatured,
       published: d.published ?? row.published,
-      attributes: nextAttributes,
+      attributes: nextAttributesForSave,
       seoTitle:
         d.seoTitle !== undefined
           ? d.seoTitle || generatedSeo.seoTitle
@@ -435,7 +449,11 @@ export async function PUT(
 
   revalidatePublicCatalogue(updated.slug, row.slug);
 
-  return NextResponse.json(updated);
+  return NextResponse.json({
+    ...updated,
+    attributes: publicProductAttributes(updated.attributes),
+    showPrice: getProductShowPrice(updated.attributes),
+  });
 }
 
 export async function DELETE(

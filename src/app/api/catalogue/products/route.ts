@@ -3,7 +3,7 @@ import { getCatalogueProductData } from "@/lib/catalogue-presets";
 import { z } from "zod";
 import { searchQuerySchema } from "@/lib/search-query-schema";
 
-const CATALOGUE_CACHE_CONTROL = "public, s-maxage=300, stale-while-revalidate=1800";
+const CATALOGUE_CACHE_CONTROL = "no-store";
 
 const querySchema = z.object({
   page: z.coerce.number().int().positive().default(1),

@@ -108,7 +108,7 @@ export default function Header() {
           isShop && !scrolled ? "site-header--on-shop" : ""
         }`}
       >
-        <Container className="flex h-[var(--header-height)] items-center justify-between gap-4">
+        <Container className="flex h-[var(--header-height)] items-center justify-between gap-6">
           <Link
             href="/"
             className="flex shrink-0 items-center leading-none"
@@ -117,14 +117,12 @@ export default function Header() {
             <Image
               src={logo}
               alt="Catertech"
-              width={300}
-              height={130}
               priority
-              className="site-header__logo block h-12 w-auto max-h-[52px] object-contain sm:h-[54px] sm:max-h-[56px] md:h-[62px] md:max-h-[66px] lg:h-[68px] lg:max-h-[72px]"
+              className="site-header__logo block h-auto w-[150px] object-contain sm:w-[175px] md:w-[190px] lg:w-[210px] xl:w-[260px] 2xl:w-[260px]"
             />
           </Link>
 
-          <nav className="hidden items-center gap-6 lg:flex xl:gap-7">
+          <nav className="hidden items-center gap-4 lg:flex xl:gap-7">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}

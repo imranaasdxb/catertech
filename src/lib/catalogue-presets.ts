@@ -11,6 +11,7 @@ import {
 } from "@/db/schema";
 import type { ProductAttributeValue } from "@/lib/category-template";
 import { resolveCategoryForProduct } from "@/lib/product-category-match";
+import { getProductShowPrice, publicProductAttributes } from "@/lib/product-price-visibility";
 
 export type CatalogueCategoryRow = {
   id: string;
@@ -30,6 +31,7 @@ export type CatalogueProductRow = {
   slug: string;
   description: string;
   pricePerDayAed: string | null;
+  showPrice: boolean;
   image: string | null;
   images?: string[];
   tag: "Popular" | "New" | null;
@@ -115,6 +117,8 @@ function mapStorefrontProduct(product: {
   categoryLabel?: string | null;
   subCategoryName: string | null;
 }): CatalogueProductRow {
+  const showPrice = getProductShowPrice(product.attributes);
+  const attributes = publicProductAttributes(product.attributes);
   const isNew = Date.now() - product.createdAt.getTime() <= 30 * 24 * 60 * 60 * 1000;
   const resolvedCategoryName =
     product.categoryName?.trim() ||
@@ -127,11 +131,12 @@ function mapStorefrontProduct(product: {
     title: product.title,
     slug: product.slug,
     description: plainText(product.description),
-    pricePerDayAed: product.pricePerDayAed,
+    pricePerDayAed: showPrice ? product.pricePerDayAed : null,
+    showPrice,
     image: product.images[0] ?? null,
     images: product.images.filter(Boolean),
     tag: isNew ? "New" : product.isFeatured ? "Popular" : null,
-    attributes: product.attributes,
+    attributes,
     categoryName: resolvedCategoryName,
     categorySlug: product.categorySlug ?? null,
     subCategoryName: product.subCategoryName,

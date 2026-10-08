@@ -9,6 +9,7 @@ export type ShopProductCard = {
   /** Labels matching featured sidebar “Type of equipment” options for this category tab */
   equipmentFilters: string[];
   price: string;
+  showPrice?: boolean;
   tag: string | null;
   image: string;
 };

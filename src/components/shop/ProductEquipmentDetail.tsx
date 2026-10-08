@@ -376,7 +376,8 @@ export default function ProductEquipmentDetail({
     [product.specs.detailRows],
   );
   const hasSpecCards = dimensionSpecRows.length > 0 || detailSpecRows.length > 0;
-  const hasDailyPrice = product.price !== "Quote";
+  const shouldShowPrice = product.showPrice !== false;
+  const hasDailyPrice = shouldShowPrice && product.price !== "Quote";
   const priceValue = hasDailyPrice
     ? product.price.replace(/^AED\s+/, "").replace(/\s+\/ day$/, "")
     : "";
@@ -510,7 +511,7 @@ export default function ProductEquipmentDetail({
         id: selectedCartId,
         name: displayName,
         category: product.category,
-        price: product.price,
+        price: shouldShowPrice ? product.price : "",
         image: product.image ?? "",
         type: "product",
       });
@@ -736,31 +737,42 @@ export default function ProductEquipmentDetail({
 
             {/* Price */}
             <div className="mb-7 rounded-xl border border-sand/30 bg-sand/10 px-4 py-4">
-              {hasDailyPrice ? (
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-sand">
-                    Rental price
-                  </p>
-                  <div className="mt-1 flex items-end gap-2">
-                    <p className="flex items-baseline gap-1.5 font-serif text-3xl font-semibold leading-none text-navy sm:text-4xl">
-                      <DirhamIcon className="h-[0.75em] w-[0.75em] shrink-0 translate-y-[0.05em]" />
-                      <span>{priceValue}</span>
+              {shouldShowPrice ? (
+                hasDailyPrice ? (
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-sand">
+                      Rental price
                     </p>
-                    <p className="pb-1 text-sm font-semibold uppercase tracking-wide text-muted">
-                      per day
+                    <div className="mt-1 flex items-end gap-2">
+                      <p className="flex items-baseline gap-1.5 font-serif text-3xl font-semibold leading-none text-navy sm:text-4xl">
+                        <DirhamIcon className="h-[0.75em] w-[0.75em] shrink-0 translate-y-[0.05em]" />
+                        <span>{priceValue}</span>
+                      </p>
+                      <p className="pb-1 text-sm font-semibold uppercase tracking-wide text-muted">
+                        per day
+                      </p>
+                    </div>
+                    <p className="mt-2 text-[12px] font-semibold leading-relaxed text-muted">
+                      You can negotiate this rate with our sales team.
                     </p>
                   </div>
-                  <p className="mt-2 text-[12px] font-semibold leading-relaxed text-muted">
-                    You can negotiate this rate with our sales team.
-                  </p>
-                </div>
+                ) : (
+                  <div className="flex items-center gap-2.5">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c21722" strokeWidth="2">
+                      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                    </svg>
+                    <span className="text-[12px] font-semibold tracking-wide text-sand">
+                      Pricing available on quote. Request yours below
+                    </span>
+                  </div>
+                )
               ) : (
-                <div className="flex items-center gap-2.5">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c21722" strokeWidth="2">
+                <div className="flex items-start gap-2.5">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c21722" strokeWidth="2" className="mt-0.5 shrink-0">
                     <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
                   </svg>
-                  <span className="text-[12px] font-semibold tracking-wide text-sand">
-                    Pricing available on quote. Request yours below
+                  <span className="text-[12px] font-semibold leading-relaxed tracking-wide text-sand">
+                    Get price by sending a quotation request. Our team will reach you with the best rate.
                   </span>
                 </div>
               )}

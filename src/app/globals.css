@@ -1223,3 +1223,29 @@ h3 {
     }
   }
 }
+
+.quote-price-pointer {
+  animation: quote-point 1.8s ease-in-out infinite;
+}
+
+@keyframes quote-point {
+  0%,
+  10% {
+    left: 0;
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  78% {
+    left: calc(100% - 15px);
+    opacity: 1;
+  }
+  88% {
+    opacity: 0;
+  }
+  100% {
+    left: 0;
+    opacity: 0;
+  }
+}
