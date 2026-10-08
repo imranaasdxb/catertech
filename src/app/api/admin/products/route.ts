@@ -25,7 +25,7 @@ import { slugify } from "@/lib/slug";
 import { z } from "zod";
 
 function revalidatePublicCatalogue(productSlug?: string | null) {
-  revalidateTag(PUBLIC_CATALOGUE_CACHE_TAG);
+  revalidateTag(PUBLIC_CATALOGUE_CACHE_TAG, "max");
   revalidatePath("/shop");
   if (productSlug) revalidatePath(`/shop/${productSlug}`);
 }
